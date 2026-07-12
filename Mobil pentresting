@@ -1,0 +1,182 @@
+# Bug Bounty & Red Team — Tools Command Reference (Part 3 — Mobile, SMB, OSINT, Wordlists)
+
+> Final batch. Covers Android mobile pentesting (relevant to your personal Vivo test device), SMB/Windows enumeration, OSINT username/email lookup, wordlist generation, and general-purpose web scanners.
+
+---
+
+## 1. Android Mobile App Pentesting
+
+### MobSF (Mobile Security Framework — static + dynamic analysis)
+```bash
+docker run -it -p 8000:8000 opensecurity/mobile-security-framework-mobsf:latest
+# Then upload APK via web UI at localhost:8000
+```
+
+### jadx (APK decompiler — readable Java source)
+```bash
+jadx -d output_folder app.apk
+jadx-gui app.apk                      # GUI viewer
+```
+
+### apktool (you already use this — decompile/rebuild)
+```bash
+apktool d app.apk -o decompiled_app
+apktool b decompiled_app -o rebuilt.apk
+```
+
+### Frida (dynamic instrumentation — hook into running app)
+```bash
+frida-ps -U                                          # list processes on connected device
+frida -U -f com.target.app -l script.js --no-pause    # run hook script on app launch
+```
+
+### Drozer (Android attack surface analysis)
+```bash
+drozer console connect
+run app.package.list
+run app.package.attacksurface com.target.app
+```
+
+### adb (Android Debug Bridge — basics)
+```bash
+adb devices
+adb install app.apk
+adb shell pm list packages
+adb logcat                                            # live device logs
+adb pull /data/data/com.target.app/ ./app_data/       # pull app data (rooted device)
+```
+
+---
+
+## 2. SMB / Windows Network Enumeration
+
+### enum4linux
+```bash
+enum4linux -a target_ip
+```
+
+### smbclient
+```bash
+smbclient -L //target_ip -N                          # list shares, no auth
+smbclient //target_ip/sharename -U username
+```
+
+### smbmap
+```bash
+smbmap -H target_ip -u username -p password
+```
+
+### rpcclient
+```bash
+rpcclient -U "" -N target_ip
+```
+
+---
+
+## 3. General Web Vulnerability Scanners
+
+### Nikto
+```bash
+nikto -h https://target.com
+nikto -h https://target.com -Tuning 1,2,3            # specific test categories
+```
+
+### Wapiti
+```bash
+wapiti -u https://target.com
+```
+
+### ZAP (OWASP ZAP — CLI mode)
+```bash
+zap-cli quick-scan --self-contained https://target.com
+zap-baseline.py -t https://target.com                 # docker baseline scan
+```
+
+---
+
+## 4. OSINT — Username / Email / Person Lookup
+
+### Sherlock (username across platforms)
+```bash
+python3 sherlock.py username123
+```
+
+### theHarvester (already in Part 1 — email/subdomain OSINT)
+```bash
+theHarvester -d target.com -b all
+```
+
+### Recon-ng (modular OSINT framework)
+```bash
+recon-ng
+marketplace install all
+workspaces create target_workspace
+```
+
+### Holehe (check if email registered on platforms)
+```bash
+holehe email@example.com
+```
+
+---
+
+## 5. Wordlist Generation / Management
+
+### CeWL (crawl target site to build custom wordlist)
+```bash
+cewl https://target.com -d 2 -m 5 -w custom_wordlist.txt
+```
+
+### Crunch (pattern-based wordlist generation)
+```bash
+crunch 8 8 -t @@@@%%%% -o wordlist.txt                # 8-char pattern
+crunch 6 10 0123456789 -o numeric_wordlist.txt
+```
+
+### Hashcat rules (mutate existing wordlist — combine with hashcat)
+```bash
+hashcat -m 0 -a 0 hash.txt rockyou.txt -r rules/best64.rule
+```
+
+---
+
+## 6. DNS Deep Recon
+
+### dnsrecon
+```bash
+dnsrecon -d target.com -a
+```
+
+### fierce
+```bash
+fierce --domain target.com
+```
+
+### dig / host (built-in, quick checks)
+```bash
+dig target.com ANY
+dig target.com MX
+host -t TXT target.com
+```
+
+---
+
+## 7. Screenshot + Recon Combo
+
+### Aquatone
+```bash
+cat live_hosts.txt | aquatone -out aquatone_report/
+```
+
+### Photon (fast crawler, extracts emails/keys/subdomains from a site)
+```bash
+python3 photon.py -u https://target.com -o photon_output
+```
+
+---
+
+## Is This Everything?
+
+Realistically — haan, ab tumhare paas **60+ tools** cover ho chuke hain teeno parts mein. Ye industry-standard toolkit hai jo professional bug bounty hunters aur red teamers use karte hain. Isse zyada tools add karna diminishing returns hoga — is point ke baad focus **tools install karne** se zyada **inhe deeply master karna** (Phase 2 roadmap) aur **practically apply karna** authorized targets pe hona chahiye.
+
+**Reminder:** Roadmap ke hisaab se abhi Phase 1 (Web Caching + JWT) hi incomplete hai — teeno parts ke tools install/practice Phase 2 mein systematically karna, ek-ek karke, jaldi mein sab install mat karna.
