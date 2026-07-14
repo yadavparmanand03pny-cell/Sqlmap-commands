@@ -1,0 +1,230 @@
+# HTTP Headers Manipulation — Bug Bounty Reference
+
+> Scope reminder: Automated tools sirf authorized scope pe chalao (e.g. Syfe → uat-bugbounty.nonprod.syfe.com only).
+
+---
+
+## 1. IP Spoofing / Access Control Bypass Headers
+
+- `X-Forwarded-For: 127.0.0.1`
+  Client IP claim karta hai proxy ke peeche se
+
+- `X-Forwarded-Host: internal.target.com`
+  Original host claim karta hai
+
+- `X-Forwarded-Proto: https`
+  Protocol claim
+
+- `X-Forwarded-Port: 8080`
+  Port claim
+
+- `X-Originating-IP: 127.0.0.1`
+  Legacy IP spoof header
+
+- `X-Remote-IP: 127.0.0.1`
+  Remote IP claim
+
+- `X-Remote-Addr: 127.0.0.1`
+  Remote address claim
+
+- `X-Client-IP: 127.0.0.1`
+  Client IP claim
+
+- `X-Real-IP: 127.0.0.1`
+  Real IP claim (Nginx common)
+
+- `X-Custom-IP-Authorization: 127.0.0.1`
+  Custom IP auth check
+
+- `True-Client-IP: 127.0.0.1`
+  Akamai/Cloudflare original client IP
+
+- `CF-Connecting-IP: 127.0.0.1`
+  Cloudflare original client IP
+
+- `Cluster-Client-IP: 127.0.0.1`
+  Cluster-level client IP
+
+- `Forwarded: for=127.0.0.1;proto=https`
+  RFC 7239 standard header
+
+**Test values:** `127.0.0.1`, `localhost`, `0.0.0.0`, `10.0.0.1`, `192.168.0.1`, target ka apna internal IP range.
+
+---
+
+## 2. Host Header Manipulation
+
+- **Basic host override**
+  `Host: evil.com` → Password reset poisoning, cache poisoning
+
+- **Duplicate host**
+  `Host: target.com` + `Host: evil.com` → Parser confusion
+
+- **Port injection**
+  `Host: target.com:evil.com` → Bypass validation
+
+- **X-Forwarded-Host override**
+  `X-Forwarded-Host: evil.com` → Bypass Host validation logic
+
+- **Absolute URI in request line**
+  `GET https://evil.com/ HTTP/1.1` → Server kabhi kabhi is URI ko Host header se zyada priority deta hai
+
+**Use case:** Password reset poisoning, SSRF via host confusion, cache poisoning.
+
+---
+
+## 3. 403/401 Bypass — Path & Method Based
+
+**Path manipulation:**
+`/admin/` try karo in variations mein:
+`/admin/.` , `/admin//` , `/./admin/` , `/%2e/admin/`
+
+**Case manipulation:**
+`/Admin` , `/ADMIN` , `/AdMiN`
+
+**Trailing characters:**
+`/admin..;/` , `/admin/..;/` , `/admin%20` , `/admin%09`
+
+**URL encoding:**
+`/%61dmin` (where %61 = "a")
+
+**Double encoding:**
+`/%2561dmin`
+
+**Method override headers:**
+`X-HTTP-Method-Override: GET`
+`X-HTTP-Method: PUT`
+`X-Method-Override: DELETE`
+
+**Method switching:**
+Try `HEAD`, `OPTIONS`, `TRACE` instead of `GET`/`POST`
+
+**Header injection:**
+`X-Original-URL: /admin`
+`X-Rewrite-URL: /admin`
+
+---
+
+## 4. Cache Poisoning / Unkeyed Headers (Param Miner territory)
+
+Yeh headers server response ko affect karte hain but cache key mein include nahi hote.
+
+- `X-Forwarded-Host` — Reflected in links → cache poisoning risk
+- `X-Forwarded-Scheme` — Protocol confusion
+- `X-Original-URL` — Routing bypass
+- `X-Rewrite-URL` — Routing bypass
+- `X-HTTP-Method-Override` — Method confusion
+- `X-Forwarded-Server` — Backend info leak
+- `Accept-Charset` — Sometimes unkeyed, response variation
+- `X-Wap-Profile` — Legacy, sometimes unkeyed
+
+> Note: Param Miner scan platacard.mx pe 6 unkeyed headers discover kar chuka hai — un findings ko yahan ki list ke against verify karo (reflected XSS via header ya cache poisoning chain ban sakta hai).
+
+---
+
+## 5. WAF Bypass Headers (Cloudflare-specific)
+
+- **X-Forwarded-For with malicious payload**
+  WAF sirf body/URL check karta hai, header nahi — kabhi bypass milta hai
+
+- **Case randomization**
+  `sELEct` instead of `SELECT` in header values
+
+- **Content-Type confusion**
+  `application/json` → `text/plain;application/json`
+
+- **Chunked transfer encoding**
+  Request smuggling attempts via `Transfer-Encoding: chunked`
+
+- **Header order randomization**
+  Kuch WAFs specific header order expect karte hain
+
+- **Null byte injection**
+  `%00` in header values
+
+- **Unicode normalization**
+  Full-width characters se filter bypass
+
+> Reminder: Cloudflare aggressively configured hai platacard.mx pe — X-Original-URL aur X-Forwarded-Host already blocked test kiye ja chuke hain.
+
+---
+
+## 6. Authentication / Session Headers
+
+- `Authorization` — Bearer token / Basic auth manipulation
+- `Cookie` — Session token tampering, HttpOnly/Secure flag bypass test
+- `X-Api-Key` — API key brute-force / leakage testing
+- `X-Auth-Token` — Custom auth token manipulation
+- `X-CSRF-Token` — CSRF protection bypass testing
+- `Referer` — CSRF/Referer-based access control bypass
+- `Origin` — CORS misconfiguration testing
+
+---
+
+## 7. CORS Misconfiguration Testing
+
+**Test 1 — Null origin**
+Send: `Origin: null`
+Secure response should NOT reflect `Access-Control-Allow-Origin: null`
+
+**Test 2 — Arbitrary origin**
+Send: `Origin: https://evil.com`
+Secure response should NOT reflect this back
+
+**Test 3 — Subdomain trust abuse**
+Send: `Origin: https://evil.target.com`
+Secure server should NOT blindly trust wildcard subdomains
+
+**Test 4 — Credentials check**
+Check if `Access-Control-Allow-Credentials: true` AND reflected origin dono present hain — is combo se critical vuln milta hai
+
+---
+
+## 8. Rate Limiting Bypass
+
+- **IP rotation via header** — `X-Forwarded-For: <random_ip>` per request
+- **Alternate IP headers** — Rotate between `X-Real-IP`, `X-Client-IP`, `True-Client-IP`
+- **User-Agent rotation** — `User-Agent: <random>`
+- **Session/Cookie removal** — Agar rate-limit session-based hai (IP-based nahi) to cookie remove karke reset try karo
+
+---
+
+## 9. Burp Suite Workflow
+
+1. **Intercept** request in Proxy → send to **Repeater** (`Ctrl+R`)
+2. Repeater mein header add/modify karo manually, ek-ek karke test karo
+3. **Param Miner** extension → right-click → "Guess headers" for automated unkeyed header discovery (UAT scope only automated ke liye)
+4. **Intruder** → Sniper attack type → header value ki jagah payload position set karo → wordlist load karo
+5. Response diff check karo — status code, response length, reflected content sab compare karo
+
+---
+
+## 10. Quick Reference List — Header Names for Intruder Payload
+
+```
+X-Forwarded-For
+X-Forwarded-Host
+X-Forwarded-Proto
+X-Originating-IP
+X-Remote-IP
+X-Remote-Addr
+X-Client-IP
+X-Real-IP
+X-Custom-IP-Authorization
+True-Client-IP
+CF-Connecting-IP
+X-Original-URL
+X-Rewrite-URL
+X-HTTP-Method-Override
+X-Forwarded-Scheme
+X-Wap-Profile
+Forwarded
+```
+
+---
+
+## Notes
+
+- Har header test **sirf authorized scope** pe karo.
+- Syfe: automated header fuzzing sirf `uat-bugbounty.nonprod.syfe.com` pe — production pe manual bhi soch samajh ke.
+- Findings document karte waqt: request/response screenshot, header used, observed behavior (status code change, reflected value, bypass confirm) — HackerOne report format mein yehi cheezein chahiye hoti hain.
