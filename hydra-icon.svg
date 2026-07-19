@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0e14"/><stop offset="100%" stop-color="#111826"/>
+    </linearGradient>
+    <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#312e81"/>
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="400" height="300" fill="url(#bg)"/>
+  <g transform="translate(20,30)">
+    <path d="M0 60 L0 220 Q0 240 20 240 L340 240 Q360 240 360 220 L360 90 Q360 70 340 70 L180 70 L155 30 Q145 15 125 15 L20 15 Q0 15 0 40 Z" fill="url(#g1)" filter="url(#glow)" opacity="0.95"/>
+    <path d="M0 60 L0 220 Q0 240 20 240 L340 240 Q360 240 360 220 L360 90 Q360 70 340 70 L20 70 Q0 70 0 90 Z" fill="#818cf8" opacity="0.85"/>
+    <!-- three serpent heads rising from a common neck -->
+    <g transform="translate(110,95)">
+      <path d="M60 130 L60 70" stroke="#ffffff" stroke-width="10" fill="none"/>
+      <!-- left head -->
+      <path d="M60 90 Q10 70 5 35 Q3 20 20 22 Q35 24 40 45 Q45 65 60 90" fill="#ffffff"/>
+      <circle cx="14" cy="30" r="3" fill="#0a0e14"/>
+      <!-- center head (tallest) -->
+      <path d="M60 90 Q60 30 60 5 Q60 -5 75 0 Q90 8 85 30 Q80 55 60 90" fill="#ffffff"/>
+      <circle cx="73" cy="10" r="3" fill="#0a0e14"/>
+      <!-- right head -->
+      <path d="M60 90 Q110 65 118 32 Q121 17 105 20 Q90 24 85 44 Q80 65 60 90" fill="#ffffff"/>
+      <circle cx="110" cy="28" r="3" fill="#0a0e14"/>
+    </g>
+    <text x="180" y="290" font-family="Arial, sans-serif" font-size="34" font-weight="bold" fill="#c7d2fe" text-anchor="middle" letter-spacing="4">HYDRA</text>
+  </g>
+</svg>
