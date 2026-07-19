@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">
+  <defs>
+    <linearGradient id="bgGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0e14"/>
+      <stop offset="100%" stop-color="#111826"/>
+    </linearGradient>
+    <linearGradient id="analyseGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff5733"/>
+      <stop offset="100%" stop-color="#c81e3a"/>
+    </linearGradient>
+    <filter id="glow2" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="400" height="300" fill="url(#bgGrad2)"/>
+
+  <g transform="translate(20,30)">
+    <path d="M0 60 L0 220 Q0 240 20 240 L340 240 Q360 240 360 220 L360 90 Q360 70 340 70 L180 70 L155 30 Q145 15 125 15 L20 15 Q0 15 0 40 Z"
+          fill="url(#analyseGrad)" filter="url(#glow2)" opacity="0.95"/>
+    <path d="M0 60 L0 220 Q0 240 20 240 L340 240 Q360 240 360 220 L360 90 Q360 70 340 70 L20 70 Q0 70 0 90 Z"
+          fill="#ff6b4a" opacity="0.85"/>
+    <g transform="translate(150,105)">
+      <circle cx="35" cy="35" r="30" fill="none" stroke="#ffffff" stroke-width="8"/>
+      <line x1="58" y1="58" x2="90" y2="90" stroke="#ffffff" stroke-width="10" stroke-linecap="round"/>
+    </g>
+    <text x="180" y="290" font-family="Arial, sans-serif" font-size="30" font-weight="bold" fill="#ffb199" text-anchor="middle" letter-spacing="2">ANALYSE-IT</text>
+  </g>
+</svg>
