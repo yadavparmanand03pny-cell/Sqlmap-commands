@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Complete Bug Bounty Methodology — Karan's Reference</title>
+<style>
+  body {
+    background: linear-gradient(135deg,#0a0e14,#111826);
+    color: #e5e7eb;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    margin: 0;
+    padding: 40px 24px;
+    line-height: 1.6;
+  }
+  h1.main-title {
+    text-align: center;
+    font-size: 2.2em;
+    background: linear-gradient(90deg,#38bdf8,#a855f7,#ec4899);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    margin-bottom: 4px;
+  }
+  p.subtitle {
+    text-align: center;
+    color: #9ca3af;
+    margin-top: 0;
+    margin-bottom: 36px;
+  }
+  h2.phase-title {
+    text-align:center;
+    color: #f3f4f6;
+    font-size: 1.1em;
+    letter-spacing: 3px;
+    margin: 44px 0 16px 0;
+    text-transform: uppercase;
+    opacity: 0.85;
+    border-top: 1px solid #263042;
+    padding-top: 30px;
+  }
+  .section {
+    border-radius: 14px;
+    padding: 18px 24px;
+    margin-bottom: 16px;
+    border-left: 6px solid;
+    background: #151b26;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+  }
+  .section h2 {
+    margin-top: 0;
+    margin-bottom: 8px;
+    font-size: 1.15em;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .badge {
+    display: inline-block;
+    font-size: 0.65em;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-weight: bold;
+    color: #0a0e14;
+  }
+  .step {
+    color: #d1d5db;
+    margin: 4px 0;
+    font-size: 0.95em;
+  }
+  code {
+    background: #05070a;
+    color: #7ee787;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.88em;
+  }
+
+  /* recon colors */
+  .subd    { border-color: #ec4899; } .subd h2 { color: #ec4899; } .subd .badge { background: #ec4899; }
+  .urlp    { border-color: #38bdf8; } .urlp h2 { color: #38bdf8; } .urlp .badge { background: #38bdf8; }
+  .apid    { border-color: #22c55e; } .apid h2 { color: #22c55e; } .apid .badge { background: #22c55e; }
+  .jsrec   { border-color: #facc15; } .jsrec h2 { color: #facc15; } .jsrec .badge { background: #facc15; }
+  .tech    { border-color: #fb923c; } .tech h2 { color: #fb923c; } .tech .badge { background: #fb923c; }
+  .ports   { border-color: #f87171; } .ports h2 { color: #f87171; } .ports .badge { background: #f87171; }
+  .dirs    { border-color: #2dd4bf; } .dirs h2 { color: #2dd4bf; } .dirs .badge { background: #2dd4bf; }
+  .shots   { border-color: #c084fc; } .shots h2 { color: #c084fc; } .shots .badge { background: #c084fc; }
+  .params  { border-color: #60a5fa; } .params h2 { color: #60a5fa; } .params .badge { background: #60a5fa; }
+  .cloud   { border-color: #34d399; } .cloud h2 { color: #34d399; } .cloud .badge { background: #34d399; }
+  .waf     { border-color: #f472b6; } .waf h2 { color: #f472b6; } .waf .badge { background: #f472b6; }
+
+  /* attack colors */
+  .sto     { border-color: #ec4899; } .sto h2 { color: #ec4899; } .sto .badge { background: #ec4899; }
+  .auth    { border-color: #a855f7; } .auth h2 { color: #a855f7; } .auth .badge { background: #a855f7; }
+  .ssrf    { border-color: #2dd4bf; } .ssrf h2 { color: #2dd4bf; } .ssrf .badge { background: #2dd4bf; }
+  .sqli    { border-color: #ef4444; } .sqli h2 { color: #ef4444; } .sqli .badge { background: #ef4444; }
+  .idor    { border-color: #fb923c; } .idor h2 { color: #fb923c; } .idor .badge { background: #fb923c; }
+  .xss     { border-color: #facc15; } .xss h2 { color: #facc15; } .xss .badge { background: #facc15; }
+  .cors    { border-color: #38bdf8; } .cors h2 { color: #38bdf8; } .cors .badge { background: #38bdf8; }
+
+  .vulnlist {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 10px;
+  }
+  @media (max-width: 600px) { .vulnlist { grid-template-columns: 1fr; } }
+  .vuln-item {
+    background: #0d1219;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 0.9em;
+  }
+  .vuln-item b { color: #f87171; }
+</style>
+</head>
+<body>
+
+<h1 class="main-title">🎯 Complete Bug Bounty Methodology</h1>
+<p class="subtitle">Recon se attack tak — poora flow, ek jagah, jitna zyada info utna useful</p>
+
+<h2 class="phase-title">— Phase 1: Recon —</h2>
+
+<div class="section subd">
+  <h2>Subdomain Enumeration <span class="badge">FIRST STEP</span></h2>
+  <div class="step">1. <code>subfinder -d target.com</code> + <code>crt.sh</code> — saare subdomains collect karo</div>
+  <div class="step">2. <code>httpx</code> se check karo kaunse subdomains live hain</div>
+  <div class="step">3. Old/unused subdomains note karo — inpe Subdomain Takeover try hoga</div>
+</div>
+
+<div class="section tech">
+  <h2>Tech Fingerprinting <span class="badge">KNOW THE STACK</span></h2>
+  <div class="step">1. <code>whatweb target.com</code> ya Wappalyzer extension — CMS, framework, server pata karo</div>
+  <div class="step">2. Server header, cookies naming pattern se backend language guess karo (PHP, Node, Java)</div>
+  <div class="step">3. Version number mile to known CVE search karo us version ke liye</div>
+</div>
+
+<div class="section ports">
+  <h2>Port & Service Scanning <span class="badge">HIDDEN ENTRY POINTS</span></h2>
+  <div class="step">1. <code>nmap -sV -p- target.com</code> — saare open ports aur services</div>
+  <div class="step">2. Non-standard ports pe admin panel ya staging environment mil sakta hai</div>
+  <div class="step">3. <code>nmap --script vuln target.com</code> — known service vulnerabilities check</div>
+</div>
+
+<div class="section urlp">
+  <h2>URL & Parameter Collection <span class="badge">SURFACE MAPPING</span></h2>
+  <div class="step">1. <code>waybackurls</code> + <code>gau</code> — purane aur current dono URLs nikalo</div>
+  <div class="step">2. Har URL ke query parameters note karo — attack surface yahi banti hai</div>
+  <div class="step">3. Burp Spider/Crawl chalao live navigation ke through — dynamic URLs bhi mile</div>
+</div>
+
+<div class="section params">
+  <h2>Hidden Parameter Discovery <span class="badge">OFTEN MISSED</span></h2>
+  <div class="step">1. <code>arjun -u https://target.com/endpoint</code> — hidden parameters brute-force karta hai</div>
+  <div class="step">2. <code>paramspider -d target.com</code> — historical URLs se parameters extract karta hai</div>
+  <div class="step">3. Jo parameter UI mein nahi dikhta lekin backend accept karta hai — wahi hidden bugs ka source hota hai</div>
+</div>
+
+<div class="section apid">
+  <h2>API & Endpoint Discovery <span class="badge">HIDDEN SURFACE</span></h2>
+  <div class="step">1. Network tab (Burp/DevTools) se XHR/fetch calls capture karo</div>
+  <div class="step">2. <code>/api/`, `/v1/`, `/v2/</code> jaise paths bruteforce karo (ffuf/kiterunner)</div>
+  <div class="step">3. Swagger/OpenAPI docs try karo: <code>/swagger-ui.html</code>, <code>/api-docs</code></div>
+</div>
+
+<div class="section jsrec">
+  <h2>JS File Analysis <span class="badge">OFTEN IGNORED</span></h2>
+  <div class="step">1. Saari .js files download karo, <code>linkfinder</code> se endpoints nikalo</div>
+  <div class="step">2. Hardcoded API keys, internal URLs, comments dhundo</div>
+</div>
+
+<div class="section dirs">
+  <h2>Directory / File Bruteforcing <span class="badge">HIGH FINDING RATE</span></h2>
+  <div class="step">1. <code>ffuf -u https://target.com/FUZZ -w wordlist.txt</code></div>
+  <div class="step">2. Backup files specifically try karo: <code>.env</code>, <code>.git</code>, <code>config.php.bak</code>, <code>.zip</code></div>
+  <div class="step">3. <code>intitle:"index of"</code> Google dork se bhi open directories milte hain</div>
+</div>
+
+<div class="section shots">
+  <h2>Screenshotting (Visual Recon) <span class="badge">SPEED UP TRIAGE</span></h2>
+  <div class="step">1. <code>gowitness scan file -f subdomains.txt</code> — actively maintained, Chrome headless use karta hai isliye modern JS-heavy sites bhi properly load hoti hain</div>
+  <div class="step">2. Jaldi identify ho jaata hai kaunsa login page, admin panel, ya dev/staging environment hai</div>
+  <div class="step">3. Backup option: <code>aquatone</code> — purana lekin quick setup, kabhi kabhi heavy JS sites pe screenshot blank aa sakta hai</div>
+</div>
+
+<div class="section cloud">
+  <h2>Cloud Storage / S3 Buckets <span class="badge">MISCONFIG GOLDMINE</span></h2>
+  <div class="step">1. Company naam se bucket names guess karo: <code>target-backup</code>, <code>target-uploads</code>, <code>target-dev</code></div>
+  <div class="step">2. <code>s3scanner</code> ya <code>grayhatwarfare.com</code> se public buckets search karo</div>
+  <div class="step">3. Misconfigured bucket mein directly sensitive files/data mil sakta hai</div>
+</div>
+
+<div class="section waf">
+  <h2>WAF Detection <span class="badge">BEFORE ATTACKING</span></h2>
+  <div class="step">1. <code>wafw00f target.com</code> — pehle pata karo WAF hai ya nahi</div>
+  <div class="step">2. WAF pata hone se payload customize kar sakte ho bypass ke liye (encoding, case variation)</div>
+</div>
+
+<h2 class="phase-title">— Phase 2: Attack Checklist —</h2>
+
+<div class="section sto">
+  <h2>Subdomain Takeover <span class="badge">TRY FIRST</span></h2>
+  <div class="step">Dangling CNAME dhundo (subdomain kisi service — S3, Heroku, GitHub Pages — ko point kar raha ho jo ab exist nahi karti)</div>
+  <div class="step">Check tool: <code>subzy</code> ya <code>nuclei -t subdomain-takeover</code></div>
+</div>
+
+<div class="section auth">
+  <h2>Authentication Testing <span class="badge">HIGH IMPACT</span></h2>
+  <div class="step">Login/OTP/password-reset flow pe rate limiting hai ya nahi</div>
+  <div class="step">Session token predictable hai kya, logout ke baad token invalidate ho raha hai kya</div>
+  <div class="step">Password reset link mein Host header manipulate karke dekho</div>
+</div>
+
+<div class="section ssrf">
+  <h2>SSRF <span class="badge">SERVER-SIDE</span></h2>
+  <div class="step">Jo bhi parameter URL/webhook/callback leta hai — usme internal IP daalo (<code>169.254.169.254</code>, <code>localhost</code>)</div>
+  <div class="step">File upload/PDF generator/image-fetch features pe bhi try karo — inme chhupa SSRF milta hai</div>
+</div>
+
+<div class="section sqli">
+  <h2>SQL Injection <span class="badge">CLASSIC</span></h2>
+  <div class="step">Search, filter, sort, login parameters pe <code>'</code>, <code>"</code>, <code>OR 1=1</code> try karo</div>
+  <div class="step">Error na aaye to time-based blind try karo: <code>' AND SLEEP(5)--</code></div>
+</div>
+
+<div class="section idor">
+  <h2>IDOR / Access Control <span class="badge">MOST COMMON</span></h2>
+  <div class="step">Har ID-based endpoint pe apna ID doosre ke ID se replace karo</div>
+  <div class="step">Numeric hi nahi — UUID/hex ID bhi try karo, low-privilege account se high-privilege data access try karo</div>
+</div>
+
+<div class="section xss">
+  <h2>XSS <span class="badge">CLIENT-SIDE</span></h2>
+  <div class="step">Search box, comment, profile bio, review fields mein payload daalo: <code>&lt;script&gt;alert(1)&lt;/script&gt;</code></div>
+  <div class="step">Reflected na mile to Stored XSS check karo — payload save hoke doosri jagah render ho raha hai kya</div>
+</div>
+
+<div class="section cors">
+  <h2>CORS Misconfiguration <span class="badge">HEADER-BASED</span></h2>
+  <div class="step">Request mein random <code>Origin</code> header daal ke dekho response mein reflect ho raha hai kya</div>
+  <div class="step">Agar <code>Access-Control-Allow-Credentials: true</code> ke saath reflect ho raha hai — critical finding</div>
+</div>
+
+<h2 class="phase-title">— Common Vulnerabilities on Websites —</h2>
+
+<div class="section" style="border-color:#9ca3af;">
+  <h2 style="color:#9ca3af;">Quick Reference <span class="badge" style="background:#9ca3af;">FREQUENTLY FOUND</span></h2>
+  <div class="vulnlist">
+    <div class="vuln-item"><b>XSS</b> — search box, comment, profile bio fields mein</div>
+    <div class="vuln-item"><b>IDOR</b> — invoice, order, profile ID-based endpoints</div>
+    <div class="vuln-item"><b>Open Redirect</b> — login/logout ke redirect parameters mein</div>
+    <div class="vuln-item"><b>CORS Misconfig</b> — Origin header blindly reflect ho raha ho</div>
+    <div class="vuln-item"><b>Rate Limiting Missing</b> — OTP, login, coupon apply pe</div>
+    <div class="vuln-item"><b>Info Disclosure</b> — API response mein extra fields (email, internal ID)</div>
+    <div class="vuln-item"><b>CSRF</b> — state-changing action bina token verification ke</div>
+    <div class="vuln-item"><b>Clickjacking</b> — X-Frame-Options header missing</div>
+    <div class="vuln-item"><b>Weak Password Policy</b> — signup/reset pe koi complexity check nahi</div>
+    <div class="vuln-item"><b>Directory Listing</b> — <code>intitle:"index of"</code> se khula folder mil jaana</div>
+    <div class="vuln-item"><b>Subdomain Takeover</b> — dangling DNS record kisi deleted service ko point kare</div>
+    <div class="vuln-item"><b>Mass Assignment</b> — request body mein extra field (role, isAdmin) accept ho jaana</div>
+  </div>
+</div>
+
+<p style="text-align:center; color:#6b7280; margin-top:36px; font-size:0.85em;">
+Ye complete methodology hai — recon ke 11 steps + attack ke 7 angles + 12 common vulns. Naya seekhoge to yahin add hoga, alag file nahi banegi.
+</p>
+
+</body>
+</html>
