@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0e14"/><stop offset="100%" stop-color="#111826"/>
+    </linearGradient>
+    <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2dd4bf"/><stop offset="100%" stop-color="#0f766e"/>
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="400" height="300" fill="url(#bg)"/>
+  <g transform="translate(20,30)">
+    <path d="M0 60 L0 220 Q0 240 20 240 L340 240 Q360 240 360 220 L360 90 Q360 70 340 70 L180 70 L155 30 Q145 15 125 15 L20 15 Q0 15 0 40 Z" fill="url(#g1)" filter="url(#glow)" opacity="0.95"/>
+    <path d="M0 60 L0 220 Q0 240 20 240 L340 240 Q360 240 360 220 L360 90 Q360 70 340 70 L20 70 Q0 70 0 90 Z" fill="#5eead4" opacity="0.85"/>
+    <g transform="translate(135,115)">
+      <rect x="0" y="0" width="35" height="45" rx="4" fill="none" stroke="#ffffff" stroke-width="6"/>
+      <line x1="6" y1="12" x2="29" y2="12" stroke="#ffffff" stroke-width="4"/>
+      <line x1="6" y1="22" x2="29" y2="22" stroke="#ffffff" stroke-width="4"/>
+      <line x1="6" y1="32" x2="29" y2="32" stroke="#ffffff" stroke-width="4"/>
+      <path d="M45 22 L85 22 M85 22 L72 10 M85 22 L72 34" stroke="#ffffff" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      <rect x="90" y="0" width="35" height="45" rx="4" fill="none" stroke="#ffffff" stroke-width="6" opacity="0.6"/>
+    </g>
+    <text x="180" y="290" font-family="Arial, sans-serif" font-size="34" font-weight="bold" fill="#ccfbf1" text-anchor="middle" letter-spacing="3">SSRF</text>
+  </g>
+</svg>
