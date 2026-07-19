@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Recon Arsenal — Karan's Reference</title>
+<style>
+  body {
+    background: linear-gradient(135deg,#0a0e14,#111826);
+    color: #e5e7eb;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    margin: 0;
+    padding: 40px 24px;
+    line-height: 1.6;
+  }
+  h1.main-title {
+    text-align: center;
+    font-size: 2.2em;
+    background: linear-gradient(90deg,#38bdf8,#a855f7,#ec4899);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    margin-bottom: 4px;
+  }
+  p.subtitle {
+    text-align: center;
+    color: #9ca3af;
+    margin-top: 0;
+    margin-bottom: 40px;
+  }
+  .section {
+    border-radius: 14px;
+    padding: 20px 26px;
+    margin-bottom: 22px;
+    border-left: 6px solid;
+    background: #151b26;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+  }
+  .section h2 {
+    margin-top: 0;
+    font-size: 1.3em;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .badge {
+    display: inline-block;
+    font-size: 0.7em;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-weight: bold;
+    color: #0a0e14;
+  }
+  .tool {
+    background: #0d1219;
+    border-radius: 8px;
+    padding: 10px 16px;
+    margin: 8px 0;
+  }
+  .tool a {
+    font-weight: bold;
+    text-decoration: none;
+  }
+  .tool a:hover { text-decoration: underline; }
+  code {
+    background: #05070a;
+    color: #7ee787;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.9em;
+  }
+  .example {
+    font-style: italic;
+    color: #9ca3af;
+    margin-top: 4px;
+    font-size: 0.9em;
+  }
+
+  /* section colors */
+  .whois   { border-color: #38bdf8; } .whois h2 { color: #38bdf8; } .whois .badge { background: #38bdf8; }
+  .tech    { border-color: #22c55e; } .tech h2 { color: #22c55e; } .tech .badge { background: #22c55e; }
+  .dns     { border-color: #facc15; } .dns h2 { color: #facc15; } .dns .badge { background: #facc15; }
+  .reverse { border-color: #fb923c; } .reverse h2 { color: #fb923c; } .reverse .badge { background: #fb923c; }
+  .subdom  { border-color: #ec4899; } .subdom h2 { color: #ec4899; } .subdom .badge { background: #ec4899; }
+  .sensfile{ border-color: #ef4444; } .sensfile h2 { color: #ef4444; } .sensfile .badge { background: #ef4444; }
+  .waybk   { border-color: #a855f7; } .waybk h2 { color: #a855f7; } .waybk .badge { background: #a855f7; }
+  .shodan  { border-color: #2dd4bf; } .shodan h2 { color: #2dd4bf; } .shodan .badge { background: #2dd4bf; }
+  .github  { border-color: #f472b6; } .github h2 { color: #f472b6; } .github .badge { background: #f472b6; }
+  .email   { border-color: #60a5fa; } .email h2 { color: #60a5fa; } .email .badge { background: #60a5fa; }
+  .ports   { border-color: #f87171; } .ports h2 { color: #f87171; } .ports .badge { background: #f87171; }
+  .dork    { border-color: #d946ef; } .dork h2 { color: #d946ef; } .dork .badge { background: #d946ef; }
+
+</style>
+</head>
+<body>
+
+<h1 class="main-title">🐉 Recon Arsenal</h1>
+<p class="subtitle">Har din padhne wali file — website, tool, link, example sab ek jagah</p>
+
+<div class="section whois">
+  <h2>1. Whois Lookup <span class="badge">DOMAIN INFO</span></h2>
+  <div class="tool">
+    <a href="https://whois.domaintools.com/" style="color:#7dd3fc">whois.domaintools.com</a>
+    <div class="example">Example: domain owner, registrar, creation date, name servers dhundhne ke liye</div>
+  </div>
+  <div class="tool">
+    <a href="https://www.whois.com/whois/" style="color:#7dd3fc">whois.com</a>
+    <div class="example">Alternative — simpler UI, same data</div>
+  </div>
+</div>
+
+<div class="section tech">
+  <h2>2. Technology Discovery <span class="badge">TECH STACK</span></h2>
+  <div class="tool">
+    <a href="https://sitereport.netcraft.com/" style="color:#86efac">sitereport.netcraft.com</a>
+    <div class="example">Server type, hosting history, tech stack ka overview</div>
+  </div>
+  <div class="tool">
+    <a href="https://www.wappalyzer.com/" style="color:#86efac">Wappalyzer</a> — browser extension
+    <div class="example">Website open karte hi CMS, framework, JS libraries turant dikhata hai</div>
+  </div>
+  <div class="tool">
+    <a href="https://builtwith.com/" style="color:#86efac">BuiltWith</a>
+    <div class="example">Detailed tech report — analytics tools, CDN, hosting provider bhi batata hai</div>
+  </div>
+</div>
+
+<div class="section dns">
+  <h2>3. Gathering DNS Information <span class="badge">DNS</span></h2>
+  <div class="tool">
+    <a href="https://www.robtex.com/" style="color:#fde047">robtex.com</a>
+    <div class="example">A, MX, TXT, NS records ek jagah dikhata hai</div>
+  </div>
+  <div class="tool">
+    <a href="https://dnsdumpster.com/" style="color:#fde047">dnsdumpster.com</a>
+    <div class="example">Visual DNS map banata hai, subdomains bhi kabhi kabhi saath mein dikha deta hai</div>
+  </div>
+  <div class="tool">
+    Terminal: <code>dig target.com ANY</code> ya <code>nslookup target.com</code>
+  </div>
+</div>
+
+<div class="section reverse">
+  <h2>4. Same Server Domains (Reverse DNS) <span class="badge">REVERSE DNS</span></h2>
+  <div class="tool">
+    <a href="https://www.robtex.com/" style="color:#fdba74">robtex.com</a>
+    <div class="example">IP daalo, us server pe hosted saare domains dikh jaate hain</div>
+  </div>
+  <div class="tool">
+    Bing search: <code>ip:192.xxx.xx.xx</code>
+    <div class="example">Same IP pe hosted saari sites Bing list kar deta hai</div>
+  </div>
+</div>
+
+<div class="section subdom">
+  <h2>5. Discovering Subdomains <span class="badge">SUBDOMAINS</span></h2>
+  <div class="tool">
+    <code>git clone https://github.com/guelfoweb/knock</code>
+    <div class="example">Wordlist-based subdomain bruteforce tool</div>
+  </div>
+  <div class="tool">
+    <code>subfinder -d target.com</code>
+    <div class="example">Fast, passive subdomain enumeration (multiple sources se ek sath)</div>
+  </div>
+  <div class="tool">
+    <a href="https://crt.sh/" style="color:#f9a8d4">crt.sh</a>
+    <div class="example">SSL certificate transparency logs se subdomains milte hain — bahut reliable</div>
+  </div>
+  <div class="tool">
+    <code>amass enum -d target.com</code>
+    <div class="example">Deep, thorough subdomain + asset discovery (thoda slow but comprehensive)</div>
+  </div>
+</div>
+
+<div class="section sensfile">
+  <h2>6. Discovering Sensitive Files <span class="badge">FILE DISCOVERY</span></h2>
+  <div class="tool">
+    <code>dirb https://target.com</code>
+    <div class="example">Default wordlist se hidden directories/files dhundhta hai</div>
+  </div>
+  <div class="tool">
+    <code>gobuster dir -u https://target.com -w wordlist.txt</code>
+    <div class="example">Faster alternative to dirb, zyada customizable</div>
+  </div>
+  <div class="tool">
+    <code>ffuf -u https://target.com/FUZZ -w wordlist.txt</code>
+    <div class="example">Sabse fast, filtering options bhi strong hain (status code, size based)</div>
+  </div>
+</div>
+
+<div class="section waybk">
+  <h2>7. Old/Archived URLs <span class="badge">HISTORY</span></h2>
+  <div class="tool">
+    <a href="https://web.archive.org/" style="color:#d8b4fe">web.archive.org (Wayback Machine)</a>
+    <div class="example">Purani versions of the site dekh sakte ho — kabhi purane API endpoints yahin dikh jaate hain</div>
+  </div>
+  <div class="tool">
+    <code>waybackurls target.com</code>
+    <div class="example">Terminal tool — Wayback Machine ke saare archived URLs ek list mein nikal deta hai</div>
+  </div>
+</div>
+
+<div class="section shodan">
+  <h2>8. Exposed Services / Infra <span class="badge">EXPOSURE</span></h2>
+  <div class="tool">
+    <a href="https://www.shodan.io/" style="color:#5eead4">shodan.io</a>
+    <div class="example">Exposed servers, open ports, IoT devices, kabhi kabhi login panels bhi dikh jaate hain</div>
+  </div>
+  <div class="tool">
+    <a href="https://search.censys.io/" style="color:#5eead4">censys.io</a>
+    <div class="example">Shodan jaisa hi, thoda alag data set, dono cross-check karne mein useful</div>
+  </div>
+</div>
+
+<div class="section github">
+  <h2>9. GitHub Recon <span class="badge">CODE LEAKS</span></h2>
+  <div class="tool">
+    <code>site:github.com "target.com" api_key</code>
+    <div class="example">Google dork — company ke leaked API keys, hardcoded endpoints milte hain</div>
+  </div>
+  <div class="tool">
+    <a href="https://github.com/search" style="color:#f9a8d4">GitHub native search</a>
+    <div class="example">Company naam + "password", "secret", "config" jaise keywords se search karo</div>
+  </div>
+</div>
+
+<div class="section email">
+  <h2>10. Email / Employee Recon <span class="badge">OSINT</span></h2>
+  <div class="tool">
+    <code>theHarvester -d target.com -b all</code>
+    <div class="example">Emails, subdomains, employee names ek sath collect karta hai (multiple sources se)</div>
+  </div>
+  <div class="tool">
+    <a href="https://hunter.io/" style="color:#93c5fd">hunter.io</a>
+    <div class="example">Company ka email pattern (firstname.lastname@target.com) confirm karta hai</div>
+  </div>
+</div>
+
+<div class="section ports">
+  <h2>11. Port & Service Scanning <span class="badge">NETWORK</span></h2>
+  <div class="tool">
+    <code>nmap -sV -p- target.com</code>
+    <div class="example">Saare open ports aur unpe chal rahi services identify karta hai</div>
+  </div>
+  <div class="tool">
+    <code>nmap --script vuln target.com</code>
+    <div class="example">Known vulnerabilities ke against services ko scan karta hai</div>
+  </div>
+</div>
+
+<div class="section dork">
+  <h2>12. Google Dorking <span class="badge">SEARCH RECON</span></h2>
+  <div class="tool">
+    <code>site:target.com filetype:pdf</code>
+    <div class="example">Public documents dhundhta hai jo internal info leak kar sakte hain</div>
+  </div>
+  <div class="tool">
+    <code>site:target.com inurl:admin</code>
+    <div class="example">Admin panels ya login pages dhundhne ke liye</div>
+  </div>
+  <div class="tool">
+    <code>site:target.com intitle:"index of"</code>
+    <div class="example">Open directory listings dhundhta hai — kabhi kabhi poora backup folder khula milta hai</div>
+  </div>
+</div>
+
+<p style="text-align:center; color:#6b7280; margin-top:40px; font-size:0.85em;">
+Naya tool seekhoge to isi file mein add ho jayega — ek hi jagah sab recon arsenal.
+</p>
+
+</body>
+</html>
