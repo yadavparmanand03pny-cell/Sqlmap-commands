@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="450" viewBox="0 0 900 450">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0e14"/>
+      <stop offset="100%" stop-color="#111826"/>
+    </linearGradient>
+    <linearGradient id="readGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00c8ff"/>
+      <stop offset="100%" stop-color="#0066aa"/>
+    </linearGradient>
+    <linearGradient id="analyseGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff5733"/>
+      <stop offset="100%" stop-color="#c81e3a"/>
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="900" height="450" fill="url(#bgGrad)"/>
+
+  <!-- READ-IT ICON -->
+  <g transform="translate(60,60)">
+    <path d="M0 60 L0 220 Q0 240 20 240 L340 240 Q360 240 360 220 L360 90 Q360 70 340 70 L180 70 L155 30 Q145 15 125 15 L20 15 Q0 15 0 40 Z"
+          fill="url(#readGrad)" filter="url(#glow)" opacity="0.95"/>
+    <path d="M0 60 L0 220 Q0 240 20 240 L340 240 Q360 240 360 220 L360 90 Q360 70 340 70 L20 70 Q0 70 0 90 Z"
+          fill="#00e0ff" opacity="0.85"/>
+    <!-- book icon inside -->
+    <g transform="translate(130,110)">
+      <path d="M0 10 Q30 -5 60 10 L60 90 Q30 75 0 90 Z" fill="#ffffff" opacity="0.9"/>
+      <path d="M60 10 Q90 -5 120 10 L120 90 Q90 75 60 90 Z" fill="#e8f8ff" opacity="0.9"/>
+      <line x1="60" y1="10" x2="60" y2="90" stroke="#0a0e14" stroke-width="2"/>
+    </g>
+    <text x="180" y="290" font-family="Arial, sans-serif" font-size="34" font-weight="bold" fill="#00e0ff" text-anchor="middle" letter-spacing="2">READ-IT</text>
+  </g>
+
+  <!-- ANALYSE-IT ICON -->
+  <g transform="translate(480,60)">
+    <path d="M0 60 L0 220 Q0 240 20 240 L340 240 Q360 240 360 220 L360 90 Q360 70 340 70 L180 70 L155 30 Q145 15 125 15 L20 15 Q0 15 0 40 Z"
+          fill="url(#analyseGrad)" filter="url(#glow)" opacity="0.95"/>
+    <path d="M0 60 L0 220 Q0 240 20 240 L340 240 Q360 240 360 220 L360 90 Q360 70 340 70 L20 70 Q0 70 0 90 Z"
+          fill="#ff6b4a" opacity="0.85"/>
+    <!-- magnifier icon inside -->
+    <g transform="translate(150,105)">
+      <circle cx="35" cy="35" r="30" fill="none" stroke="#ffffff" stroke-width="8"/>
+      <line x1="58" y1="58" x2="90" y2="90" stroke="#ffffff" stroke-width="10" stroke-linecap="round"/>
+      <circle cx="35" cy="35" r="30" fill="none" stroke="#fff3ee" stroke-width="8" opacity="0.5"/>
+    </g>
+    <text x="180" y="290" font-family="Arial, sans-serif" font-size="30" font-weight="bold" fill="#ffb199" text-anchor="middle" letter-spacing="2">ANALYSE-IT</text>
+  </g>
+</svg>
