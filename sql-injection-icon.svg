@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0e14"/><stop offset="100%" stop-color="#111826"/>
+    </linearGradient>
+    <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ef4444"/><stop offset="100%" stop-color="#991b1b"/>
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="400" height="300" fill="url(#bg)"/>
+  <g transform="translate(20,30)">
+    <path d="M0 60 L0 220 Q0 240 20 240 L340 240 Q360 240 360 220 L360 90 Q360 70 340 70 L180 70 L155 30 Q145 15 125 15 L20 15 Q0 15 0 40 Z" fill="url(#g1)" filter="url(#glow)" opacity="0.95"/>
+    <path d="M0 60 L0 220 Q0 240 20 240 L340 240 Q360 240 360 220 L360 90 Q360 70 340 70 L20 70 Q0 70 0 90 Z" fill="#f87171" opacity="0.85"/>
+    <g transform="translate(150,110)">
+      <ellipse cx="35" cy="12" rx="35" ry="12" fill="#ffffff"/>
+      <path d="M0 12 L0 75 Q0 87 35 87 Q70 87 70 75 L70 12" fill="none" stroke="#ffffff" stroke-width="6"/>
+      <path d="M0 40 Q35 52 70 40" fill="none" stroke="#ffffff" stroke-width="4"/>
+      <line x1="18" y1="30" x2="52" y2="60" stroke="#0a0e14" stroke-width="6"/>
+      <line x1="52" y1="30" x2="18" y2="60" stroke="#0a0e14" stroke-width="6"/>
+    </g>
+    <text x="180" y="290" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#fecaca" text-anchor="middle" letter-spacing="2">SQL INJECTION</text>
+  </g>
+</svg>
