@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="hi-en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>No Rate Limit on OTP/Reset — Advanced Arsenal</title>
+<style>
+  :root{
+    --bg:#0d1117;
+    --panel:#161b22;
+    --panel2:#1c2333;
+    --border:#2b3444;
+    --cyan:#00e5ff;
+    --pink:#ff4fa3;
+    --yellow:#ffd23f;
+    --green:#3ddc97;
+    --orange:#ff8c42;
+    --purple:#b46cff;
+    --text:#e6edf3;
+    --muted:#9aa7b8;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:radial-gradient(circle at 20% 0%, #14203a 0%, var(--bg) 45%);
+    color:var(--text);
+    font-family:'Segoe UI', Roboto, Arial, sans-serif;
+    line-height:1.6;
+    padding-bottom:60px;
+  }
+  header{
+    padding:50px 6vw 40px;
+    background:linear-gradient(135deg, #1a0b2e, #0d1117 60%);
+    border-bottom:3px solid var(--cyan);
+    position:relative;
+    overflow:hidden;
+  }
+  header::before{
+    content:"";
+    position:absolute; top:-80px; right:-80px;
+    width:300px;height:300px;border-radius:50%;
+    background:radial-gradient(circle, rgba(0,229,255,0.25), transparent 70%);
+  }
+  header::after{
+    content:"";
+    position:absolute; bottom:-100px; left:10%;
+    width:260px;height:260px;border-radius:50%;
+    background:radial-gradient(circle, rgba(255,79,163,0.2), transparent 70%);
+  }
+  h1{
+    font-size:2.4rem;
+    margin:0 0 8px;
+    background:linear-gradient(90deg, var(--cyan), var(--pink) 60%, var(--yellow));
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+    letter-spacing:0.5px;
+  }
+  .subtitle{color:var(--muted); font-size:1.05rem;}
+  .badges{margin-top:18px; display:flex; gap:10px; flex-wrap:wrap;}
+  .badge{
+    padding:6px 14px; border-radius:20px; font-size:0.8rem; font-weight:600;
+    border:1px solid var(--border);
+  }
+  .badge.day{background:rgba(0,229,255,0.12); color:var(--cyan); border-color:var(--cyan);}
+  .badge.vec{background:rgba(255,79,163,0.12); color:var(--pink); border-color:var(--pink);}
+  .badge.owasp{background:rgba(255,210,63,0.12); color:var(--yellow); border-color:var(--yellow);}
+
+  main{padding:0 6vw; max-width:1100px; margin:0 auto;}
+  section{margin-top:46px;}
+  h2{
+    font-size:1.5rem;
+    display:flex; align-items:center; gap:10px;
+    color:var(--cyan);
+    border-bottom:2px solid var(--border);
+    padding-bottom:10px;
+  }
+  h2 .num{
+    background:var(--cyan); color:#00232b; font-weight:800;
+    width:34px;height:34px;border-radius:8px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:1rem; flex-shrink:0;
+  }
+  h3{color:var(--pink); font-size:1.15rem; margin-top:28px;}
+  p{color:var(--text);}
+  .muted{color:var(--muted);}
+
+  .card{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:20px 24px;
+    margin-top:16px;
+  }
+  .card.green{border-left:4px solid var(--green);}
+  .card.orange{border-left:4px solid var(--orange);}
+  .card.purple{border-left:4px solid var(--purple);}
+  .card.pink{border-left:4px solid var(--pink);}
+  .card.yellow{border-left:4px solid var(--yellow);}
+  .card.cyan{border-left:4px solid var(--cyan);}
+
+  code, .mono{
+    font-family:'Consolas','Courier New',monospace;
+    background:#0a0e17;
+    color:var(--green);
+    padding:2px 6px;
+    border-radius:4px;
+    font-size:0.9em;
+  }
+  pre{
+    background:#0a0e17;
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:16px 18px;
+    overflow-x:auto;
+    margin-top:10px;
+  }
+  pre code{background:none; padding:0; color:#c8f7dc; font-size:0.88rem;}
+
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:14px;
+    background:var(--panel);
+    border-radius:10px;
+    overflow:hidden;
+  }
+  th{
+    background:#1b2740;
+    color:var(--cyan);
+    text-align:left;
+    padding:12px 14px;
+    font-size:0.85rem;
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+  }
+  td{
+    padding:12px 14px;
+    border-top:1px solid var(--border);
+    font-size:0.92rem;
+    color:var(--text);
+  }
+  tr:hover td{background:rgba(255,255,255,0.02);}
+
+  .tag{
+    display:inline-block;
+    padding:3px 10px;
+    border-radius:6px;
+    font-size:0.75rem;
+    font-weight:700;
+  }
+  .tag.high{background:rgba(255,79,79,0.15); color:#ff6b6b;}
+  .tag.med{background:rgba(255,210,63,0.15); color:var(--yellow);}
+  .tag.low{background:rgba(61,220,151,0.15); color:var(--green);}
+
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:18px;}
+  @media(max-width:800px){.grid2{grid-template-columns:1fr;}}
+
+  .checklist{list-style:none; padding:0; margin-top:10px;}
+  .checklist li{
+    padding:10px 14px;
+    background:var(--panel2);
+    border-radius:8px;
+    margin-bottom:8px;
+    display:flex; gap:10px; align-items:flex-start;
+    border:1px solid var(--border);
+  }
+  .checklist li::before{
+    content:"⬜";
+    flex-shrink:0;
+  }
+
+  .svgwrap{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:20px;
+    margin-top:16px;
+    text-align:center;
+  }
+  .flow-label{font-size:0.75rem; fill:var(--muted); font-family:'Segoe UI',sans-serif;}
+
+  .footer-note{
+    margin-top:60px;
+    padding:20px 24px;
+    background:linear-gradient(90deg, rgba(0,229,255,0.08), rgba(255,79,163,0.08));
+    border:1px dashed var(--border);
+    border-radius:12px;
+    color:var(--muted);
+    font-size:0.9rem;
+  }
+  a{color:var(--cyan);}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="badges">
+    <span class="badge day">Day 3 / 14 — ATO Mastery</span>
+    <span class="badge vec">Vector: Rate Limiting</span>
+    <span class="badge owasp">OWASP A07 — Broken Authentication</span>
+  </div>
+  <h1>No Rate Limit on OTP / Password Reset</h1>
+  <p class="subtitle">Advanced tricks arsenal — detection se leke bypass techniques tak, ek hi jagah.</p>
+</header>
+
+<main>
+
+<section>
+  <h2><span class="num">1</span> Vulnerability Kya Hai</h2>
+  <div class="card cyan">
+    <p>Jab application OTP verification, password reset, ya login attempts pe koi limit nahi lagata — attacker <b>unlimited requests</b> bhej sakta hai bina block/lockout/delay ke. Result: OTP brute-force, account takeover, ya credential stuffing possible ho jaata hai.</p>
+  </div>
+
+  <div class="svgwrap">
+    <svg viewBox="0 0 760 160" width="100%" height="160">
+      <defs>
+        <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+          <path d="M0,0 L8,3 L0,6 Z" fill="#00e5ff"/>
+        </marker>
+      </defs>
+      <rect x="10" y="55" width="140" height="50" rx="10" fill="#1c2333" stroke="#00e5ff" stroke-width="2"/>
+      <text x="80" y="85" text-anchor="middle" fill="#e6edf3" font-size="13" font-family="Segoe UI">Attacker</text>
+
+      <line x1="150" y1="80" x2="290" y2="80" stroke="#00e5ff" stroke-width="2" marker-end="url(#arrow)"/>
+      <text x="220" y="70" class="flow-label" text-anchor="middle">0000–9999 OTP loop</text>
+
+      <rect x="300" y="55" width="160" height="50" rx="10" fill="#1c2333" stroke="#ff4fa3" stroke-width="2"/>
+      <text x="380" y="80" text-anchor="middle" fill="#e6edf3" font-size="12" font-family="Segoe UI">/verify-otp</text>
+      <text x="380" y="96" text-anchor="middle" fill="#9aa7b8" font-size="10" font-family="Segoe UI">no rate limit ❌</text>
+
+      <line x1="460" y1="80" x2="600" y2="80" stroke="#ff4fa3" stroke-width="2" marker-end="url(#arrow)"/>
+      <text x="530" y="70" class="flow-label" text-anchor="middle">200 OK on match</text>
+
+      <rect x="610" y="55" width="140" height="50" rx="10" fill="#1c2333" stroke="#3ddc97" stroke-width="2"/>
+      <text x="680" y="80" text-anchor="middle" fill="#3ddc97" font-size="13" font-family="Segoe UI">Account Takeover</text>
+    </svg>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">2</span> Kahan Test Karna Hai</h2>
+  <table>
+    <tr><th>Endpoint Type</th><th>Example</th><th>Risk</th></tr>
+    <tr><td>Login OTP / 2FA</td><td><span class="mono">/api/auth/verify-otp</span></td><td><span class="tag high">High</span></td></tr>
+    <tr><td>Password Reset OTP</td><td><span class="mono">/api/reset-password/verify</span></td><td><span class="tag high">High</span></td></tr>
+    <tr><td>Email/Phone Verification</td><td><span class="mono">/api/verify-email</span></td><td><span class="tag med">Medium</span></td></tr>
+    <tr><td>Login (password field)</td><td><span class="mono">/api/login</span></td><td><span class="tag high">High</span></td></tr>
+    <tr><td>Coupon / Referral Code</td><td><span class="mono">/api/apply-coupon</span></td><td><span class="tag low">Low</span></td></tr>
+    <tr><td>Resend OTP button</td><td><span class="mono">/api/resend-otp</span></td><td><span class="tag med">Medium (spam/cost)</span></td></tr>
+  </table>
+</section>
+
+<section>
+  <h2><span class="num">3</span> Basic Detection (Burp Intruder)</h2>
+  <div class="card green">
+    <p><b>Setup:</b> Request ko Intruder mein bhejo → OTP field ko payload position mark karo → attack type <span class="mono">Sniper</span> → payload set: Numbers, 0000–9999, step 1.</p>
+    <p>Agar 50+ requests bina block/captcha/delay ke chal jaayein → <b>rate limit missing confirmed.</b></p>
+  </div>
+  <pre><code>POST /api/auth/verify-otp HTTP/1.1
+Host: target.com
+Content-Type: application/json
+
+{"phone":"9198XXXXXXX","otp":"§0000§"}</code></pre>
+</section>
+
+<section>
+  <h2><span class="num">4</span> Advanced Bypass Tricks — jab basic rate limit already laga ho</h2>
+
+  <h3>🔹 IP Rotation Headers</h3>
+  <div class="card orange">
+    <p>Kai apps IP-based rate limit lagate hain but proxy/CDN headers pe blindly trust karte hain. Har request mein spoofed header change karo:</p>
+    <pre><code>X-Forwarded-For: 1.2.3.4
+X-Originating-IP: 1.2.3.4
+X-Remote-IP: 1.2.3.4
+X-Remote-Addr: 1.2.3.4
+X-Client-IP: 1.2.3.4
+True-Client-IP: 1.2.3.4</code></pre>
+    <p class="muted">Burp Intruder mein <span class="mono">Cluster Bomb</span> use karo — ek payload set OTP ke liye, dusra random IP octets ke liye.</p>
+  </div>
+
+  <h3>🔹 Race Condition (Turbo Intruder)</h3>
+  <div class="card pink">
+    <p>Agar rate limit "counter after response" based hai (not atomic), to <b>sabhi requests ek hi millisecond mein parallel</b> bhejo — counter update hone se pehle hi sab process ho jaayenge.</p>
+    <pre><code>engine = RequestEngine(endpoint=target.endpoint,
+                        concurrentConnections=30,
+                        engine=Engine.THREADED)
+
+for i in range(30):
+    engine.queue(target.req, str(i))</code></pre>
+    <p class="muted">Ye Turbo Intruder extension (Burp) ka script hai — single-packet attack ke liye best.</p>
+  </div>
+
+  <h3>🔹 Case & Format Manipulation</h3>
+  <div class="card purple">
+    <ul>
+      <li>Header name case change: <span class="mono">x-forwarded-for</span> vs <span class="mono">X-Forwarded-For</span></li>
+      <li>Extra whitespace/null bytes value mein: <span class="mono">otp=1234%00</span></li>
+      <li>Content-Type switch: JSON → XML → form-urlencoded (kai baar rate limiter sirf ek format track karta hai)</li>
+      <li>Trailing slash / double slash: <span class="mono">/verify-otp/</span> vs <span class="mono">//verify-otp</span></li>
+    </ul>
+  </div>
+
+  <h3>🔹 Session/Account Rotation</h3>
+  <div class="card yellow">
+    <p>Agar limit per-session/per-account hai (IP based nahi), to nayi session tokens/cookies generate karke har OTP attempt ke saath naya session bhejo. Multiple test accounts se parallel bhi try karo.</p>
+  </div>
+
+  <h3>🔹 Mobile API Endpoints</h3>
+  <div class="card green">
+    <p>Web app pe rate limit hoga but <b>same backend ka mobile API</b> (jo APK decompile karke milta hai) alag endpoint use kar sakta hai jahan limit missing ho. APK ko <span class="mono">apktool</span> se decompile karke API base URL nikaalo aur wahi endpoint direct test karo.</p>
+  </div>
+
+  <h3>🔹 Response-based Bypass</h3>
+  <div class="card cyan">
+    <p>Kai apps sirf <b>failed</b> attempts count karte hain. Agar tumhe pata chal jaaye ki response length/status different hota hai valid vs invalid OTP ke liye (via earlier testing), to targeted guesses kam attempts mein kaam kar sakti hain — brute force ki zaroorat hi kam ho jaati hai.</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">5</span> Rate Limit Bypass — Quick Reference Table</h2>
+  <table>
+    <tr><th>Technique</th><th>Kab kaam karta hai</th><th>Tool</th></tr>
+    <tr><td>IP spoof headers</td><td>Rate limit IP-header trust karta ho (CDN behind app)</td><td>Burp Intruder</td></tr>
+    <tr><td>Race condition</td><td>Counter async/delayed update</td><td>Turbo Intruder</td></tr>
+    <tr><td>Case/format fuzz</td><td>Naive string-match based limiter</td><td>Burp Repeater/Intruder</td></tr>
+    <tr><td>Session rotation</td><td>Per-session limit, not global</td><td>Manual/Python script</td></tr>
+    <tr><td>Mobile API</td><td>Alag backend/endpoint mobile ke liye</td><td>apktool + Burp</td></tr>
+    <tr><td>Parameter pollution</td><td><span class="mono">otp=1234&otp=5678</span> jaisa duplicate param</td><td>Burp Repeater</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2><span class="num">6</span> Testing Checklist</h2>
+  <ul class="checklist">
+    <li>Login, OTP verify, password reset — teeno endpoints alag-alag test kiye</li>
+    <li>50-100 sequential requests Intruder se bina delay ke bheji</li>
+    <li>IP spoofing headers (6 variants) try kiye</li>
+    <li>Race condition Turbo Intruder se check kiya</li>
+    <li>Case-sensitivity aur format switch try kiya</li>
+    <li>Mobile app ka alag API endpoint check kiya (agar app available ho)</li>
+    <li>Resend-OTP button pe bhi rate limit missing check kiya (spam/cost impact)</li>
+    <li>Lockout ke baad bypass (naya session/account se retry) try kiya</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="num">7</span> Impact likhte time (Report ke liye)</h2>
+  <div class="card orange">
+    <p>4-digit OTP = <b>10,000</b> combinations. Agar rate limit missing hai aur average response time ~200ms hai, to full brute-force <b>~33 minutes</b> mein possible hai (parallel threads se aur kam). Report mein ye calculation zaroor likho — severity justify karne ke liye.</p>
+  </div>
+</section>
+
+<div class="footer-note">
+  ⚠️ Sirf authorized targets (Syfe UAT environment, ya jo scope mein explicitly allowed ho) pe hi test karna — automated/high-volume requests production pe bhejna scope violation ho sakta hai.
+</div>
+
+</main>
+</body>
+</html>
