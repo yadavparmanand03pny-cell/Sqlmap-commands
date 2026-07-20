@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OTP Bypass Arsenal — Recon Notes</title>
+<style>
+  :root{
+    --bg:#060a12;
+    --panel:#0b1120;
+    --panel2:#0e1830;
+    --border:#1c2942;
+    --green:#39ff9d;
+    --cyan:#4fd8ff;
+    --pink:#ff5ea8;
+    --yellow:#ffd447;
+    --red:#ff5470;
+    --purple:#b98bff;
+    --text:#c9d6f0;
+    --dim:#7186ad;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(circle at 10% 0%, rgba(79,216,255,0.08), transparent 40%),
+      radial-gradient(circle at 90% 20%, rgba(185,139,255,0.08), transparent 40%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Consolas','SF Mono',monospace;
+    line-height:1.55;
+    padding:0 0 60px 0;
+  }
+  header{
+    text-align:center;
+    padding:38px 20px 22px;
+    border-bottom:1px solid var(--border);
+    background:linear-gradient(180deg, rgba(79,216,255,0.06), transparent);
+  }
+  header h1{
+    margin:0;
+    font-size:2.1rem;
+    letter-spacing:2px;
+    color:var(--cyan);
+    text-shadow:0 0 18px rgba(79,216,255,0.55);
+  }
+  header .sub{
+    color:var(--dim);
+    margin-top:10px;
+    font-size:0.95rem;
+  }
+  header .warn{
+    display:inline-block;
+    margin-top:16px;
+    padding:8px 16px;
+    border:1px solid var(--red);
+    color:var(--red);
+    border-radius:6px;
+    font-size:0.85rem;
+    background:rgba(255,84,112,0.07);
+  }
+
+  nav{
+    max-width:1100px;
+    margin:26px auto;
+    padding:0 20px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    justify-content:center;
+  }
+  nav a{
+    color:var(--green);
+    border:1px solid var(--border);
+    padding:6px 12px;
+    border-radius:20px;
+    text-decoration:none;
+    font-size:0.8rem;
+    background:var(--panel);
+    transition:0.2s;
+  }
+  nav a:hover{ border-color:var(--green); box-shadow:0 0 10px rgba(57,255,157,0.35); }
+
+  main{
+    max-width:1100px;
+    margin:0 auto;
+    padding:0 20px;
+    display:flex;
+    flex-direction:column;
+    gap:26px;
+  }
+
+  .card{
+    background:linear-gradient(180deg, var(--panel2), var(--panel));
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:24px 26px;
+    position:relative;
+    overflow:hidden;
+  }
+  .card::before{
+    content:"";
+    position:absolute; top:0; left:0; right:0; height:3px;
+    background:var(--accent);
+  }
+  .tag{
+    display:inline-block;
+    font-size:0.7rem;
+    letter-spacing:1px;
+    padding:3px 9px;
+    border-radius:4px;
+    color:#04121a;
+    background:var(--accent);
+    font-weight:bold;
+    margin-bottom:10px;
+  }
+  .card h2{
+    margin:4px 0 12px;
+    font-size:1.35rem;
+    color:var(--accent);
+  }
+  .card p.desc{
+    color:var(--text);
+    margin:0 0 14px;
+  }
+  .steps{
+    background:rgba(0,0,0,0.28);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:14px 18px;
+    margin:12px 0;
+  }
+  .steps h3{
+    margin:0 0 8px;
+    font-size:0.85rem;
+    color:var(--dim);
+    text-transform:uppercase;
+    letter-spacing:1px;
+  }
+  .steps ol{ margin:0; padding-left:20px; }
+  .steps li{ margin-bottom:6px; }
+
+  .example{
+    background:#020408;
+    border:1px solid var(--border);
+    border-left:3px solid var(--accent);
+    border-radius:6px;
+    padding:14px 16px;
+    font-size:0.85rem;
+    overflow-x:auto;
+    margin:12px 0;
+    color:#8fffc0;
+    white-space:pre-wrap;
+  }
+  .example .c1{color:var(--cyan);}
+  .example .c2{color:var(--pink);}
+  .example .c3{color:var(--yellow);}
+  .example .strike{color:var(--red); text-decoration:line-through;}
+  .example .ok{color:var(--green);}
+
+  .impact{
+    display:flex;
+    gap:10px;
+    align-items:center;
+    margin-top:14px;
+    padding:10px 14px;
+    border-radius:6px;
+    background:rgba(255,84,112,0.08);
+    border:1px solid rgba(255,84,112,0.35);
+    color:var(--red);
+    font-size:0.85rem;
+  }
+  .fix{
+    margin-top:10px;
+    padding:10px 14px;
+    border-radius:6px;
+    background:rgba(57,255,157,0.06);
+    border:1px solid rgba(57,255,157,0.3);
+    color:var(--green);
+    font-size:0.85rem;
+  }
+
+  .grid2{ display:grid; grid-template-columns:1fr; gap:0; }
+
+  footer{
+    text-align:center;
+    color:var(--dim);
+    font-size:0.8rem;
+    margin-top:40px;
+    padding:0 20px;
+  }
+  footer .box{
+    max-width:700px;
+    margin:0 auto;
+    border:1px dashed var(--border);
+    border-radius:8px;
+    padding:16px;
+  }
+  code{ color:var(--yellow); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>&gt; OTP_BYPASS_ARSENAL.md</h1>
+  <div class="sub">Common OTP / 2FA verification bypass techniques — recon reference file</div>
+  <div class="warn">⚠ Sirf authorized programs (HackerOne scope) pe hi apply karna — bina permission illegal hai</div>
+</header>
+
+<nav>
+  <a href="#t1">01 Response Manipulation</a>
+  <a href="#t2">02 No Rate Limiting</a>
+  <a href="#t3">03 Form Resubmission</a>
+  <a href="#t4">04 Replay Attack</a>
+  <a href="#t5">05 Non-Expiring OTP</a>
+  <a href="#t6">06 Race Condition</a>
+  <a href="#t7">07 OTP Leak in Response</a>
+  <a href="#t8">08 Weak OTP Generation</a>
+  <a href="#t9">09 Client-Side Validation</a>
+  <a href="#t10">10 Step Skipping / Direct Endpoint</a>
+  <a href="#t11">11 Shared OTP Across Flows</a>
+  <a href="#t12">12 Case-Sensitivity / Null Bypass</a>
+</nav>
+
+<main>
+
+  <!-- 01 -->
+  <div class="card" id="t1" style="--accent:var(--green)">
+    <span class="tag">SEVERITY: CRITICAL</span>
+    <h2>01. Response Manipulation</h2>
+    <p class="desc">Server jab OTP verify karta hai, response me success/failure ka status bhejta hai. Agar validation client-side JS ya frontend logic pe depend karta hai, to Burp me response body intercept karke value change karne se login "successful" ban jaata hai — bina sahi OTP daale.</p>
+    <div class="steps">
+      <h3>Steps</h3>
+      <ol>
+        <li>Login/verify OTP page pe koi bhi galat 6-digit OTP daalo (e.g. 111111).</li>
+        <li>Burp Proxy intercept ON karke request submit karo.</li>
+        <li>Response tab me jao — response ko forward mat karo abhi.</li>
+        <li>Response body me <code>"status":"failure"</code>, <code>"verified":false</code> ya <code>"error":true</code> jaisa field dhoondo.</li>
+        <li>Usko <code>true</code> / <code>"success"</code> me badal do aur forward karo.</li>
+      </ol>
+    </div>
+    <div class="example"><span class="c1">Original Response:</span>
+{ "status": <span class="strike">"failure"</span>, "message": "Invalid OTP" }
+
+<span class="c1">Modified Response (Burp Repeater/Proxy):</span>
+{ "status": <span class="ok">"success"</span>, "message": "OTP verified" }</div>
+    <div class="impact">💥 Impact: Full account takeover — frontend server ke response pe bharosa karke redirect kar deta hai.</div>
+    <div class="fix">🛡 Fix (dev ke liye): Verification hamesha server-side session/token check pe hona chahiye, kabhi bhi sirf client response pe nahi.</div>
+  </div>
+
+  <!-- 02 -->
+  <div class="card" id="t2" style="--accent:var(--cyan)">
+    <span class="tag">SEVERITY: CRITICAL</span>
+    <h2>02. No Rate Limiting (Brute Force)</h2>
+    <p class="desc">Agar OTP verification endpoint par unlimited attempts allowed hain, to 6-digit OTP (000000–999999 = sirf 10 lakh combinations) ko Burp Intruder se brute-force kiya ja sakta hai.</p>
+    <div class="steps">
+      <h3>Steps</h3>
+      <ol>
+        <li>OTP verify request ko Burp Intruder me bhejo.</li>
+        <li>OTP field ko payload position mark karo (§otp§).</li>
+        <li>Payload type = Numbers, range 000000 se 999999, padding 6 digits.</li>
+        <li>Attack start karo — response length/status code se sahi OTP ka pata chal jaayega (differentiator).</li>
+      </ol>
+    </div>
+    <div class="example"><span class="c1">POST /api/verify-otp HTTP/1.1
+Host: target.com
+Content-Type: application/json
+
+{"phone":"9198xxxxxx","otp":"</span><span class="c3">§000000§</span><span class="c1">"}</span></div>
+    <div class="impact">💥 Impact: OTP brute-force → login bypass ya password reset bypass.</div>
+    <div class="fix">🛡 Fix: Max 3-5 attempts ke baad account/IP temporarily lock karo, aur CAPTCHA laga do.</div>
+  </div>
+
+  <!-- 03 -->
+  <div class="card" id="t3" style="--accent:var(--pink)">
+    <span class="tag">SEVERITY: MEDIUM</span>
+    <h2>03. Form Resubmission (Number Swap)</h2>
+    <p class="desc">Registration/OTP request apne real number pe karo, phir usi request ko Repeater me phone number field sirf badal ke fake/target number ke liye resubmit karo — kabhi kabhi server sahi se re-validate nahi karta ki OTP kis number ke liye actually bheja gaya tha.</p>
+    <div class="steps">
+      <h3>Steps</h3>
+      <ol>
+        <li>Apne real number se OTP generate karne ki request bhejo aur Burp me capture karo.</li>
+        <li>Request ko Repeater me bhejo.</li>
+        <li>Phone number field ko target/victim ke number se replace karo, baaki request same rakho.</li>
+        <li>Send karo — OTP tumhare real number pe aayega lekin session target account ke liye bind ho sakta hai.</li>
+      </ol>
+    </div>
+    <div class="example">POST /api/send-otp HTTP/1.1
+{"phone":"<span class="strike">9198_YOUR_NUMBER</span><span class="c2">9199_VICTIM_NUMBER</span>"}</div>
+    <div class="impact">💥 Impact: Unauthorized registration / OTP verification session ka mismatch exploit.</div>
+    <div class="fix">🛡 Fix: OTP generate + verify dono steps me phone number ko server-side session se strictly bind karo.</div>
+  </div>
+
+  <!-- 04 -->
+  <div class="card" id="t4" style="--accent:var(--yellow)">
+    <span class="tag">SEVERITY: HIGH</span>
+    <h2>04. Replay Attack</h2>
+    <p class="desc">Ek baar use ho chuka valid OTP request, agar server usko "used" mark nahi karta, to wahi exact request dobara replay karne se dobara accept ho jaata hai.</p>
+    <div class="steps">
+      <h3>Steps</h3>
+      <ol>
+        <li>Normal flow se apna sahi OTP verify karo — request Burp history me capture ho jaayegi.</li>
+        <li>Logout karo (ya naya session try karo).</li>
+        <li>Wahi exact captured request Repeater se dobara send karo, koi field change kiye bina.</li>
+        <li>Agar server dobara "success" deta hai, to replay possible hai.</li>
+      </ol>
+    </div>
+    <div class="example"><span class="c1">// same request, replayed dobara after logout</span>
+POST /api/verify-otp
+{"session":"abc123","otp":"482913"}  <span class="c3">// already-used OTP</span></div>
+    <div class="impact">💥 Impact: Session hijack / repeated unauthorized verification.</div>
+    <div class="fix">🛡 Fix: OTP verify hote hi usko database me "consumed" mark karo, dobara accept mat karo.</div>
+  </div>
+
+  <!-- 05 -->
+  <div class="card" id="t5" style="--accent:var(--purple)">
+    <span class="tag">SEVERITY: HIGH</span>
+    <h2>05. Non-Expiring OTP</h2>
+    <p class="desc">Kai apps OTP ko 5-10 minute expiry deti hain, lekin backend me expiry check missing hoti hai. Purana OTP (kal ka, ghanto pehle ka) bhi accept ho jaata hai — jisse brute-force ka window bahut badh jaata hai.</p>
+    <div class="steps">
+      <h3>Steps</h3>
+      <ol>
+        <li>Ek OTP generate karo aur usko note kar lo, lekin verify mat karo.</li>
+        <li>10-15 minute wait karo (expiry time cross karne ke liye).</li>
+        <li>Wahi purana OTP verify karke submit karo.</li>
+        <li>Agar accept ho jaaye — expiry enforce nahi ho rahi.</li>
+      </ol>
+    </div>
+    <div class="impact">💥 Impact: Brute-force window unlimited ho jaata hai, purane leaked OTPs bhi kaam karte rehte hain.</div>
+    <div class="fix">🛡 Fix: Server-side timestamp check — OTP generate time se 5 min baad DB me auto-invalidate karo.</div>
+  </div>
+
+  <!-- 06 -->
+  <div class="card" id="t6" style="--accent:var(--red)">
+    <span class="tag">SEVERITY: HIGH</span>
+    <h2>06. Race Condition</h2>
+    <p class="desc">Agar rate-limiting request-by-request check karta hai (sequential), to Burp Turbo Intruder ya multi-threaded tool se sath-sath (parallel) bahut saari requests bhejne se limit-check ka logic race ho jaata hai aur sab requests process ho jaati hain before the counter updates.</p>
+    <div class="steps">
+      <h3>Steps</h3>
+      <ol>
+        <li>OTP verify request ko Burp Turbo Intruder (ya <code>ffuf -c</code> parallel mode) me daalo.</li>
+        <li>Same time pe 20-50 different OTP guesses ek saath (single packet attack) bhejo.</li>
+        <li>Rate limiter ek-ek request process karne se pehle hi sab requests server tak pahunch jaati hain.</li>
+        <li>Correct OTP milne ke chances badh jaate hain limit bypass karke.</li>
+      </ol>
+    </div>
+    <div class="impact">💥 Impact: Rate-limiting bypass, discount coupon multiple redeem, OTP brute-force restriction bypass.</div>
+    <div class="fix">🛡 Fix: Atomic counter (Redis INCR jaisa) use karo, request-level locking implement karo.</div>
+  </div>
+
+  <!-- 07 -->
+  <div class="card" id="t7" style="--accent:var(--green)">
+    <span class="tag">SEVERITY: CRITICAL</span>
+    <h2>07. OTP Leak in API Response</h2>
+    <p class="desc">Kai apps debug/testing ke liye OTP generate karte waqt actual OTP value ko response body me, response headers me, ya network tab me bhej dete hain — jo production me bhi reh jaata hai (developer bhool jaate hain hatana).</p>
+    <div class="steps">
+      <h3>Steps</h3>
+      <ol>
+        <li>OTP generate karne wali request Burp me capture karo.</li>
+        <li>Response body poora carefully padho — JSON ke andar chhupe fields dekho.</li>
+        <li>Browser DevTools → Network tab me bhi response check karo.</li>
+        <li>Fields jaise <code>debug_otp</code>, <code>test_otp</code>, <code>otp_hint</code>, ya raw <code>otp</code> dhoondo.</li>
+      </ol>
+    </div>
+    <div class="example">{ "message": "OTP sent successfully",
+  <span class="c2">"debug_otp": "738291"</span>,  <span class="c3">// yahi actual OTP hai!</span>
+  "expiry": 300 }</div>
+    <div class="impact">💥 Impact: SMS ki zaroorat hi nahi — response se seedha OTP mil jaata hai. Full account takeover.</div>
+    <div class="fix">🛡 Fix: Debug fields ko production build se strictly remove karo, response me sirf generic success message ho.</div>
+  </div>
+
+  <!-- 08 -->
+  <div class="card" id="t8" style="--accent:var(--cyan)">
+    <span class="tag">SEVERITY: MEDIUM</span>
+    <h2>08. Weak / Predictable OTP Generation</h2>
+    <p class="desc">Agar OTP truly random na ho (e.g. timestamp-based, sequential, ya hamesha same pattern), to multiple OTPs generate karke pattern analyze karne se next OTP predict kiya ja sakta hai.</p>
+    <div class="steps">
+      <h3>Steps</h3>
+      <ol>
+        <li>Ek hi account ke liye baar-baar OTP generate karo (10-15 times).</li>
+        <li>Har OTP ko note karo timestamp ke saath.</li>
+        <li>Pattern dhoondo — kya OTP hamesha "1234" se start hota hai? Kya wo timestamp ka last-6-digit hai? Kya sequential hai?</li>
+        <li>Agar pattern milta hai, to bina brute-force ke bhi predict ho sakta hai.</li>
+      </ol>
+    </div>
+    <div class="example">OTP #1: 481920   (12:00:01)
+OTP #2: 481935   (12:00:16)
+OTP #3: 481951   (12:00:32)
+<span class="c3">// pattern: seconds ke close, weak entropy</span></div>
+    <div class="impact">💥 Impact: OTP prediction bina kisi brute-force attempt ke.</div>
+    <div class="fix">🛡 Fix: Cryptographically secure random number generator (CSPRNG) use karo, koi bhi timestamp-based logic mat rakho.</div>
+  </div>
+
+  <!-- 09 -->
+  <div class="card" id="t9" style="--accent:var(--pink)">
+    <span class="tag">SEVERITY: HIGH</span>
+    <h2>09. Client-Side Validation Bypass</h2>
+    <p class="desc">Kabhi kabhi puri OTP verification logic JavaScript me client-side likhi hoti hai (e.g. <code>if(otp==correctOtp){redirect()}</code>), aur server ko sirf "verified" flag bhej diya jaata hai bina real check ke.</p>
+    <div class="steps">
+      <h3>Steps</h3>
+      <ol>
+        <li>Page source / JS files me OTP verify function dhoondo (DevTools → Sources).</li>
+        <li>Dekho kya correct OTP kahin JS variable me client-side hi compare ho raha hai.</li>
+        <li>Agar haan, DevTools Console se directly us redirect/success function ko call karo.</li>
+        <li>Ya phir next-page endpoint pe directly navigate karo without OTP step.</li>
+      </ol>
+    </div>
+    <div class="impact">💥 Impact: OTP step completely skip — koi bhi request ki zaroorat nahi.</div>
+    <div class="fix">🛡 Fix: Verification logic sirf backend me ho, frontend sirf UI display ke liye.</div>
+  </div>
+
+  <!-- 10 -->
+  <div class="card" id="t10" style="--accent:var(--yellow)">
+    <span class="tag">SEVERITY: CRITICAL</span>
+    <h2>10. Step Skipping (Direct Endpoint Access)</h2>
+    <p class="desc">Multi-step flow (login → OTP page → dashboard) me agar dashboard/next-step endpoint OTP verification session ko check nahi karta, to seedha us endpoint pe navigate karke poora OTP step skip kiya ja sakta hai.</p>
+    <div class="steps">
+      <h3>Steps</h3>
+      <ol>
+        <li>Login karo, OTP page tak pahuncho (verify mat karo).</li>
+        <li>Burp history me dashboard/success wale endpoints dhoondo (jo OTP verify ke baad load hote hain).</li>
+        <li>Us URL/API endpoint ko directly browser me ya Repeater se hit karo.</li>
+        <li>Agar access mil jaaye bina OTP verify kiye — step skip vulnerability confirmed.</li>
+      </ol>
+    </div>
+    <div class="impact">💥 Impact: Poora authentication step bypass — direct account access.</div>
+    <div class="fix">🛡 Fix: Har protected endpoint pe server-side session state check karo ("otp_verified":true) hona chahiye.</div>
+  </div>
+
+  <!-- 11 -->
+  <div class="card" id="t11" style="--accent:var(--purple)">
+    <span class="tag">SEVERITY: MEDIUM</span>
+    <h2>11. Shared OTP Across Flows</h2>
+    <p class="desc">Kai apps login, registration, aur password-reset ke liye same OTP-generation endpoint reuse karte hain. Agar OTP kisi ek flow (jaise low-security "newsletter signup") se generate karke high-security flow (password reset) me use ho jaaye, to weak flow se strong flow bypass ho sakta hai.</p>
+    <div class="steps">
+      <h3>Steps</h3>
+      <ol>
+        <li>Har jagah jahan OTP maanga jaata hai (login, signup, forgot-password, profile-update) — sabke request bodies compare karo.</li>
+        <li>Ek low-security flow se OTP generate karo (jo weak rate-limit rakhta ho).</li>
+        <li>Wahi generated OTP high-security flow (password reset) me try karo.</li>
+        <li>Agar accept ho jaaye — OTP flows properly isolated nahi hain.</li>
+      </ol>
+    </div>
+    <div class="impact">💥 Impact: Weakly-protected flow ke through strong flow (password reset) bypass.</div>
+    <div class="fix">🛡 Fix: Har flow ka OTP alag purpose-tag/context ke saath bind karo (e.g. purpose="password_reset").</div>
+  </div>
+
+  <!-- 12 -->
+  <div class="card" id="t12" style="--accent:var(--red)">
+    <span class="tag">SEVERITY: LOW-MEDIUM</span>
+    <h2>12. Case-Sensitivity / Null / Special Value Bypass</h2>
+    <p class="desc">Kabhi backend validation itni loose hoti hai ki empty string, null, array, ya boolean value bhej dene se "no OTP means no comparison needed" jaisi buggy logic trigger ho jaati hai.</p>
+    <div class="steps">
+      <h3>Steps</h3>
+      <ol>
+        <li>OTP field me empty string <code>""</code> try karo.</li>
+        <li>OTP field me <code>null</code> ya JSON array <code>[]</code>/<code>["123456"]</code> try karo.</li>
+        <li>OTP field completely request se remove karke bhejo.</li>
+        <li>Boolean <code>true</code> ya wildcard jaisi values try karo.</li>
+      </ol>
+    </div>
+    <div class="example">{"phone":"9198xxxxxx","otp":<span class="c2">null</span>}
+{"phone":"9198xxxxxx","otp":<span class="c2">[]</span>}
+{"phone":"9198xxxxxx"}   <span class="c3">// otp field hi remove</span></div>
+    <div class="impact">💥 Impact: Poorly written comparison logic (e.g. loose <code>==</code> in some languages) bypass ho sakti hai.</div>
+    <div class="fix">🛡 Fix: Strict type checking + input validation, missing/null field ko turant reject karo.</div>
+  </div>
+
+</main>
+
+<footer>
+  <div class="box">
+    Ye reference sirf <strong style="color:var(--green)">authorized</strong> HackerOne / apne lab targets pe testing ke liye hai.<br>
+    Bina permission kisi bhi live system pe try karna cybercrime hai (IT Act 2000).<br><br>
+    Recon Notes ka part — roadmap: Bug Bounty → Red Team → OSCP
+  </div>
+</footer>
+
+</body>
+</html>
