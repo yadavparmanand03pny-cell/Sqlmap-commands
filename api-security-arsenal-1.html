@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>API Security Arsenal — Recon Notes</title>
+<style>
+  :root{
+    --bg:#060a12;
+    --panel:#0b1120;
+    --panel2:#0e1830;
+    --border:#1c2942;
+    --green:#39ff9d;
+    --cyan:#4fd8ff;
+    --pink:#ff5ea8;
+    --yellow:#ffd447;
+    --red:#ff5470;
+    --purple:#b98bff;
+    --text:#c9d6f0;
+    --dim:#7186ad;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(circle at 10% 0%, rgba(79,216,255,0.08), transparent 40%),
+      radial-gradient(circle at 90% 20%, rgba(185,139,255,0.08), transparent 40%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Consolas','SF Mono',monospace;
+    line-height:1.55;
+    padding:0 0 60px 0;
+  }
+  header{
+    text-align:center;
+    padding:38px 20px 22px;
+    border-bottom:1px solid var(--border);
+    background:linear-gradient(180deg, rgba(79,216,255,0.06), transparent);
+  }
+  header h1{
+    margin:0;
+    font-size:2.1rem;
+    letter-spacing:2px;
+    color:var(--cyan);
+    text-shadow:0 0 18px rgba(79,216,255,0.55);
+  }
+  header .sub{
+    color:var(--dim);
+    margin-top:10px;
+    font-size:0.95rem;
+  }
+  header .warn{
+    display:inline-block;
+    margin-top:16px;
+    padding:8px 16px;
+    border:1px solid var(--red);
+    color:var(--red);
+    border-radius:6px;
+    font-size:0.85rem;
+    background:rgba(255,84,112,0.07);
+  }
+
+  nav{
+    max-width:1100px;
+    margin:26px auto;
+    padding:0 20px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    justify-content:center;
+  }
+  nav a{
+    color:var(--green);
+    border:1px solid var(--border);
+    padding:6px 12px;
+    border-radius:20px;
+    text-decoration:none;
+    font-size:0.8rem;
+    background:var(--panel);
+    transition:0.2s;
+  }
+  nav a:hover{ border-color:var(--green); box-shadow:0 0 10px rgba(57,255,157,0.35); }
+
+  main{
+    max-width:1100px;
+    margin:0 auto;
+    padding:0 20px;
+    display:flex;
+    flex-direction:column;
+    gap:26px;
+  }
+
+  .card{
+    background:linear-gradient(180deg, var(--panel2), var(--panel));
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:24px 26px;
+    position:relative;
+    overflow:hidden;
+  }
+  .card::before{
+    content:"";
+    position:absolute; top:0; left:0; right:0; height:3px;
+    background:var(--accent);
+  }
+  .tag{
+    display:inline-block;
+    font-size:0.7rem;
+    letter-spacing:1px;
+    padding:3px 9px;
+    border-radius:4px;
+    color:#04121a;
+    background:var(--accent);
+    font-weight:bold;
+    margin-bottom:10px;
+  }
+  .card h2{
+    margin:4px 0 12px;
+    font-size:1.35rem;
+    color:var(--accent);
+  }
+  .card p.desc{
+    color:var(--text);
+    margin:0 0 14px;
+  }
+  .steps{
+    background:rgba(0,0,0,0.28);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:14px 18px;
+    margin:12px 0;
+  }
+  .steps h3{
+    margin:0 0 8px;
+    font-size:0.85rem;
+    color:var(--dim);
+    text-transform:uppercase;
+    letter-spacing:1px;
+  }
+  .steps ol{ margin:0; padding-left:20px; }
+  .steps li{ margin-bottom:6px; }
+
+  .example{
+    background:#020408;
+    border:1px solid var(--border);
+    border-left:3px solid var(--accent);
+    border-radius:6px;
+    padding:14px 16px;
+    font-size:0.85rem;
+    overflow-x:auto;
+    margin:12px 0;
+    color:#8fffc0;
+    white-space:pre-wrap;
+  }
+  .example .c1{color:var(--cyan);}
+  .example .c2{color:var(--pink);}
+  .example .c3{color:var(--yellow);}
+  .example .strike{color:var(--red); text-decoration:line-through;}
+  .example .ok{color:var(--green);}
+
+  .impact{
+    display:flex;
+    gap:10px;
+    align-items:center;
+    margin-top:14px;
+    padding:10px 14px;
+    border-radius:6px;
+    background:rgba(255,84,112,0.08);
+    border:1px solid rgba(255,84,112,0.35);
+    color:var(--red);
+    font-size:0.85rem;
+  }
+  .fix{
+    margin-top:10px;
+    padding:10px 14px;
+    border-radius:6px;
+    background:rgba(57,255,157,0.06);
+    border:1px solid rgba(57,255,157,0.3);
+    color:var(--green);
+    font-size:0.85rem;
+  }
+
+  footer{
+    text-align:center;
+    color:var(--dim);
+    font-size:0.8rem;
+    margin-top:40px;
+    padding:0 20px;
+  }
+  footer .box{
+    max-width:700px;
+    margin:0 auto;
+    border:1px dashed var(--border);
+    border-radius:8px;
+    padding:16px;
+  }
+  code{ color:var(--yellow); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>&gt; API_SECURITY_ARSENAL.md</h1>
+  <div class="sub">OWASP API Top 10 aligned — advanced API exploitation techniques — recon reference file</div>
+  <div class="warn">⚠ Sirf authorized programs (HackerOne scope) pe hi apply karna — bina permission illegal hai</div>
+</header>
+
+<nav>
+  <a href="#t1">01 BOLA / IDOR</a>
+  <a href="#t2">02 BFLA</a>
+  <a href="#t3">03 Mass Assignment</a>
+  <a href="#t4">04 Excessive Data Exposure</a>
+  <a href="#t5">05 Rate Limit Bypass</a>
+  <a href="#t6">06 API Key/Token Leak</a>
+  <a href="#t7">07 GraphQL Introspection</a>
+  <a href="#t8">08 Shadow/Zombie APIs</a>
+  <a href="#t9">09 SSRF via API</a>
+  <a href="#t10">10 JWT Alg Confusion</a>
+  <a href="#t11">11 HTTP Parameter Pollution</a>
+  <a href="#t12">12 NoSQL/SQLi via JSON</a>
+</nav>
+
+<main>
+
+  <!-- 01 -->
+  <div class="card" id="t1" style="--accent:var(--green)">
+    <span class="tag">API1:2023 — BOLA</span>
+    <h2>01. Broken Object Level Authorization (BOLA/IDOR)</h2>
+    <p class="desc">API endpoints jab object ID (user_id, order_id, invoice_id) URL/body me leti hain aur server yeh check nahi karta ki logged-in user us specific object ka owner hai ya nahi — to sirf ID badal ke doosre user ka data access ho jaata hai.</p>
+    <div class="steps">
+      <h3>Steps</h3>
+      <ol>
+        <li>Apne khud ke account se ek normal API request capture karo Burp me (jaise <code>GET /api/user/1042/profile</code>).</li>
+        <li>Request ko Repeater me bhejo.</li>
+        <li>ID value ko sequentially badalte jao — 1041, 1043, 1000, etc.</li>
+        <li>Response status + body compare karo — agar doosre user ka data mil raha hai to BOLA confirmed.</li>
+        <li>Autorize extension use karo authenticated vs unauthenticated dono session compare karne ke liye automatically.</li>
+      </ol>
+    </div>
+    <div class="example"><span class="c1">Original:</span>
+GET /api/v1/orders/<span class="c3">8841</span> HTTP/1.1
+Authorization: Bearer &lt;your_token&gt;
+
+<span class="c1">Tampered (kisi aur ka order):</span>
+GET /api/v1/orders/<span class="c2">8842</span> HTTP/1.1
+Authorization: Bearer &lt;your_token&gt;   <span class="c3">// same token, doosre ka order dikh raha hai</span></div>
+    <div class="impact">💥 Impact: Kisi bhi user ka data (orders, invoices, PII) unauthorized access — mass data leak tak.</div>
+    <div class="fix">🛡 Fix: Har request pe object-level ownership server-side verify karo, sequential IDs ki jagah UUID use karo.</div>
+  </div>
+
+  <!-- 02 -->
+  <div class="card" id="t2" style="--accent:var(--cyan)">
+    <span class="tag">API5:2023 — BFLA</span>
+    <h2>02. Broken Function Level Authorization (BFLA)</h2>
+    <p class="desc">Admin-only functions (delete user, change role, refund) ke API endpoints agar sirf frontend UI se hide kiye gaye hain lekin backend pe role check missing hai, to normal user directly wahi endpoint hit karke admin action perform kar sakta hai.</p>
+    <div class="steps">
+      <h3>Steps</h3>
+      <ol>
+        <li>Admin panel ke JS files / API docs (Swagger, Postman collection leak) me admin endpoints dhoondo.</li>
+        <li>Normal user account se login karo, us endpoint ko directly call karo apne token ke saath.</li>
+        <li>HTTP method bhi try karo alag-alag — GET jo allowed hai, POST/DELETE bhi try karo same endpoint pe.</li>
+        <li>Agar action execute ho jaaye (200 OK + effect visible) — BFLA confirmed.</li>
+      </ol>
+    </div>
+    <div class="example">POST /api/admin/users/<span class="c3">delete</span> HTTP/1.1
+Authorization: Bearer &lt;normal_user_token&gt;
+{"user_id": 5521}
+
+<span class="c2">// Expected: 403 Forbidden
+// Actual: 200 OK — user delete ho gaya!</span></div>
+    <div class="impact">💥 Impact: Privilege escalation — normal user admin-level actions perform kar sakta hai.</div>
+    <div class="fix">🛡 Fix: Role-based access control (RBAC) har endpoint pe backend me enforce karo, method-level bhi.</div>
+  </div>
+
+  <!-- 03 -->
+  <div class="card" id="t3" style="--accent:var(--pink)">
+    <span class="tag">API3:2023 — Mass Assignment</span>
+    <h2>03. Mass Assignment</h2>
+    <p class="desc">Jab API request body ke saare fields directly database model me bind ho jaate hain bina whitelist ke, to attacker extra fields add karke (jaise <code>role</code>, <code>isAdmin</code>, <code>balance</code>) unhe bhi set kar sakta hai jo form me dikhaye hi nahi gaye the.</p>
+    <div class="steps">
+      <h3>Steps</h3>
+      <ol>
+        <li>Normal registration/profile-update request capture karo.</li>
+        <li>Response ya API docs (Swagger/GraphQL schema) se poora object schema pata karo — saare possible fields.</li>
+        <li>Request body me extra hidden fields add karo jo form me nahi the.</li>
+        <li>Response/profile check karo — agar wo field apply ho gaya, mass assignment confirmed.</li>
+      </ol>
+    </div>
+    <div class="example"><span class="c1">Normal request:</span>
+{"name":"Karan","email":"k@test.com"}
+
+<span class="c1">Tampered request:</span>
+{"name":"Karan","email":"k@test.com",<span class="c2">"role":"admin"</span>,<span class="c2">"isVerified":true</span>}</div>
+    <div class="impact">💥 Impact: Privilege escalation, account balance manipulation, verified badge bina verify kiye.</div>
+    <div class="fix">🛡 Fix: Explicit field whitelisting (allow-list), DTO pattern use karo — sirf expected fields hi bind karo.</div>
+  </div>
+
+  <!-- 04 -->
+  <div class="card" id="t4" style="--accent:var(--yellow)">
+    <span class="tag">API3:2023 — Data Exposure</span>
+    <h2>04. Excessive Data Exposure</h2>
+    <p class="desc">API kabhi kabhi poora database object return kar deta hai (password_hash, internal_notes, ssn) aur filtering sirf frontend pe hoti hai — jo fields UI display nahi karti wo bhi response me chhupi hoti hain.</p>
+    <div class="steps">
+      <h3>Steps</h3>
+      <ol>
+        <li>Koi bhi API response Burp me capture karo jo UI par thoda data dikhata hai (jaise profile card).</li>
+        <li>Raw JSON response poora carefully padho — sirf UI-displayed fields nahi, pura object.</li>
+        <li>Sensitive fields dhoondo: <code>password</code>, <code>password_hash</code>, <code>token</code>, <code>ssn</code>, <code>internal_id</code>, <code>is_flagged</code>.</li>
+        <li>Note karo ki UI in fields ko display nahi karti lekin response me maujood hain.</li>
+      </ol>
+    </div>
+    <div class="example">GET /api/user/profile → response:
+{
+  "name": "Karan",
+  "email": "k@test.com",
+  <span class="c2">"password_hash": "$2b$10$abc...",</span>
+  <span class="c2">"internal_risk_score": 82,</span>
+  "phone": "9198xxxxxx"
+}</div>
+    <div class="impact">💥 Impact: Sensitive internal/PII data leak jo scraping ya offline cracking ke kaam aata hai.</div>
+    <div class="fix">🛡 Fix: Response serialization me sirf zaroori fields explicitly select karo, kabhi poora DB object return mat karo.</div>
+  </div>
+
+  <!-- 05 -->
+  <div class="card" id="t5" style="--accent:var(--purple)">
+    <span class="tag">API4:2023 — Resource Consumption</span>
+    <h2>05. API Rate Limit Bypass</h2>
+    <p class="desc">API level pe rate-limiting IP-based, header-based, ya endpoint-specific hoti hai — agar consistently enforce nahi hoti to alag-alag bypass tricks se limit todi ja sakti hai.</p>
+    <div class="steps">
+      <h3>Steps</h3>
+      <ol>
+        <li>Rate-limited endpoint pe limit hit hone tak requests bhejo (429 aane tak).</li>
+        <li>Headers rotate karke retry karo: <code>X-Forwarded-For</code>, <code>X-Real-IP</code>, <code>X-Client-IP</code> ke alag-alag fake IPs.</li>
+        <li>API version endpoint change karke try karo (<code>/api/v1/</code> vs <code>/api/v2/</code> vs <code>/API/</code> case change) — kabhi limit sirf ek version pe hoti hai.</li>
+        <li>Trailing slash, extra query param, ya case-change (<code>/Login</code> vs <code>/login</code>) se bhi alag rate-limit bucket trigger ho sakta hai.</li>
+      </ol>
+    </div>
+    <div class="example">POST /api/v1/login HTTP/1.1
+<span class="c3">X-Forwarded-For: 1.2.3.4</span>
+
+<span class="c1">// blocked after 5 tries, ab try:</span>
+POST /api/v1/login HTTP/1.1
+<span class="c2">X-Forwarded-For: 5.6.7.8</span>   <span class="c3">// counter reset ho jaata hai per-IP</span></div>
+    <div class="impact">💥 Impact: Brute-force, credential stuffing, OTP guessing unlimited scale pe possible.</div>
+    <div class="fix">🛡 Fix: Rate-limit ko authenticated user/account ID pe bind karo, sirf IP/header pe bharosa mat karo.</div>
+  </div>
+
+  <!-- 06 -->
+  <div class="card" id="t6" style="--accent:var(--red)">
+    <span class="tag">API8:2023 — Misconfiguration</span>
+    <h2>06. API Key / Token Leakage</h2>
+    <p class="desc">JS bundle files, mobile APK, GitHub repos, ya API responses me hardcoded API keys/secrets accidentally expose ho jaate hain — jinse directly backend services access mil sakti hai.</p>
+    <div class="steps">
+      <h3>Steps</h3>
+      <ol>
+        <li>Target ke saare JS files download karo (<code>gau</code> / <code>waybackurls</code> + grep <code>.js</code>).</li>
+        <li>Pattern-match karo: <code>api_key</code>, <code>secret</code>, <code>AKIA</code> (AWS), <code>AIza</code> (Google), <code>Bearer</code> hardcoded tokens.</li>
+        <li>TruffleHog / GitHub dorking se target ke public repos me bhi leaked secrets dhoondo.</li>
+        <li>Mila hua key ko relevant API pe test karo (kya wo abhi bhi valid/active hai).</li>
+      </ol>
+    </div>
+    <div class="example"><span class="c1">grep -Eo "(api_key|secret|AKIA[0-9A-Z]{16})" *.js</span>
+
+<span class="c3">// bundle.js me mila:</span>
+const STRIPE_KEY = <span class="c2">"sk_live_51H8x..."</span>;   <span class="c3">// live secret key, production!</span></div>
+    <div class="impact">💥 Impact: Direct backend/third-party service access — billing, data, infra tak compromise ho sakta hai.</div>
+    <div class="fix">🛡 Fix: Secrets kabhi client-side code me na rakho, env variables + backend proxy use karo, key rotation policy rakho.</div>
+  </div>
+
+  <!-- 07 -->
+  <div class="card" id="t7" style="--accent:var(--green)">
+    <span class="tag">GraphQL Specific</span>
+    <h2>07. GraphQL Introspection Abuse</h2>
+    <p class="desc">GraphQL APIs agar production me introspection query enabled chhod dete hain, to poora schema (saare types, queries, mutations, hidden fields) directly query karke expose ho jaata hai — jo recon ko bahut aasan bana deta hai.</p>
+    <div class="steps">
+      <h3>Steps</h3>
+      <ol>
+        <li>GraphQL endpoint dhoondo (<code>/graphql</code>, <code>/api/graphql</code>, <code>/v1/graphql</code>).</li>
+        <li>Introspection query bhejo poore schema ke liye.</li>
+        <li>Response me saare available mutations dekho — kabhi admin-only mutations bhi expose ho jaate hain (<code>deleteUser</code>, <code>updateRole</code>).</li>
+        <li>InQL / GraphQL Voyager Burp extension se schema visually explore karo.</li>
+        <li>Hidden/deprecated fields bhi query karke try karo — access control usually inpe weak hota hai.</li>
+      </ol>
+    </div>
+    <div class="example">POST /graphql
+{"query":"<span class="c3">{__schema{types{name,fields{name}}}}</span>"}
+
+<span class="c1">// response se pata chala:</span>
+mutation <span class="c2">deleteAllSessions(userId: ID!)</span>   <span class="c3">// exposed, koi role check nahi</span></div>
+    <div class="impact">💥 Impact: Poora API attack surface + hidden admin mutations turant discover ho jaate hain.</div>
+    <div class="fix">🛡 Fix: Production me introspection disable karo, query depth/complexity limiting bhi lagao.</div>
+  </div>
+
+  <!-- 08 -->
+  <div class="card" id="t8" style="--accent:var(--cyan)">
+    <span class="tag">API9:2023 — Inventory Mgmt</span>
+    <h2>08. Shadow / Zombie APIs</h2>
+    <p class="desc">Old API versions (<code>/api/v1/</code>) ya deprecated/staging endpoints jo documentation se hata diye gaye hain, lekin server pe abhi bhi live hain aur weaker security controls rakhte hain.</p>
+    <div class="steps">
+      <h3>Steps</h3>
+      <ol>
+        <li>Current API version pata karo (<code>/api/v3/users</code> jaisa).</li>
+        <li>Purane versions manually try karo: <code>/api/v1/users</code>, <code>/api/v2/users</code>, <code>/api-old/</code>, <code>/api/beta/</code>.</li>
+        <li>Wayback Machine + JS files se purane endpoint references dhoondo.</li>
+        <li>Subdomain enum se <code>staging-api.</code>, <code>dev-api.</code>, <code>test-api.</code> jaise hosts dhoondo.</li>
+        <li>Purane version pe wahi authorization bugs try karo jo naye version me patch ho chuke hain.</li>
+      </ol>
+    </div>
+    <div class="example">Current (patched): GET /api/v3/users/me
+Zombie (unpatched): GET <span class="c2">/api/v1/users/me</span>   <span class="c3">// same bug jo v3 me fix ho chuka tha</span></div>
+    <div class="impact">💥 Impact: Already-patched vulnerabilities purane version me abhi bhi exploitable rehti hain.</div>
+    <div class="fix">🛡 Fix: Deprecated API versions ko poori tarah decommission/block karo, inventory tracking rakho.</div>
+  </div>
+
+  <!-- 09 -->
+  <div class="card" id="t9" style="--accent:var(--pink)">
+    <span class="tag">API7:2023 — SSRF</span>
+    <h2>09. SSRF via API Parameters</h2>
+    <p class="desc">Kai APIs URL/webhook/image-fetch jaisa parameter accept karte hain (jaise <code>callback_url</code>, <code>avatar_url</code>, <code>webhook</code>) — agar server-side yeh URL bina validation ke fetch kar leta hai, to internal network/cloud metadata tak access mil sakta hai.</p>
+    <div class="steps">
+      <h3>Steps</h3>
+      <ol>
+        <li>Koi bhi parameter dhoondo jo URL accept karta hai (webhook setup, image import, PDF generation, link preview).</li>
+        <li>Us field me apna Burp Collaborator / requestbin URL daalo pehle confirm karne ke liye ki server request bhejta hai.</li>
+        <li>Fir internal/cloud targets try karo: <code>http://169.254.169.254/latest/meta-data/</code> (AWS), <code>http://localhost:PORT/</code>.</li>
+        <li>Response me agar internal data (metadata, internal service response) dikhta hai — SSRF confirmed.</li>
+      </ol>
+    </div>
+    <div class="example">POST /api/webhook/register
+{"callback_url": "<span class="c2">http://169.254.169.254/latest/meta-data/iam/security-credentials/</span>"}
+
+<span class="c3">// response me AWS IAM temp credentials leak ho sakte hain</span></div>
+    <div class="impact">💥 Impact: Cloud credentials theft, internal network pivoting, internal service enumeration.</div>
+    <div class="fix">🛡 Fix: URL allow-list rakho, internal IP ranges (169.254.x.x, 127.x, 10.x) explicitly block karo.</div>
+  </div>
+
+  <!-- 10 -->
+  <div class="card" id="t10" style="--accent:var(--yellow)">
+    <span class="tag">Token Layer</span>
+    <h2>10. JWT Algorithm Confusion / None Bypass</h2>
+    <p class="desc">Kuch API backends JWT ka <code>alg</code> header blindly trust karte hain. Agar <code>alg</code> ko <code>none</code> me badal do to signature verification hi skip ho jaata hai, ya RS256→HS256 confusion se public key ko hi HMAC secret bana ke fake token forge kiya ja sakta hai.</p>
+    <div class="steps">
+      <h3>Steps</h3>
+      <ol>
+        <li>Apna JWT token capture karo (Burp / jwt.io me decode karo — header.payload.signature).</li>
+        <li>Header me <code>"alg":"none"</code> set karo, signature part poora hata do (trailing dot rakho).</li>
+        <li>Payload me <code>role/user_id</code> apni marzi se badal do, base64url encode karke bhejo.</li>
+        <li>Agar accept ho jaaye — none-alg bypass confirmed.</li>
+        <li>RS256 target ho to public key nikalo (<code>/jwks.json</code> ya cert se), usi ko HS256 secret bana ke naya token HMAC-sign karo.</li>
+      </ol>
+    </div>
+    <div class="example"><span class="c1">Header (tampered):</span> {"alg":"<span class="c2">none</span>","typ":"JWT"}
+<span class="c1">Payload:</span> {"user":"karan","role":"<span class="c2">admin</span>"}
+<span class="c1">Token:</span> eyJhbGciOiJub25lIn0.eyJyb2xlIjoiYWRtaW4ifQ<span class="c3">.</span>   <span class="c3">// empty signature</span></div>
+    <div class="impact">💥 Impact: Poora authentication bypass — koi bhi role/user forge kiya ja sakta hai.</div>
+    <div class="fix">🛡 Fix: Server-side algorithm explicitly whitelist karo (sirf RS256 accept), <code>none</code> hamesha reject karo.</div>
+  </div>
+
+  <!-- 11 -->
+  <div class="card" id="t11" style="--accent:var(--purple)">
+    <span class="tag">Input Layer</span>
+    <h2>11. HTTP Parameter Pollution (HPP)</h2>
+    <p class="desc">Jab same parameter name multiple baar bheja jaata hai, alag-alag backend frameworks alag tarah handle karte hain (pehla le lete hain, aakhri le lete hain, ya array bana dete hain) — is inconsistency se validation/logic bypass ho sakta hai.</p>
+    <div class="steps">
+      <h3>Steps</h3>
+      <ol>
+        <li>Kisi bhi request me ek parameter ko duplicate karo.</li>
+        <li>Pehli value validation-friendly rakho, doosri value malicious/target rakho (ya vice versa).</li>
+        <li>Response dekho ki backend ne kaunsi value process ki — server aur WAF alag value dekh sakte hain (WAF bypass ka scope).</li>
+        <li>Price, quantity, discount jaise business-logic parameters pe especially try karo.</li>
+      </ol>
+    </div>
+    <div class="example">POST /api/checkout?<span class="c1">discount=</span><span class="c3">10</span>&amp;<span class="c1">discount=</span><span class="c2">90</span>
+<span class="c3">// WAF ne pehli value (10%) check ki, backend ne doosri (90%) process kar li</span></div>
+    <div class="impact">💥 Impact: Business logic bypass, WAF/validation evasion, price manipulation.</div>
+    <div class="fix">🛡 Fix: Backend framework me duplicate parameter handling explicitly define karo, WAF aur app ka parsing consistent rakho.</div>
+  </div>
+
+  <!-- 12 -->
+  <div class="card" id="t12" style="--accent:var(--red)">
+    <span class="tag">Injection Layer</span>
+    <h2>12. SQLi / NoSQLi via JSON Body</h2>
+    <p class="desc">Modern APIs JSON body accept karti hain — injection testing sirf query string pe focus karke JSON body ke fields miss ho jaate hain, jabki wahi sabse zyada vulnerable hote hain (khaaskar NoSQL operator injection).</p>
+    <div class="steps">
+      <h3>Steps</h3>
+      <ol>
+        <li>Login/search API JSON body ke har string field me <code>'</code>, <code>"</code>, <code>--</code> daal ke error trigger karo (SQLi check).</li>
+        <li>MongoDB backend ho to operator injection try karo — string field ki jagah JSON object bhejo.</li>
+        <li>Login bypass ke liye <code>$ne</code> (not-equal) operator try karo password field me.</li>
+        <li>Response time/behavior difference se blind injection bhi confirm karo.</li>
+      </ol>
+    </div>
+    <div class="example"><span class="c1">Normal login:</span>
+{"username":"admin","password":"wrongpass"}
+
+<span class="c1">NoSQL injection (MongoDB):</span>
+{"username":"admin","password":<span class="c2">{"$ne":null}</span>}
+<span class="c3">// "password not equal to null" — matches, login bypass!</span></div>
+    <div class="impact">💥 Impact: Authentication bypass, unauthorized data extraction, full DB compromise.</div>
+    <div class="fix">🛡 Fix: Input type strictly validate karo (string expected to object reject), parameterized queries + ORM use karo.</div>
+  </div>
+
+</main>
+
+<footer>
+  <div class="box">
+    Ye reference sirf <strong style="color:var(--green)">authorized</strong> HackerOne / apne lab targets pe testing ke liye hai.<br>
+    Bina permission kisi bhi live system pe try karna cybercrime hai (IT Act 2000).<br><br>
+    Recon Notes ka part — roadmap: Bug Bounty → Red Team → OSCP
+  </div>
+</footer>
+
+</body>
+</html>
