@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IDOR in Account Endpoints Arsenal — Recon Notes</title>
+<style>
+  :root{
+    --bg:#060a12;
+    --panel:#0b1120;
+    --panel2:#0e1830;
+    --border:#1c2942;
+    --green:#39ff9d;
+    --cyan:#4fd8ff;
+    --pink:#ff5ea8;
+    --yellow:#ffd447;
+    --red:#ff5470;
+    --purple:#b98bff;
+    --text:#c9d6f0;
+    --dim:#7186ad;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(circle at 10% 0%, rgba(79,216,255,0.08), transparent 40%),
+      radial-gradient(circle at 90% 20%, rgba(185,139,255,0.08), transparent 40%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Consolas','SF Mono',monospace;
+    line-height:1.55;
+    padding:0 0 60px 0;
+  }
+  header{
+    text-align:center;
+    padding:38px 20px 22px;
+    border-bottom:1px solid var(--border);
+    background:linear-gradient(180deg, rgba(79,216,255,0.06), transparent);
+  }
+  header h1{
+    margin:0;
+    font-size:2.1rem;
+    letter-spacing:2px;
+    color:var(--cyan);
+    text-shadow:0 0 18px rgba(79,216,255,0.55);
+  }
+  header .sub{
+    color:var(--dim);
+    margin-top:10px;
+    font-size:0.95rem;
+  }
+  header .warn{
+    display:inline-block;
+    margin-top:16px;
+    padding:8px 16px;
+    border:1px solid var(--red);
+    color:var(--red);
+    border-radius:6px;
+    font-size:0.85rem;
+    background:rgba(255,84,112,0.07);
+  }
+  nav{
+    max-width:1100px;
+    margin:26px auto;
+    padding:0 20px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    justify-content:center;
+  }
+  nav a{
+    color:var(--green);
+    border:1px solid var(--border);
+    padding:6px 12px;
+    border-radius:20px;
+    text-decoration:none;
+    font-size:0.8rem;
+    background:var(--panel);
+    transition:0.2s;
+  }
+  nav a:hover{ border-color:var(--green); box-shadow:0 0 10px rgba(57,255,157,0.35); }
+  main{
+    max-width:1100px;
+    margin:0 auto;
+    padding:0 20px;
+    display:flex;
+    flex-direction:column;
+    gap:26px;
+  }
+  .card{
+    background:linear-gradient(180deg, var(--panel2), var(--panel));
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:24px 26px;
+    position:relative;
+    overflow:hidden;
+  }
+  .card::before{
+    content:"";
+    position:absolute; top:0; left:0; right:0; height:3px;
+    background:var(--accent);
+  }
+  .tag{
+    display:inline-block;
+    font-size:0.7rem;
+    letter-spacing:1px;
+    padding:3px 9px;
+    border-radius:4px;
+    color:#04121a;
+    background:var(--accent);
+    font-weight:bold;
+    margin-bottom:10px;
+  }
+  .card h2{
+    margin:4px 0 12px;
+    font-size:1.35rem;
+    color:var(--accent);
+  }
+  .card p.desc{
+    color:var(--text);
+    margin:0 0 14px;
+  }
+  .steps{
+    background:rgba(0,0,0,0.28);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:14px 18px;
+    margin:12px 0;
+  }
+  .steps h3{
+    margin:0 0 8px;
+    font-size:0.85rem;
+    color:var(--dim);
+    text-transform:uppercase;
+    letter-spacing:1px;
+  }
+  .steps ol{ margin:0; padding-left:20px; }
+  .steps li{ margin-bottom:6px; }
+  .example{
+    background:#020408;
+    border:1px solid var(--border);
+    border-left:3px solid var(--accent);
+    border-radius:6px;
+    padding:14px 16px;
+    font-size:0.85rem;
+    overflow-x:auto;
+    margin:12px 0;
+    color:#8fffc0;
+    white-space:pre-wrap;
+  }
+  .example .c1{color:var(--cyan);}
+  .example .c2{color:var(--pink);}
+  .example .c3{color:var(--yellow);}
+  .example .strike{color:var(--red); text-decoration:line-through;}
+  .example .ok{color:var(--green);}
+  .impact{
+    display:flex;
+    gap:10px;
+    align-items:center;
+    margin-top:14px;
+    padding:10px 14px;
+    border-radius:6px;
+    background:rgba(255,84,112,0.08);
+    border:1px solid rgba(255,84,112,0.35);
+    color:var(--red);
+    font-size:0.85rem;
+  }
+  .fix{
+    margin-top:10px;
+    padding:10px 14px;
+    border-radius:6px;
+    background:rgba(57,255,157,0.06);
+    border:1px solid rgba(57,255,157,0.3);
+    color:var(--green);
+    font-size:0.85rem;
+  }
+  footer{
+    text-align:center;
+    color:var(--dim);
+    font-size:0.8rem;
+    margin-top:40px;
+    padding:0 20px;
+  }
+  footer .box{
+    max-width:700px;
+    margin:0 auto;
+    border:1px dashed var(--border);
+    border-radius:8px;
+    padding:16px;
+  }
+  code{ color:var(--yellow); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>&gt; IDOR_ACCOUNT_ENDPOINTS.md</h1>
+  <div class="sub">Account Takeover — Insecure Direct Object Reference deep-dive — recon reference file</div>
+  <div class="warn">⚠ Sirf authorized programs (HackerOne scope) pe hi apply karna — bina permission illegal hai</div>
+</header>
+
+<nav>
+  <a href="#t1">01 Numeric Enumeration</a>
+  <a href="#t2">02 UUID/Hash Leak</a>
+  <a href="#t3">03 Method-Based IDOR</a>
+  <a href="#t4">04 Horizontal vs Vertical</a>
+  <a href="#t5">05 Nested Resource IDOR</a>
+  <a href="#t6">06 Hidden Param IDOR</a>
+  <a href="#t7">07 Two-Session Diffing</a>
+  <a href="#t8">08 Blind IDOR</a>
+  <a href="#t9">09 Encoded/Obfuscated ID</a>
+  <a href="#t10">10 Batch/Bulk IDOR</a>
+  <a href="#t11">11 File/Document IDOR</a>
+  <a href="#t12">12 GraphQL Node IDOR</a>
+</nav>
+
+<main>
+
+  <!-- 01 -->
+  <div class="card" id="t1" style="--accent:var(--green)">
+    <span class="tag">FOUNDATION</span>
+    <h2>01. Numeric ID Enumeration</h2>
+    <p class="desc">Sabse basic aur sabse common form — account endpoints me sequential integer ID hoti hai (<code>user_id</code>, <code>account_no</code>). ID ko badal ke doosre account ka data mil jaata hai agar ownership check missing hai.</p>
+    <div class="steps">
+      <h3>Steps</h3>
+      <ol>
+        <li>Apna profile/account endpoint open karo, apni ID note karo (jaise <code>1042</code>).</li>
+        <li>Request Repeater me bhejo, ID ko +1, +2, +10 karke test karo.</li>
+        <li>Response body dhyan se compare karo — sirf status code pe mat jao, kai baar 200 OK generic response ke saath bhi aata hai.</li>
+        <li>Range scan karo (Intruder — Numbers payload) aur response length ka pattern dekho outliers ke liye.</li>
+      </ol>
+    </div>
+    <div class="example">GET /api/account/<span class="c3">1042</span>/details   <span class="c1">// apna account</span>
+GET /api/account/<span class="c2">1043</span>/details   <span class="c1">// doosre ka data mil raha hai?</span></div>
+    <div class="impact">💥 Impact: Bulk PII scraping — pura user-base enumerate ho sakta hai.</div>
+    <div class="fix">🛡 Fix: Server-side ownership check + non-sequential IDs (UUID v4) use karo.</div>
+  </div>
+
+  <!-- 02 -->
+  <div class="card" id="t2" style="--accent:var(--cyan)">
+    <span class="tag">ADVANCED</span>
+    <h2>02. UUID / Hash-Based ID Leakage</h2>
+    <p class="desc">UUID guess karna practically impossible hai, lekin UUID khud kahin aur leak ho jaata hai — API responses, HTML source, JS files, ya notifications me — jahan se collect karke IDOR chalaya ja sakta hai.</p>
+    <div class="steps">
+      <h3>Steps</h3>
+      <ol>
+        <li>Poore app ko crawl karo — har jagah note karo jahan koi UUID dikhta hai (invoice link, avatar URL, share link, notification).</li>
+        <li>API responses me nested objects check karo — ek endpoint doosre user ka UUID reference kar sakta hai (jaise "shared_by" field).</li>
+        <li>JS files/network tab me hidden API calls dhoondo jo UUID list return karte hain (autocomplete, search suggestions).</li>
+        <li>Collected UUIDs ko direct account-access endpoints pe try karo.</li>
+      </ol>
+    </div>
+    <div class="example"><span class="c1">// "shared_by" field me victim ka UUID accidentally expose:</span>
+{"document_id":"9f2a...", <span class="c2">"shared_by_uuid":"7b3e1c9a-4f2d-..."</span>}
+
+<span class="c1">// ab isko directly try karo:</span>
+GET /api/account/<span class="c2">7b3e1c9a-4f2d-...</span>/profile</div>
+    <div class="impact">💥 Impact: Targeted single-user IDOR — random UUID guess ki zaroorat nahi, leak se direct access.</div>
+    <div class="fix">🛡 Fix: UUID ko bhi treat as sensitive karo, kahin bhi unnecessarily doosre user ka UUID expose mat karo, plus ownership check zaroori hai even with UUID.</div>
+  </div>
+
+  <!-- 03 -->
+  <div class="card" id="t3" style="--accent:var(--pink)">
+    <span class="tag">ADVANCED</span>
+    <h2>03. Method-Based IDOR (Read vs Write)</h2>
+    <p class="desc">Kai apps GET request pe ownership check karti hain lekin POST/PUT/PATCH/DELETE pe nahi (ya vice versa) — kyunki developer sochta hai "sirf read hi risky hai." Har HTTP method ko independently test karna zaroori hai.</p>
+    <div class="steps">
+      <h3>Steps</h3>
+      <ol>
+        <li>Ek account endpoint pe saare CRUD operations list karo: GET, PUT, PATCH, DELETE.</li>
+        <li>Victim ki ID le kar har method alag se try karo — sirf GET (read) nahi, PUT (update) aur DELETE bhi.</li>
+        <li>Address change, payment method delete, notification-settings update jaise "write" endpoints priority pe rakho — inka impact GET se zyada hota hai.</li>
+        <li>Method override tricks bhi try karo: <code>X-HTTP-Method-Override: DELETE</code> header ke saath POST bhejna.</li>
+      </ol>
+    </div>
+    <div class="example">GET  /api/account/<span class="c2">victim_id</span>/address     → 403 Forbidden (blocked)
+PUT  /api/account/<span class="c2">victim_id</span>/address     → <span class="ok">200 OK</span>  <span class="c3">// write path unprotected!</span></div>
+    <div class="impact">💥 Impact: Victim ka data silently modify/delete ho sakta hai, sirf read-protection ka bharosa karna galat hai.</div>
+    <div class="fix">🛡 Fix: Har HTTP method pe independently same ownership-check middleware apply karo.</div>
+  </div>
+
+  <!-- 04 -->
+  <div class="card" id="t4" style="--accent:var(--yellow)">
+    <span class="tag">FOUNDATION</span>
+    <h2>04. Horizontal vs Vertical IDOR</h2>
+    <p class="desc">Horizontal IDOR = same privilege-level ke doosre user ka data (normal user → doosra normal user). Vertical IDOR = lower-priv user ka access admin/higher-role data tak. Dono ko systematically alag test karo.</p>
+    <div class="steps">
+      <h3>Steps</h3>
+      <ol>
+        <li>Do normal-user test accounts banao (agar sign-up allowed hai) — Account A aur Account B.</li>
+        <li>Account A ke session se Account B ki ID try karo → horizontal IDOR test.</li>
+        <li>Agar admin panel exposed hai, normal user account se admin-only object IDs try karo (jaise admin dashboard ka <code>report_id</code>) → vertical IDOR test.</li>
+        <li>Role-check bugs kaafi baar sirf "logged in hai ya nahi" verify karte hain, "kaunsa role hai" nahi — is gap ko exploit karo.</li>
+      </ol>
+    </div>
+    <div class="impact">💥 Impact: Horizontal = mass user data leak. Vertical = privilege escalation, admin data/actions tak access.</div>
+    <div class="fix">🛡 Fix: Object-level AND role-level authorization dono alag-alag enforce karo, kabhi ek doosre ka substitute mat maano.</div>
+  </div>
+
+  <!-- 05 -->
+  <div class="card" id="t5" style="--accent:var(--purple)">
+    <span class="tag">ADVANCED</span>
+    <h2>05. Nested Resource IDOR</h2>
+    <p class="desc">Jab URL me do IDs ek saath hoti hain (<code>/user/{uid}/order/{oid}</code>), developers aksar sirf pehli ID (parent) verify karte hain aur maan lete hain doosri (child) automatically safe hai — jabki child ID independently tamper ho sakti hai.</p>
+    <div class="steps">
+      <h3>Steps</h3>
+      <ol>
+        <li>Nested-path endpoint dhoondo: <code>/api/user/{user_id}/orders/{order_id}</code> jaisa.</li>
+        <li>Pehle sirf parent ID (user_id) badal ke test karo.</li>
+        <li>Fir parent ID apna hi rakho, sirf child ID (order_id) doosre account ki try karo.</li>
+        <li>Fir dono IDs mismatch karke try karo — apna user_id + victim ka order_id, aur victim ka user_id + apna order_id.</li>
+        <li>Har combination alag behavior de sakta hai — jo bhi combination data leak kare wahi confirmed IDOR hai.</li>
+      </ol>
+    </div>
+    <div class="example">GET /api/user/<span class="c1">MY_ID</span>/orders/<span class="c2">VICTIM_ORDER_ID</span>
+<span class="c3">// server sirf check karta hai "user_id valid session ka hai" — order_id ka ownership verify nahi karta</span></div>
+    <div class="impact">💥 Impact: Parent-level check bypass karke child resource tak unauthorized access.</div>
+    <div class="fix">🛡 Fix: Har nested resource ka ownership chain fully verify karo — parent AND child dono ka link check karo.</div>
+  </div>
+
+  <!-- 06 -->
+  <div class="card" id="t6" style="--accent:var(--red)">
+    <span class="tag">ADVANCED</span>
+    <h2>06. Hidden Parameter IDOR (Body/Query/Header)</h2>
+    <p class="desc">Sirf URL path IDs hi nahi — IDOR JSON body, query string, ya custom headers me chhupi IDs me bhi hota hai. Yeh jagahein aksar miss ho jaati hain kyunki URL itna "obvious" nahi lagta.</p>
+    <div class="steps">
+      <h3>Steps</h3>
+      <ol>
+        <li>Har request ka poora raw body/headers Burp me line-by-line padho — sirf URL path pe mat ruko.</li>
+        <li>Fields dhoondo jo indirectly ID jaisi lagti hain: <code>account_ref</code>, <code>customer_no</code>, <code>profile_key</code>, custom headers jaise <code>X-Account-Id</code>.</li>
+        <li>Param Miner (Burp extension) use karo hidden/unlinked parameters discover karne ke liye.</li>
+        <li>Mili hui hidden ID field ko victim ki value se replace karke response check karo.</li>
+      </ol>
+    </div>
+    <div class="example">POST /api/dashboard/summary
+Content-Type: application/json
+<span class="c1">X-Account-Id:</span> <span class="c2">victim_account_id</span>   <span class="c3">// header me hidden ID, easily missed</span>
+
+{"range":"30d"}</div>
+    <div class="impact">💥 Impact: Standard URL-based testing miss kar deta hai, lekin real IDOR chhupi hoti hai.</div>
+    <div class="fix">🛡 Fix: Har input source (path, query, body, headers, cookies) ko consistently authorize karo — koi bhi source "trusted by default" mat maano.</div>
+  </div>
+
+  <!-- 07 -->
+  <div class="card" id="t7" style="--accent:var(--green)">
+    <span class="tag">METHODOLOGY</span>
+    <h2>07. Two-Session Diffing (Autorize Method)</h2>
+    <p class="desc">Manual testing slow aur error-prone hoti hai. Do accounts (Account A — low-priv, Account B — victim/admin) ke sessions ko automated tool se compare karna sabse reliable IDOR-hunting method hai.</p>
+    <div class="steps">
+      <h3>Steps</h3>
+      <ol>
+        <li>Do test accounts banao — Account A aur Account B, dono ke auth tokens/cookies note karo.</li>
+        <li>Burp me Autorize extension install karo, Account A ka session-cookie/token configure karo.</li>
+        <li>Account B (ya unauthenticated) se poora app browse karo normally — saare requests Autorize automatically Account A ke token se replay karega.</li>
+        <li>Autorize results table check karo — "Bypassed" marked entries wahi hain jahan authorization missing hai.</li>
+        <li>Har flagged entry manually verify karo (false positives possible hain).</li>
+      </ol>
+    </div>
+    <div class="impact">💥 Impact: Manual testing se miss hui dozens of IDOR endpoints ek hi crawl session me systematically mil jaate hain.</div>
+    <div class="fix">🛡 Fix: (Defender side) CI/CD me automated authorization testing integrate karo, har naye endpoint ke liye.</div>
+  </div>
+
+  <!-- 08 -->
+  <div class="card" id="t8" style="--accent:var(--cyan)">
+    <span class="tag">ADVANCED</span>
+    <h2>08. Blind IDOR (No Direct Response Leak)</h2>
+    <p class="desc">Kabhi kabhi response me data directly nahi dikhta (jaise "action successful" generic message), lekin backend me action fir bhi execute ho jaata hai — jaise delete, ya email/notification trigger. Side-effects se confirm karna padta hai.</p>
+    <div class="steps">
+      <h3>Steps</h3>
+      <ol>
+        <li>Ek "write" action try karo victim ki ID pe (jaise <code>DELETE /api/account/{victim_id}/notification/{id}</code>).</li>
+        <li>Response generic ho sakta hai ("Deleted successfully") chahe ID tumhari ho ya na ho — isliye response pe bharosa mat karo.</li>
+        <li>Doosre account (victim wala test account) se login karke verify karo ki action actually apply hua ya nahi.</li>
+        <li>Out-of-band signals bhi use karo — email notification aaya victim ko? Timestamp change hua backend me?</li>
+      </ol>
+    </div>
+    <div class="impact">💥 Impact: Silent data manipulation jo response se turant pata nahi chalta, lekin real damage karta hai.</div>
+    <div class="fix">🛡 Fix: Generic success messages ki jagah actual authorization result ke hisaab se accurate response do, aur backend logs/side-effects bhi audit karo.</div>
+  </div>
+
+  <!-- 09 -->
+  <div class="card" id="t9" style="--accent:var(--pink)">
+    <span class="tag">ADVANCED</span>
+    <h2>09. Encoded / Obfuscated ID Bypass</h2>
+    <p class="desc">Developers kabhi ID ko base64/hash me "hide" karke security samajhte hain (security by obscurity) — lekin encoding sirf format change karta hai, authorization nahi karta. Decode karke standard IDOR wahi chalta hai.</p>
+    <div class="steps">
+      <h3>Steps</h3>
+      <ol>
+        <li>URL/body me koi bhi lambi random-looking string dhoondo — base64, hex, ya custom-encoded lag sakti hai.</li>
+        <li>Decode try karo: base64 decode, URL decode, hex decode — CyberChef use karo pattern pehchanne ke liye.</li>
+        <li>Agar decode hone par plain numeric/UUID ID nikle, to usko standard tareeke se enumerate/tamper karo.</li>
+        <li>Apna khud ka ID encode karke pattern samjho, fir victim ki (agar mil jaaye) ya predicted ID ko usi format me re-encode karke bhejo.</li>
+      </ol>
+    </div>
+    <div class="example"><span class="c1">Encoded ID:</span> MTA0Mg==
+<span class="c1">Base64 decode:</span> <span class="c3">1042</span>   <span class="c1">// plain numeric ID hi hai, sirf encoded</span>
+<span class="c1">Tampered:</span> MTA0Mw==  <span class="c1">(decodes to 1043)</span></div>
+    <div class="impact">💥 Impact: "Obscured" security ka false sense — actual authorization check phir bhi missing rehta hai.</div>
+    <div class="fix">🛡 Fix: Encoding ko authorization mat samjho — chahe ID kaisi bhi dikhe, server-side ownership check hamesha zaroori hai.</div>
+  </div>
+
+  <!-- 10 -->
+  <div class="card" id="t10" style="--accent:var(--yellow)">
+    <span class="tag">ADVANCED</span>
+    <h2>10. Batch / Bulk Request IDOR</h2>
+    <p class="desc">Bulk-fetch ya batch endpoints (jaise "compare multiple accounts" ya "export selected orders") kabhi individual ID pe check karte hain lekin array me pass ki gayi extra IDs ko validate nahi karte.</p>
+    <div class="steps">
+      <h3>Steps</h3>
+      <ol>
+        <li>Koi bhi feature dhoondo jo multiple IDs ek saath accept karta hai — bulk export, comparison tool, multi-select delete.</li>
+        <li>Apni valid ID(s) ke saath array me ek victim ID bhi mix karke bhejo.</li>
+        <li>Response check karo — kya sirf apni IDs ka data aaya ya victim ki bhi mix ho gayi.</li>
+        <li>Poori array hi victim IDs ki bana ke bhi try karo (kabhi bulk endpoint individual-ID check hi skip kar deta hai).</li>
+      </ol>
+    </div>
+    <div class="example">POST /api/orders/export
+{"order_ids": [<span class="c1">1042</span>, <span class="c1">1043</span>, <span class="c2">9981</span>]}   <span class="c3">// 9981 victim ka hai</span>
+<span class="c3">// response me teeno orders ka data mil gaya — batch validation missing</span></div>
+    <div class="impact">💥 Impact: Ek hi request se multiple victims ka data simultaneously leak — mass data exfiltration.</div>
+    <div class="fix">🛡 Fix: Batch endpoint me array ke har single ID pe individually ownership verify karo, kisi ko bhi skip mat karo.</div>
+  </div>
+
+  <!-- 11 -->
+  <div class="card" id="t11" style="--accent:var(--red)">
+    <span class="tag">ADVANCED</span>
+    <h2>11. File / Document IDOR</h2>
+    <p class="desc">Invoices, statements, KYC documents, profile pictures — yeh sab kabhi direct file-serving endpoint se serve hote hain jahan sirf filename/ID predictable hoti hai aur access-check missing hota hai.</p>
+    <div class="steps">
+      <h3>Steps</h3>
+      <ol>
+        <li>Apna khud ka document/invoice download karo, URL pattern note karo (jaise <code>/files/invoice_1042.pdf</code>).</li>
+        <li>Filename me ID part badal ke doosri IDs try karo.</li>
+        <li>Kai systems me file-path directly DB-ID se derive hoti hai — is pattern ko exploit karo.</li>
+        <li>Static file server (S3, CDN) ho to bucket listing bhi try karo (agar publicly accessible ho) — pura directory expose ho sakta hai.</li>
+      </ol>
+    </div>
+    <div class="example">GET /files/invoice_<span class="c3">1042</span>.pdf   <span class="c1">// apna invoice</span>
+GET /files/invoice_<span class="c2">1043</span>.pdf   <span class="c1">// kisi aur ka bhi mil gaya, bina auth check ke</span></div>
+    <div class="impact">💥 Impact: Sensitive financial/identity documents ka mass leak — KYC data, bank statements, invoices.</div>
+    <div class="fix">🛡 Fix: File-serving endpoints pe bhi wahi session-based ownership check lagao jo baaki API pe hai, signed short-lived URLs use karo.</div>
+  </div>
+
+  <!-- 12 -->
+  <div class="card" id="t12" style="--accent:var(--purple)">
+    <span class="tag">GraphQL Specific</span>
+    <h2>12. GraphQL Node-ID IDOR</h2>
+    <p class="desc">GraphQL me global object IDs (Relay-style <code>node(id: ...)</code>) alag users ke resources ko ek hi generic query se access karne ki koshish me use kiye ja sakte hain, agar resolver-level authorization missing hai.</p>
+    <div class="steps">
+      <h3>Steps</h3>
+      <ol>
+        <li>Schema introspection se <code>node</code> query ya specific type queries (jaise <code>user(id: ID!)</code>) dhoondo.</li>
+        <li>Apna khud ka object query karke uski <code>id</code> (global relay ID, aksar base64-encoded type+id) note karo.</li>
+        <li>Us ID ko decode karke pattern samjho, fir victim ka ID predict/construct karo aur same query re-run karo.</li>
+        <li>Mutations pe bhi same test karo — <code>updateUser(id: ...)</code> jaisi mutations me ownership check missing ho sakta hai.</li>
+      </ol>
+    </div>
+    <div class="example">query { node(id: "<span class="c3">VXNlcjoxMDQy</span>") { ... on User { email, phone } } }
+<span class="c1">// base64 decode: "User:1042" — pattern samajh aa gaya</span>
+query { node(id: "<span class="c2">VXNlcjoxMDQz</span>") { ... on User { email, phone } } }  <span class="c3">// "User:1043"</span></div>
+    <div class="impact">💥 Impact: GraphQL ki flexible query structure se ek hi query se bahut saara cross-user data access ho sakta hai.</div>
+    <div class="fix">🛡 Fix: Har resolver me field-level authorization enforce karo, sirf query-existence check kaafi nahi hai.</div>
+  </div>
+
+</main>
+
+<footer>
+  <div class="box">
+    Ye reference sirf <strong style="color:var(--green)">authorized</strong> HackerOne / apne lab targets pe testing ke liye hai.<br>
+    Bina permission kisi bhi live system pe try karna cybercrime hai (IT Act 2000).<br><br>
+    Recon Notes ka part — roadmap: Bug Bounty → Red Team → OSCP
+  </div>
+</footer>
+
+</body>
+</html>
