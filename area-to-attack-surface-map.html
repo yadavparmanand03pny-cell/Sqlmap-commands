@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Area-to-Attack Surface Map — Recon Notes</title>
+<style>
+  :root{
+    --bg:#060a12;
+    --panel:#0b1120;
+    --panel2:#0e1830;
+    --border:#1c2942;
+    --green:#39ff9d;
+    --cyan:#4fd8ff;
+    --pink:#ff5ea8;
+    --yellow:#ffd447;
+    --red:#ff5470;
+    --purple:#b98bff;
+    --text:#c9d6f0;
+    --dim:#7186ad;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(circle at 10% 0%, rgba(79,216,255,0.08), transparent 40%),
+      radial-gradient(circle at 90% 20%, rgba(185,139,255,0.08), transparent 40%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Consolas','SF Mono',monospace;
+    line-height:1.6;
+    padding:0 0 60px 0;
+  }
+  header{
+    text-align:center;
+    padding:38px 20px 22px;
+    border-bottom:1px solid var(--border);
+    background:linear-gradient(180deg, rgba(79,216,255,0.06), transparent);
+  }
+  header h1{
+    margin:0;
+    font-size:2rem;
+    letter-spacing:2px;
+    color:var(--cyan);
+    text-shadow:0 0 18px rgba(79,216,255,0.55);
+  }
+  header .sub{
+    color:var(--dim);
+    margin-top:10px;
+    font-size:0.95rem;
+  }
+  header .warn{
+    display:inline-block;
+    margin-top:16px;
+    padding:8px 16px;
+    border:1px solid var(--red);
+    color:var(--red);
+    border-radius:6px;
+    font-size:0.85rem;
+    background:rgba(255,84,112,0.07);
+  }
+  .mindset{
+    max-width:1100px;
+    margin:24px auto 0;
+    padding:18px 24px;
+    border:1px dashed var(--purple);
+    border-radius:8px;
+    background:rgba(185,139,255,0.06);
+    color:var(--purple);
+    text-align:center;
+    font-size:0.95rem;
+  }
+  nav{
+    max-width:1100px;
+    margin:26px auto;
+    padding:0 20px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    justify-content:center;
+  }
+  nav a{
+    color:var(--green);
+    border:1px solid var(--border);
+    padding:6px 12px;
+    border-radius:20px;
+    text-decoration:none;
+    font-size:0.8rem;
+    background:var(--panel);
+    transition:0.2s;
+  }
+  nav a:hover{ border-color:var(--green); box-shadow:0 0 10px rgba(57,255,157,0.35); }
+  main{
+    max-width:1100px;
+    margin:0 auto;
+    padding:0 20px;
+    display:flex;
+    flex-direction:column;
+    gap:26px;
+  }
+  .card{
+    background:linear-gradient(180deg, var(--panel2), var(--panel));
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:24px 26px;
+    position:relative;
+    overflow:hidden;
+  }
+  .card::before{
+    content:"";
+    position:absolute; top:0; left:0; right:0; height:3px;
+    background:var(--accent);
+  }
+  .tag{
+    display:inline-block;
+    font-size:0.7rem;
+    letter-spacing:1px;
+    padding:3px 9px;
+    border-radius:4px;
+    color:#04121a;
+    background:var(--accent);
+    font-weight:bold;
+    margin-bottom:10px;
+  }
+  .card h2{
+    margin:4px 0 12px;
+    font-size:1.35rem;
+    color:var(--accent);
+  }
+  .card p.desc{
+    color:var(--text);
+    margin:0 0 14px;
+  }
+  .attacklist{
+    background:rgba(0,0,0,0.22);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:14px 18px;
+    margin:12px 0;
+  }
+  .attacklist h3{
+    margin:0 0 8px;
+    font-size:0.85rem;
+    color:var(--dim);
+    text-transform:uppercase;
+    letter-spacing:1px;
+  }
+  .attacklist ul{ margin:0; padding-left:20px; }
+  .attacklist li{ margin-bottom:8px; }
+  .attacklist li b{ color:var(--accent); }
+  .steps{
+    background:rgba(0,0,0,0.28);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:14px 18px;
+    margin:12px 0;
+  }
+  .steps h3{
+    margin:0 0 8px;
+    font-size:0.85rem;
+    color:var(--dim);
+    text-transform:uppercase;
+    letter-spacing:1px;
+  }
+  .steps ol{ margin:0; padding-left:20px; }
+  .steps li{ margin-bottom:6px; }
+  .example{
+    background:#020408;
+    border:1px solid var(--border);
+    border-left:3px solid var(--accent);
+    border-radius:6px;
+    padding:14px 16px;
+    font-size:0.85rem;
+    overflow-x:auto;
+    margin:12px 0;
+    color:#8fffc0;
+    white-space:pre-wrap;
+  }
+  .example .c1{color:var(--cyan);}
+  .example .c2{color:var(--pink);}
+  .example .c3{color:var(--yellow);}
+  .example .ok{color:var(--green);}
+  .impact{
+    display:flex;
+    gap:10px;
+    align-items:center;
+    margin-top:14px;
+    padding:10px 14px;
+    border-radius:6px;
+    background:rgba(255,84,112,0.08);
+    border:1px solid rgba(255,84,112,0.35);
+    color:var(--red);
+    font-size:0.85rem;
+  }
+  .fix{
+    margin-top:10px;
+    padding:10px 14px;
+    border-radius:6px;
+    background:rgba(57,255,157,0.06);
+    border:1px solid rgba(57,255,157,0.3);
+    color:var(--green);
+    font-size:0.85rem;
+  }
+  footer{
+    text-align:center;
+    color:var(--dim);
+    font-size:0.8rem;
+    margin-top:40px;
+    padding:0 20px;
+  }
+  footer .box{
+    max-width:700px;
+    margin:0 auto;
+    border:1px dashed var(--border);
+    border-radius:8px;
+    padding:16px;
+  }
+  code{ color:var(--yellow); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>&gt; AREA_TO_ATTACK_SURFACE_MAP.md</h1>
+  <div class="sub">Kisi bhi target ke har area (login, shopping, search, profile...) mein kya-kya try karna hai — simple bhasha mein</div>
+  <div class="warn">⚠ Sirf authorized programs (HackerOne scope) pe hi apply karna — bina permission illegal hai</div>
+</header>
+
+<div class="mindset">
+  🧠 <strong>Idea simple hai:</strong> Jab bhi kisi naye target pe jao, poori site ko areas mein baanto — login, signup, search, cart, checkout, profile, admin, waghera. Har area ka apna "typical" set of bugs hota hai. Neeche har area ke liye wahi list di hai.
+</div>
+
+<nav>
+  <a href="#a1">01 Login</a>
+  <a href="#a2">02 Signup/Register</a>
+  <a href="#a3">03 Password Reset</a>
+  <a href="#a4">04 Search</a>
+  <a href="#a5">05 Shopping/Cart</a>
+  <a href="#a6">06 Checkout/Payment</a>
+  <a href="#a7">07 Profile/Settings</a>
+  <a href="#a8">08 File Upload</a>
+  <a href="#a9">09 API Endpoints</a>
+  <a href="#a10">10 Admin Panel</a>
+  <a href="#a11">11 Comments/Reviews/Chat</a>
+  <a href="#a12">12 Notifications/Emails</a>
+</nav>
+
+<main>
+
+  <!-- 01 LOGIN -->
+  <div class="card" id="a1" style="--accent:var(--green)">
+    <span class="tag">AREA 01</span>
+    <h2>Login Page</h2>
+    <p class="desc">Yeh sabse pehla area hota hai jahan bug milte hain, kyunki yahan se hi poori security ki neev bnti hai. Login ka matlab hai — server yeh decide karta hai "tum kaun ho", isliye yahan galti hone ka matlab seedha kisi ka account.</p>
+    <div class="attacklist">
+      <h3>Yahan kya try karna hai</h3>
+      <ul>
+        <li><b>Brute force:</b> Password field pe Burp Intruder se common passwords ki list try karo — dekho kitni attempts allowed hain bina block hue.</li>
+        <li><b>SQL injection login bypass:</b> Username field me <code>' OR '1'='1</code> jaisa payload daal ke dekho login ho jaata hai kya bina sahi password ke.</li>
+        <li><b>User enumeration:</b> Galat username vs sahi username+galat password — response alag hai kya? Isse pata chalta hai kaunse accounts exist karte hain.</li>
+        <li><b>2FA bypass:</b> Login step complete hone ke baad seedha dashboard URL try karo — kya 2FA step skip ho jaata hai.</li>
+        <li><b>Response manipulation:</b> Burp se response me <code>"success":false</code> ko <code>true</code> me badal ke dekho.</li>
+      </ul>
+    </div>
+    <div class="steps">
+      <h3>Basic step-by-step (brute force ka example)</h3>
+      <ol>
+        <li>Login request Burp me capture karo (username + password fields).</li>
+        <li>Request ko Intruder me bhejo, password field payload mark karo.</li>
+        <li>Ek common-password wordlist load karo (rockyou.txt jaisi).</li>
+        <li>Attack chalao — response length/status alag jahan aaye, wahi sahi password hai.</li>
+        <li>Note karo — rate limit kab lagta hai, kitne attempts ke baad.</li>
+      </ol>
+    </div>
+    <div class="impact">💥 Impact: Account takeover, poore user-base ke passwords guess ho sakte hain.</div>
+    <div class="fix">🛡 Fix: Rate limiting + CAPTCHA + account lockout, generic error messages.</div>
+  </div>
+
+  <!-- 02 SIGNUP -->
+  <div class="card" id="a2" style="--accent:var(--cyan)">
+    <span class="tag">AREA 02</span>
+    <h2>Signup / Registration</h2>
+    <p class="desc">Naya account banane wali jagah — yahan pe backend model ke "extra" fields (jo form me dikhti nahi hain) test karna sabse zyada faayde ka hota hai.</p>
+    <div class="attacklist">
+      <h3>Yahan kya try karna hai</h3>
+      <ul>
+        <li><b>Mass assignment:</b> Registration request me <code>role</code>, <code>isAdmin</code>, <code>isVerified</code> jaisi extra fields manually add karo — dekho accept hoti hain kya.</li>
+        <li><b>Email verification bypass:</b> Verify-link click kiye bina hi account use karne ki koshish karo, ya email-verify API ko directly manipulate karo.</li>
+        <li><b>Duplicate account/race condition:</b> Ek hi email se ek saath (parallel) kayi registration requests bhejo — dekho multiple accounts ban jaate hain kya.</li>
+        <li><b>Weak password policy:</b> "123456" jaisa weak password accept hota hai kya check karo.</li>
+      </ul>
+    </div>
+    <div class="steps">
+      <h3>Basic step-by-step (mass assignment ka example)</h3>
+      <ol>
+        <li>Normal signup request capture karo (name, email, password fields).</li>
+        <li>API docs ya JS files se poora user-object schema pata karo.</li>
+        <li>Ek extra field add karo request body me — jaise <code>"role":"admin"</code>.</li>
+        <li>Account bana ke login karo, check karo kya wo field apply hui.</li>
+      </ol>
+    </div>
+    <div class="impact">💥 Impact: Bina verify kiye admin/verified account ban sakta hai.</div>
+    <div class="fix">🛡 Fix: Sirf expected fields hi backend model me bind karo (whitelist).</div>
+  </div>
+
+  <!-- 03 PASSWORD RESET -->
+  <div class="card" id="a3" style="--accent:var(--pink)">
+    <span class="tag">AREA 03</span>
+    <h2>Password Reset / Forgot Password</h2>
+    <p class="desc">Yeh area humne pehle hi ek poori alag file mein detail se cover kiya hai (Password Reset Poisoning Arsenal) — yahan sirf quick reminder hai.</p>
+    <div class="attacklist">
+      <h3>Yahan kya try karna hai (quick list)</h3>
+      <ul>
+        <li><b>Host header poisoning:</b> Reset link kis domain ka banta hai — Host header badal ke check karo.</li>
+        <li><b>Token predictability:</b> Kai baar reset request karke token ka pattern dekho.</li>
+        <li><b>Token reuse:</b> Ek baar use ho chuka token dobara try karo.</li>
+        <li><b>IDOR:</b> Apna token, victim ka email — dono mismatch karke bhejo.</li>
+      </ul>
+    </div>
+    <div class="impact">💥 Impact: Full account takeover.</div>
+    <div class="fix">🛡 Fix: Poori list <code>password-reset-poisoning-arsenal.html</code> file mein hai.</div>
+  </div>
+
+  <!-- 04 SEARCH -->
+  <div class="card" id="a4" style="--accent:var(--yellow)">
+    <span class="tag">AREA 04</span>
+    <h2>Search Bar</h2>
+    <p class="desc">Jahan bhi tum kuch type karke "search" karte ho, wo text kahin na kahin backend query ya page pe render hota hai — isliye search bar hamesha injection testing ke liye perfect jagah hai.</p>
+    <div class="attacklist">
+      <h3>Yahan kya try karna hai</h3>
+      <ul>
+        <li><b>Reflected XSS:</b> <code>&lt;script&gt;alert(1)&lt;/script&gt;</code> daal ke dekho search-results page pe execute hota hai kya.</li>
+        <li><b>SQL injection:</b> <code>'</code> daal ke error aata hai kya, ya behavior change hota hai.</li>
+        <li><b>SSTI:</b> <code>{{7*7}}</code> daal ke dekho "49" reflect hota hai kya.</li>
+        <li><b>Search-result IDOR:</b> Search suggestions/autocomplete me kahin doosre users ka private data to nahi dikh raha.</li>
+      </ul>
+    </div>
+    <div class="steps">
+      <h3>Basic step-by-step (XSS ka example)</h3>
+      <ol>
+        <li>Search box me simple payload daalo: <code>&lt;script&gt;alert(document.domain)&lt;/script&gt;</code>.</li>
+        <li>Search submit karo, result page ka source dekho — payload kaise reflect ho raha hai (encoded ya raw).</li>
+        <li>Agar filter block kar raha hai, alag payload variants try karo (case-change, event-handler based jaise <code>&lt;img src=x onerror=alert(1)&gt;</code>).</li>
+        <li>Alert popup aaye to XSS confirmed.</li>
+      </ol>
+    </div>
+    <div class="impact">💥 Impact: Session cookie theft, victim ke account pe actions perform karna.</div>
+    <div class="fix">🛡 Fix: Output encoding, Content-Security-Policy, parameterized queries.</div>
+  </div>
+
+  <!-- 05 SHOPPING/CART -->
+  <div class="card" id="a5" style="--accent:var(--purple)">
+    <span class="tag">AREA 05</span>
+    <h2>Shopping / Cart</h2>
+    <p class="desc">Product add karna, quantity badalna, coupon lagana — yeh sab "business logic" area hai. Yahan traditional bugs kam, lekin logic flaws (jo Burp scanner detect nahi karta) zyada milte hain.</p>
+    <div class="attacklist">
+      <h3>Yahan kya try karna hai</h3>
+      <ul>
+        <li><b>Negative quantity:</b> Cart me quantity <code>-1</code> daal ke total price kam/negative karne ki koshish karo.</li>
+        <li><b>Coupon abuse:</b> Ek hi coupon multiple baar apply karo, ya expired coupon try karo.</li>
+        <li><b>Cart IDOR:</b> Apne cart ID ko badal ke doosre user ka cart access karne ki koshish karo.</li>
+        <li><b>Price tampering:</b> Add-to-cart request me price field directly badal ke dekho (agar exist karti hai).</li>
+      </ul>
+    </div>
+    <div class="steps">
+      <h3>Basic step-by-step (negative quantity ka example)</h3>
+      <ol>
+        <li>Product cart me add karo, add-to-cart request Burp me capture karo.</li>
+        <li>Quantity field ko <code>-1</code> ya <code>-5</code> me badlo.</li>
+        <li>Request forward karo, cart total check karo.</li>
+        <li>Agar total negative/kam ho gaya — bug confirmed, checkout tak le jaake actual impact verify karo.</li>
+      </ol>
+    </div>
+    <div class="impact">💥 Impact: Free items, negative-price refund abuse, business ko financial loss.</div>
+    <div class="fix">🛡 Fix: Quantity ko positive-only validate karo, price hamesha server-side recalculate karo.</div>
+  </div>
+
+  <!-- 06 CHECKOUT/PAYMENT -->
+  <div class="card" id="a6" style="--accent:var(--red)">
+    <span class="tag">AREA 06</span>
+    <h2>Checkout / Payment</h2>
+    <p class="desc">Yeh sabse "high-impact" area hai — paison ka seedha connection hai, isliye companies yahan ke bugs ko high bounty dete hain.</p>
+    <div class="attacklist">
+      <h3>Yahan kya try karna hai</h3>
+      <ul>
+        <li><b>Price manipulation:</b> Checkout request me final amount field directly badal ke bhejo.</li>
+        <li><b>Currency swap:</b> Weak currency select karo jismein conversion galat ho raha ho.</li>
+        <li><b>Payment status bypass:</b> "payment pending" wali request ko directly "payment success" bana ke order-confirm endpoint try karo.</li>
+        <li><b>Order IDOR:</b> Order-confirmation/invoice page pe order ID badal ke doosre ka order dekho.</li>
+        <li><b>Race condition:</b> Ek hi wallet-balance/coupon se parallel multiple orders place karke double-spend try karo.</li>
+      </ul>
+    </div>
+    <div class="steps">
+      <h3>Basic step-by-step (payment status bypass ka example)</h3>
+      <ol>
+        <li>Checkout process start karo, payment gateway tak pahuncho lekin actual payment complete mat karo.</li>
+        <li>Order-confirm/verify-payment API request Burp me capture karo.</li>
+        <li>Status field ko <code>"pending"</code> se <code>"success"</code>/<code>"paid"</code> me manually badlo.</li>
+        <li>Request forward karo — order confirm ho gaya to bina payment ke item mil gaya.</li>
+      </ol>
+    </div>
+    <div class="impact">💥 Impact: Free orders, financial fraud, business ko direct monetary loss.</div>
+    <div class="fix">🛡 Fix: Payment status hamesha payment-gateway ke webhook/callback se server-to-server verify karo, client input pe kabhi trust mat karo.</div>
+  </div>
+
+  <!-- 07 PROFILE/SETTINGS -->
+  <div class="card" id="a7" style="--accent:var(--green)">
+    <span class="tag">AREA 07</span>
+    <h2>Profile / Account Settings</h2>
+    <p class="desc">Name, email, phone, address, notification-preference badalne wali jagah — yahan IDOR aur CSRF sabse common milte hain.</p>
+    <div class="attacklist">
+      <h3>Yahan kya try karna hai</h3>
+      <ul>
+        <li><b>IDOR:</b> Profile-update request me apna user_id doosre ki se replace karke dekho.</li>
+        <li><b>Email/phone change without re-auth:</b> Bina current-password confirm kiye email/phone change ho jaata hai kya.</li>
+        <li><b>CSRF:</b> Settings-change request me CSRF token hai ya nahi check karo, form banake auto-submit try karo.</li>
+        <li><b>Mass assignment:</b> Profile-update body me extra fields (role, verified status) add karo.</li>
+      </ul>
+    </div>
+    <div class="steps">
+      <h3>Basic step-by-step (email change without re-auth ka example)</h3>
+      <ol>
+        <li>Profile settings me email change karne ka option dhoondo.</li>
+        <li>Request capture karo — dekho current-password bhi maanga ja raha hai kya.</li>
+        <li>Agar nahi maang raha, koi bhi email daal ke change karo bina current password ke.</li>
+        <li>Confirm karo login ab naye email se ho raha hai.</li>
+      </ol>
+    </div>
+    <div class="impact">💥 Impact: Attacker apna email daal ke victim ke account ka control le sakta hai (phir password reset bhi khud kar sakta hai).</div>
+    <div class="fix">🛡 Fix: Sensitive changes (email/phone/password) ke liye current-password confirmation zaroori karo.</div>
+  </div>
+
+  <!-- 08 FILE UPLOAD -->
+  <div class="card" id="a8" style="--accent:var(--cyan)">
+    <span class="tag">AREA 08</span>
+    <h2>File Upload (Avatar, Documents, Attachments)</h2>
+    <p class="desc">Profile picture, KYC document, support-ticket attachment — jahan bhi file upload ka option dikhe, wahan file-type validation zaroor test karo.</p>
+    <div class="attacklist">
+      <h3>Yahan kya try karna hai</h3>
+      <ul>
+        <li><b>Malicious file upload:</b> <code>.php</code>/<code>.jsp</code> jaisi executable file upload karke RCE try karo.</li>
+        <li><b>Extension bypass:</b> Double extension (<code>shell.jpg.php</code>) ya null-byte tricks se filter bypass karo.</li>
+        <li><b>Path traversal in filename:</b> Filename me <code>../../</code> daal ke server ki kisi aur folder me file save karne ki koshish karo.</li>
+        <li><b>Uploaded file IDOR:</b> Uploaded file ka URL predictable hai to doosre users ki uploaded files access karo.</li>
+      </ul>
+    </div>
+    <div class="steps">
+      <h3>Basic step-by-step (malicious upload ka example)</h3>
+      <ol>
+        <li>Normal image upload karo, response me file ka URL/path note karo.</li>
+        <li>Ab ek file banao jisme malicious code ho lekin extension image ka rakho (<code>shell.php.jpg</code>).</li>
+        <li>Upload karke check karo file accept hoti hai ya nahi.</li>
+        <li>Agar accept ho jaaye, uploaded file ko directly browser me open karke execution check karo.</li>
+      </ol>
+    </div>
+    <div class="impact">💥 Impact: Server compromise (RCE) — sabse critical impact possible hai.</div>
+    <div class="fix">🛡 Fix: File-content-based validation, execution-disabled upload folder, image re-encoding.</div>
+  </div>
+
+  <!-- 09 API -->
+  <div class="card" id="a9" style="--accent:var(--pink)">
+    <span class="tag">AREA 09</span>
+    <h2>API Endpoints (Backend/Mobile App APIs)</h2>
+    <p class="desc">Website ke peeche jo APIs kaam karti hain (aur mobile app ki bhi), wahan security checks kabhi UI se kam hoti hain — kyunki developers sochte hain "yeh sirf app hi call karega." Iske liye humari alag detailed file bhi hai (API Security Arsenal).</p>
+    <div class="attacklist">
+      <h3>Yahan kya try karna hai (quick list)</h3>
+      <ul>
+        <li><b>BOLA/IDOR:</b> Object ID badal ke doosre ka data access karo.</li>
+        <li><b>BFLA:</b> Admin-only API endpoints normal user se directly call karo.</li>
+        <li><b>Excessive data:</b> Response poora JSON padho — extra hidden fields dhoondo.</li>
+        <li><b>Rate limit bypass:</b> Headers rotate karke limit todo.</li>
+      </ul>
+    </div>
+    <div class="impact">💥 Impact: Data leak se lekar privilege escalation tak, poori file: <code>api-security-arsenal.html</code>.</div>
+    <div class="fix">🛡 Fix: Har endpoint pe backend-level authorization + rate limiting.</div>
+  </div>
+
+  <!-- 10 ADMIN -->
+  <div class="card" id="a10" style="--accent:var(--yellow)">
+    <span class="tag">AREA 10</span>
+    <h2>Admin Panel</h2>
+    <p class="desc">Companies sochte hain admin panel "hidden" hai, isliye kabhi kam security lagate hain wahan. Lekin hidden hona security nahi hai.</p>
+    <div class="attacklist">
+      <h3>Yahan kya try karna hai</h3>
+      <ul>
+        <li><b>Forced browsing:</b> <code>/admin</code>, <code>/admin-panel</code>, <code>/backend</code> jaise common paths directly try karo.</li>
+        <li><b>Directory/endpoint discovery:</b> Ffuf/gobuster se hidden admin routes brute-force karo wordlist ke saath.</li>
+        <li><b>Role check missing:</b> Normal user token se admin API endpoints directly call karo.</li>
+        <li><b>Default credentials:</b> <code>admin:admin</code>, <code>admin:password</code> jaisi default login details try karo.</li>
+      </ul>
+    </div>
+    <div class="steps">
+      <h3>Basic step-by-step (forced browsing ka example)</h3>
+      <ol>
+        <li>Common admin-path wordlist collect karo (SecLists se milegi).</li>
+        <li>Ffuf/Burp Intruder se saare paths ek-ek karke try karo target domain pe.</li>
+        <li>200/302 response wale paths note karo (403/404 alag rakho).</li>
+        <li>Mile hue admin path pe login page dikhe to default creds ya password-spray try karo (authorized scope ke andar).</li>
+      </ol>
+    </div>
+    <div class="impact">💥 Impact: Poore application ka control mil sakta hai — highest severity.</div>
+    <div class="fix">🛡 Fix: Admin panel ko separate network/VPN se restrict karo, sirf hiding se security nahi banti.</div>
+  </div>
+
+  <!-- 11 COMMENTS/REVIEWS/CHAT -->
+  <div class="card" id="a11" style="--accent:var(--purple)">
+    <span class="tag">AREA 11</span>
+    <h2>Comments / Reviews / Chat / Messaging</h2>
+    <p class="desc">Jahan bhi ek user ka text doosre users ko dikhta hai (comment, review, chat message) — wahan stored XSS ka sabse bada chance hota hai, kyunki payload ek baar save hoke sabko dikhta hai.</p>
+    <div class="attacklist">
+      <h3>Yahan kya try karna hai</h3>
+      <ul>
+        <li><b>Stored XSS:</b> Comment/review me script payload daalo, dekho doosre users ke liye bhi execute hota hai.</li>
+        <li><b>Message IDOR:</b> Chat/message ID badal ke doosre users ki private conversation padhne ki koshish karo.</li>
+        <li><b>Rich-text/markdown injection:</b> Agar formatting allowed hai (bold, links), HTML injection try karo.</li>
+        <li><b>Spam/rate-limit bypass:</b> Ek hi review/comment baar-baar automated tarike se post karo.</li>
+      </ul>
+    </div>
+    <div class="steps">
+      <h3>Basic step-by-step (stored XSS ka example)</h3>
+      <ol>
+        <li>Comment/review box me <code>&lt;img src=x onerror=alert(document.cookie)&gt;</code> daalo.</li>
+        <li>Submit karo, apna hi browser refresh karke check karo popup aata hai ya nahi.</li>
+        <li>Agar apne account pe kaam kar gaya, doosre test account se check karo ki wahan bhi execute hota hai (yahi "stored" hone ka matlab hai).</li>
+        <li>Filter block kare to encoding tricks try karo (HTML entities, case-mix, event handlers alag-alag).</li>
+      </ol>
+    </div>
+    <div class="impact">💥 Impact: Har visitor ka session cookie/data steal ho sakta hai — mass impact, sirf ek victim nahi.</div>
+    <div class="fix">🛡 Fix: Output encoding + input sanitization + Content-Security-Policy.</div>
+  </div>
+
+  <!-- 12 NOTIFICATIONS -->
+  <div class="card" id="a12" style="--accent:var(--red)">
+    <span class="tag">AREA 12</span>
+    <h2>Notifications / Emails</h2>
+    <p class="desc">Email preferences, unsubscribe links, in-app notifications — chhota area lagta hai lekin yahan IDOR aur token-related bugs common hain.</p>
+    <div class="attacklist">
+      <h3>Yahan kya try karna hai</h3>
+      <ul>
+        <li><b>Unsubscribe IDOR:</b> Email unsubscribe link me user-identifying parameter badal ke doosre ko unsubscribe karne ki koshish karo.</li>
+        <li><b>Notification IDOR:</b> Notification ID badal ke doosre users ki private notification content padho.</li>
+        <li><b>Mark-as-read IDOR:</b> Doosre ke notification ko apne account se "read" mark karo — access check missing hai kya.</li>
+        <li><b>Email header injection:</b> "Send to" jaisi feature me extra headers inject karke spam relay try karo.</li>
+      </ul>
+    </div>
+    <div class="impact">💥 Impact: Private notification content leak, ya spam relay abuse.</div>
+    <div class="fix">🛡 Fix: Har notification/unsubscribe action pe ownership verify karo, signed tokens use karo.</div>
+  </div>
+
+</main>
+
+<footer>
+  <div class="box">
+    Ye reference sirf <strong style="color:var(--green)">authorized</strong> HackerOne / apne lab targets pe testing ke liye hai.<br>
+    Bina permission kisi bhi live system pe try karna cybercrime hai (IT Act 2000).<br><br>
+    Jab bhi naya target milega, is list se ek-ek area check karte jaana — koi bhi area miss mat karna.<br>
+    Recon Notes ka part — roadmap: Bug Bounty → Red Team → OSCP
+  </div>
+</footer>
+
+</body>
+</html>
