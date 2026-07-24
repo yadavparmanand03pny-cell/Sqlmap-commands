@@ -1,0 +1,125 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
+  <defs>
+    <radialGradient id="bgGlow" cx="50%" cy="40%" r="75%">
+      <stop offset="0%" stop-color="#0a1410"/>
+      <stop offset="45%" stop-color="#050b08"/>
+      <stop offset="100%" stop-color="#000000"/>
+    </radialGradient>
+    <linearGradient id="neonGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#00ff9d"/>
+      <stop offset="50%" stop-color="#00d4ff"/>
+      <stop offset="100%" stop-color="#00ff9d"/>
+    </linearGradient>
+    <linearGradient id="hexFade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#00ff9d" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#00d4ff" stop-opacity="0.9"/>
+    </linearGradient>
+    <radialGradient id="coreGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#00ff9d" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#00ff9d" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="glow" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="8" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glowSoft" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="3" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <rect width="1920" height="1080" fill="url(#bgGlow)"/>
+  <circle cx="960" cy="470" r="520" fill="url(#coreGlow)"/>
+
+  <!-- perspective grid floor -->
+  <g stroke="#0e2e1e" stroke-width="1" opacity="0.55">
+    <path d="M0,1080 L780,600 M240,1080 L840,600 M480,1080 L900,600 M720,1080 L960,600
+             M1920,1080 L1140,600 M1680,1080 L1080,600 M1440,1080 L1020,600 M1200,1080 L960,600"/>
+    <path d="M300,1080 L1620,1080 M420,980 L1500,980 M540,900 L1380,900 M630,840 L1290,840
+             M700,795 L1220,795 M760,760 L1160,760 M810,730 L1110,730 M850,705 L1070,705"/>
+  </g>
+
+  <!-- faint scattered code, dimmer than before -->
+  <g font-family="Consolas, monospace" font-size="14" fill="#144024" opacity="0.7">
+    <text x="50" y="55">$ subfinder -d target.com -silent</text>
+    <text x="50" y="80">[+] api.target.com  [200]</text>
+    <text x="50" y="105">[+] staging.target.com  [403]</text>
+    <text x="50" y="130">' UNION SELECT NULL,NULL,NULL--+</text>
+    <text x="50" y="155">[+] SQLi confirmed → id parameter</text>
+    <text x="1450" y="55">Authorization: Bearer eyJhbGci...</text>
+    <text x="1450" y="80">[!] IDOR: /api/user/1002/profile</text>
+    <text x="1450" y="105">[+] Reflected XSS in ?q= param</text>
+    <text x="1450" y="130">$ sqlmap -u target --batch --dump</text>
+    <text x="1450" y="155">200 OK  X-Powered-By: PHP/7.4</text>
+  </g>
+
+  <!-- Hexagon shield made of segments -->
+  <g transform="translate(960,430)" filter="url(#glow)">
+    <polygon points="0,-190 165,-95 165,95 0,190 -165,95 -165,-95"
+             fill="none" stroke="url(#neonGrad)" stroke-width="3"/>
+    <polygon points="0,-160 138,-80 138,80 0,160 -138,80 -138,-80"
+             fill="#020705" opacity="0.85" stroke="#0c3a24" stroke-width="1"/>
+
+    <!-- inner rotating-style rings -->
+    <circle r="205" fill="none" stroke="#0c4b2f" stroke-width="1" opacity="0.6"/>
+    <circle r="230" fill="none" stroke="#0c4b2f" stroke-width="1" stroke-dasharray="4 10" opacity="0.5"/>
+
+    <!-- bug / spider glyph, cleaner geometric style -->
+    <g filter="url(#glowSoft)">
+      <ellipse cx="0" cy="15" rx="46" ry="66" fill="none" stroke="url(#neonGrad)" stroke-width="3.5"/>
+      <circle cx="0" cy="-45" r="24" fill="none" stroke="url(#neonGrad)" stroke-width="3.5"/>
+      <line x1="0" y1="-49" x2="0" y2="81" stroke="url(#neonGrad)" stroke-width="1.5" opacity="0.8"/>
+      <line x1="-46" y1="-5" x2="46" y2="-5" stroke="url(#neonGrad)" stroke-width="1.5" opacity="0.6"/>
+      <line x1="-42" y1="30" x2="42" y2="30" stroke="url(#neonGrad)" stroke-width="1.5" opacity="0.6"/>
+
+      <g stroke="url(#neonGrad)" stroke-width="4.5" stroke-linecap="round">
+        <path d="M-42,-8 Q-80,-18 -100,-40" fill="none"/>
+        <path d="M-46,18 Q-92,18 -112,18" fill="none"/>
+        <path d="M-42,44 Q-80,54 -100,76" fill="none"/>
+        <path d="M42,-8 Q80,-18 100,-40" fill="none"/>
+        <path d="M46,18 Q92,18 112,18" fill="none"/>
+        <path d="M42,44 Q80,54 100,76" fill="none"/>
+      </g>
+      <line x1="-11" y1="-62" x2="-26" y2="-92" stroke="url(#neonGrad)" stroke-width="3.5" stroke-linecap="round"/>
+      <line x1="11" y1="-62" x2="26" y2="-92" stroke="url(#neonGrad)" stroke-width="3.5" stroke-linecap="round"/>
+      <circle cx="-26" cy="-92" r="5" fill="#00ff9d"/>
+      <circle cx="26" cy="-92" r="5" fill="#00ff9d"/>
+    </g>
+
+    <!-- crosshair lock-on -->
+    <g stroke="#00d4ff" stroke-width="1.5" opacity="0.75">
+      <line x1="-230" y1="0" x2="-250" y2="0"/>
+      <line x1="230" y1="0" x2="250" y2="0"/>
+      <line x1="0" y1="-230" x2="0" y2="-250"/>
+      <line x1="0" y1="230" x2="0" y2="250"/>
+    </g>
+    <g fill="#00d4ff" font-family="Consolas, monospace" font-size="12" opacity="0.85">
+      <text x="-248" y="-8" text-anchor="end">TARGET</text>
+      <text x="248" y="-8">LOCKED</text>
+    </g>
+  </g>
+
+  <!-- title block -->
+  <text x="960" y="770" font-family="Segoe UI, Arial" font-size="72" font-weight="800"
+        fill="url(#neonGrad)" text-anchor="middle" letter-spacing="6" filter="url(#glowSoft)">
+    BUG BOUNTY HUNTER
+  </text>
+  <line x1="620" y1="800" x2="1300" y2="800" stroke="url(#neonGrad)" stroke-width="1.5" opacity="0.8"/>
+  <text x="960" y="835" font-family="Consolas, monospace" font-size="22" fill="#7de8c0"
+        text-anchor="middle" letter-spacing="8" opacity="0.95">
+    RECON  ·  EXPLOIT  ·  REPORT  ·  REPEAT
+  </text>
+
+  <!-- corner HUD accents -->
+  <g stroke="#0c4b2f" stroke-width="2" opacity="0.8">
+    <path d="M40,40 L110,40 L40,40 L40,110" fill="none"/>
+    <path d="M1880,40 L1810,40 L1880,40 L1880,110" fill="none"/>
+    <path d="M40,1040 L110,1040 L40,1040 L40,970" fill="none"/>
+    <path d="M1880,1040 L1810,1040 L1880,1040 L1880,970" fill="none"/>
+  </g>
+
+  <text x="960" y="1010" font-family="Consolas, monospace" font-size="16" fill="#2c6b40"
+        text-anchor="middle" opacity="0.85" letter-spacing="1">
+    Har cheez mein poochho — Yeh kaise toot sakta hai?
+  </text>
+</svg>
