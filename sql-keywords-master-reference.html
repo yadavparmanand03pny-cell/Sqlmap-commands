@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<title>SQL Keywords &amp; Syntax — Complete Master Reference</title>
+<style>
+  :root{
+    --bg:#0d1117; --panel:#161b22; --border:#30363d;
+    --text:#c9d1d9; --muted:#8b949e;
+    --blue:#58a6ff; --green:#3fb950; --orange:#f0883e;
+    --red:#f85149; --purple:#bc8cff; --yellow:#e3b341;
+  }
+  *{box-sizing:border-box;}
+  body{background:var(--bg); color:var(--text); font-family:'Segoe UI',Arial,sans-serif; margin:0; padding:0;}
+  header{background:linear-gradient(135deg,#1f2937,#111827); padding:35px 30px; border-bottom:3px solid var(--green); text-align:center;}
+  header h1{color:var(--green); font-size:2em; margin:0;}
+  header p{color:var(--muted); margin-top:6px;}
+  .container{max-width:1100px; margin:0 auto; padding:25px 20px;}
+  .toc{background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:16px 22px; margin-bottom:25px;}
+  .toc a{color:var(--blue); text-decoration:none; margin-right:14px; font-size:0.85em; display:inline-block; padding:3px 0;}
+  section{background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:20px 25px; margin-bottom:22px;}
+  section h2{color:var(--orange); border-bottom:2px solid var(--border); padding-bottom:8px; font-size:1.3em; margin-top:0;}
+  table{width:100%; border-collapse:collapse; margin-top:10px;}
+  th, td{border:1px solid var(--border); padding:9px 12px; text-align:left; vertical-align:top;}
+  th{background:#1c2333; color:var(--yellow); font-size:0.85em;}
+  tr:nth-child(even){background:#141a24;}
+  td.kw{font-family:'Consolas','Courier New',monospace; color:var(--green); font-weight:bold; white-space:nowrap;}
+  td.ex{font-family:'Consolas','Courier New',monospace; color:var(--blue); font-size:0.85em;}
+  td.note{font-size:0.85em;}
+  footer{text-align:center; color:var(--muted); padding:25px; font-size:0.85em;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>📖 SQL Keywords &amp; Syntax — Complete Master Reference</h1>
+  <p>Har keyword/symbol ka matlab aur example, ek jagah</p>
+</header>
+
+<div class="container">
+
+  <div class="toc">
+    <a href="#core">Core Query</a>
+    <a href="#filter">Filtering</a>
+    <a href="#logic">Logical Operators</a>
+    <a href="#compare">Comparison Operators</a>
+    <a href="#join">Joins</a>
+    <a href="#agg">Aggregate Functions</a>
+    <a href="#string">String Functions</a>
+    <a href="#modify">Data Modification</a>
+    <a href="#structure">Table/Schema Commands</a>
+    <a href="#special">Special Symbols</a>
+    <a href="#subquery">Subqueries &amp; CTE</a>
+    <a href="#conditional">Conditional Logic</a>
+    <a href="#constraints">Constraints</a>
+    <a href="#transaction">Transactions</a>
+    <a href="#date">Date/Time Functions</a>
+    <a href="#numeric">Numeric Functions</a>
+    <a href="#views">Views, Index &amp; Misc</a>
+    <a href="#datatypes">Common Data Types</a>
+  </div>
+
+  <section id="core">
+    <h2>1. Core Query Keywords</h2>
+    <table>
+      <tr><th width="18%">Keyword</th><th width="40%">Example</th><th>Kya karta hai</th></tr>
+      <tr><td class="kw">SELECT</td><td class="ex">SELECT name FROM users;</td><td class="note">Data retrieve/read karne ke liye — kaunse columns chahiye batata hai</td></tr>
+      <tr><td class="kw">*</td><td class="ex">SELECT * FROM users;</td><td class="note">"Sabhi columns" ka symbol — pura row le aata hai</td></tr>
+      <tr><td class="kw">FROM</td><td class="ex">SELECT * FROM users;</td><td class="note">Kis table se data lena hai, wo specify karta hai</td></tr>
+      <tr><td class="kw">AS</td><td class="ex">SELECT name AS username FROM users;</td><td class="note">Column/table ko temporary alias (naya naam) deta hai</td></tr>
+      <tr><td class="kw">DISTINCT</td><td class="ex">SELECT DISTINCT city FROM users;</td><td class="note">Duplicate values hata ke sirf unique results deta hai</td></tr>
+      <tr><td class="kw">ORDER BY</td><td class="ex">SELECT * FROM users ORDER BY name;</td><td class="note">Result ko sort karta hai (default ascending)</td></tr>
+      <tr><td class="kw">ASC / DESC</td><td class="ex">ORDER BY age DESC;</td><td class="note">Sorting direction — ascending (chhota→bada) ya descending (bada→chhota)</td></tr>
+      <tr><td class="kw">LIMIT</td><td class="ex">SELECT * FROM users LIMIT 5;</td><td class="note">Sirf itne rows return karo (MySQL/PostgreSQL)</td></tr>
+      <tr><td class="kw">OFFSET</td><td class="ex">SELECT * FROM users LIMIT 5 OFFSET 10;</td><td class="note">Pehle N rows skip karo, phir LIMIT apply karo</td></tr>
+      <tr><td class="kw">TOP</td><td class="ex">SELECT TOP 5 * FROM users;</td><td class="note">MSSQL ka LIMIT jaisa — sirf itne rows do</td></tr>
+      <tr><td class="kw">FETCH</td><td class="ex">SELECT * FROM users FETCH FIRST 5 ROWS ONLY;</td><td class="note">Oracle/PostgreSQL — rows limit karne ka standard tarika</td></tr>
+      <tr><td class="kw">GROUP BY</td><td class="ex">SELECT city, COUNT(*) FROM users GROUP BY city;</td><td class="note">Rows ko groups mein combine karta hai (aggregate functions ke saath use hota hai)</td></tr>
+      <tr><td class="kw">HAVING</td><td class="ex">GROUP BY city HAVING COUNT(*)>5;</td><td class="note">GROUP BY ke baad filter lagane ke liye (WHERE groups pe kaam nahi karta)</td></tr>
+    </table>
+  </section>
+
+  <section id="filter">
+    <h2>2. Filtering &amp; Conditions</h2>
+    <table>
+      <tr><th width="18%">Keyword</th><th width="40%">Example</th><th>Kya karta hai</th></tr>
+      <tr><td class="kw">WHERE</td><td class="ex">SELECT * FROM users WHERE id=1;</td><td class="note">Condition lagata hai — sirf matching rows return honge</td></tr>
+      <tr><td class="kw">LIKE</td><td class="ex">WHERE name LIKE 'A%';</td><td class="note">Pattern matching — text ke andar dhundta hai</td></tr>
+      <tr><td class="kw">%</td><td class="ex">WHERE name LIKE '%raj%';</td><td class="note">LIKE ke saath wildcard — koi bhi/zero characters represent karta hai</td></tr>
+      <tr><td class="kw">_</td><td class="ex">WHERE name LIKE 'r_j';</td><td class="note">LIKE ke saath wildcard — exactly ek character represent karta hai</td></tr>
+      <tr><td class="kw">IN</td><td class="ex">WHERE city IN ('Delhi','Mumbai');</td><td class="note">Multiple possible values check karta hai (OR ka shortcut)</td></tr>
+      <tr><td class="kw">NOT IN</td><td class="ex">WHERE city NOT IN ('Delhi','Mumbai');</td><td class="note">In list ke alawa sab kuch match karta hai</td></tr>
+      <tr><td class="kw">BETWEEN</td><td class="ex">WHERE age BETWEEN 18 AND 30;</td><td class="note">Range ke andar values check karta hai (inclusive)</td></tr>
+      <tr><td class="kw">IS NULL</td><td class="ex">WHERE email IS NULL;</td><td class="note">Empty/missing value check karta hai</td></tr>
+      <tr><td class="kw">IS NOT NULL</td><td class="ex">WHERE email IS NOT NULL;</td><td class="note">Value present hai, empty nahi</td></tr>
+      <tr><td class="kw">EXISTS</td><td class="ex">WHERE EXISTS (SELECT 1 FROM orders WHERE user_id=users.id);</td><td class="note">Subquery ka result exist karta hai ya nahi check karta hai</td></tr>
+      <tr><td class="kw">ANY / SOME</td><td class="ex">WHERE age > ANY (SELECT age FROM users);</td><td class="note">Subquery ki kisi bhi ek value se condition true honi chahiye</td></tr>
+      <tr><td class="kw">ALL</td><td class="ex">WHERE age > ALL (SELECT age FROM users);</td><td class="note">Subquery ki sabhi values se condition true honi chahiye</td></tr>
+    </table>
+  </section>
+
+  <section id="logic">
+    <h2>3. Logical Operators</h2>
+    <table>
+      <tr><th width="18%">Keyword</th><th width="40%">Example</th><th>Kya karta hai</th></tr>
+      <tr><td class="kw">AND</td><td class="ex">WHERE age>18 AND city='Delhi';</td><td class="note">Dono conditions TRUE honi chahiye</td></tr>
+      <tr><td class="kw">OR</td><td class="ex">WHERE age>18 OR city='Delhi';</td><td class="note">Koi bhi ek condition TRUE ho jaye kaafi hai</td></tr>
+      <tr><td class="kw">NOT</td><td class="ex">WHERE NOT city='Delhi';</td><td class="note">Condition ko negate/reverse karta hai</td></tr>
+      <tr><td class="kw">&amp;&amp; / ||</td><td class="ex">WHERE age>18 && city='Delhi';</td><td class="note">MySQL mein AND/OR ka alternate syntax (filter bypass ke liye bhi useful)</td></tr>
+      <tr><td class="kw">XOR</td><td class="ex">WHERE (a=1) XOR (b=1);</td><td class="note">Exactly ek condition true honi chahiye, dono nahi</td></tr>
+    </table>
+  </section>
+
+  <section id="compare">
+    <h2>4. Comparison Operators</h2>
+    <table>
+      <tr><th width="18%">Symbol</th><th width="40%">Example</th><th>Kya karta hai</th></tr>
+      <tr><td class="kw">=</td><td class="ex">WHERE id=1;</td><td class="note">Equal to — value match karta hai</td></tr>
+      <tr><td class="kw">!= / &lt;&gt;</td><td class="ex">WHERE id!=1;</td><td class="note">Not equal to</td></tr>
+      <tr><td class="kw">&gt;</td><td class="ex">WHERE age&gt;18;</td><td class="note">Greater than</td></tr>
+      <tr><td class="kw">&lt;</td><td class="ex">WHERE age&lt;18;</td><td class="note">Less than</td></tr>
+      <tr><td class="kw">&gt;=</td><td class="ex">WHERE age&gt;=18;</td><td class="note">Greater than or equal to</td></tr>
+      <tr><td class="kw">&lt;=</td><td class="ex">WHERE age&lt;=18;</td><td class="note">Less than or equal to</td></tr>
+    </table>
+  </section>
+
+  <section id="join">
+    <h2>5. Joins (Multiple Tables Combine Karna)</h2>
+    <table>
+      <tr><th width="18%">Keyword</th><th width="40%">Example</th><th>Kya karta hai</th></tr>
+      <tr><td class="kw">JOIN / INNER JOIN</td><td class="ex">SELECT * FROM a JOIN b ON a.id=b.id;</td><td class="note">Dono tables mein matching rows hi return karta hai</td></tr>
+      <tr><td class="kw">LEFT JOIN</td><td class="ex">SELECT * FROM a LEFT JOIN b ON a.id=b.id;</td><td class="note">Left table ke sab rows + matching right rows (na milne pe NULL)</td></tr>
+      <tr><td class="kw">RIGHT JOIN</td><td class="ex">SELECT * FROM a RIGHT JOIN b ON a.id=b.id;</td><td class="note">Right table ke sab rows + matching left rows</td></tr>
+      <tr><td class="kw">FULL JOIN</td><td class="ex">SELECT * FROM a FULL JOIN b ON a.id=b.id;</td><td class="note">Dono tables ke sab rows, match ho ya na ho</td></tr>
+      <tr><td class="kw">SELF JOIN</td><td class="ex">SELECT a.name FROM users a JOIN users b ON a.mgr_id=b.id;</td><td class="note">Table ko khud ke saath join karna (hierarchical data ke liye)</td></tr>
+      <tr><td class="kw">CROSS JOIN</td><td class="ex">SELECT * FROM a CROSS JOIN b;</td><td class="note">Dono tables ka har combination (Cartesian product)</td></tr>
+      <tr><td class="kw">ON</td><td class="ex">JOIN b ON a.id=b.user_id;</td><td class="note">Join ki condition specify karta hai — kaunse columns match karne hain</td></tr>
+      <tr><td class="kw">USING</td><td class="ex">JOIN b USING(id);</td><td class="note">ON ka shortcut jab dono tables mein column ka naam same ho</td></tr>
+      <tr><td class="kw">UNION</td><td class="ex">SELECT a FROM t1 UNION SELECT b FROM t2;</td><td class="note">Do queries ke results ko combine karta hai, duplicates remove karke</td></tr>
+      <tr><td class="kw">UNION ALL</td><td class="ex">SELECT a FROM t1 UNION ALL SELECT b FROM t2;</td><td class="note">Same as UNION but duplicates bhi rakhta hai (faster)</td></tr>
+      <tr><td class="kw">INTERSECT</td><td class="ex">SELECT a FROM t1 INTERSECT SELECT b FROM t2;</td><td class="note">Sirf wo rows deta hai jo dono queries mein common hain</td></tr>
+      <tr><td class="kw">EXCEPT / MINUS</td><td class="ex">SELECT a FROM t1 EXCEPT SELECT b FROM t2;</td><td class="note">Pehli query ke rows jo dusri query mein nahi hain</td></tr>
+    </table>
+  </section>
+
+  <section id="agg">
+    <h2>6. Aggregate Functions</h2>
+    <table>
+      <tr><th width="18%">Function</th><th width="40%">Example</th><th>Kya karta hai</th></tr>
+      <tr><td class="kw">COUNT()</td><td class="ex">SELECT COUNT(*) FROM users;</td><td class="note">Total rows ginta hai</td></tr>
+      <tr><td class="kw">SUM()</td><td class="ex">SELECT SUM(price) FROM orders;</td><td class="note">Column ki values ka total nikalta hai</td></tr>
+      <tr><td class="kw">AVG()</td><td class="ex">SELECT AVG(age) FROM users;</td><td class="note">Average nikalta hai</td></tr>
+      <tr><td class="kw">MAX()</td><td class="ex">SELECT MAX(age) FROM users;</td><td class="note">Sabse badi value</td></tr>
+      <tr><td class="kw">MIN()</td><td class="ex">SELECT MIN(age) FROM users;</td><td class="note">Sabse choti value</td></tr>
+      <tr><td class="kw">GROUP_CONCAT()</td><td class="ex">SELECT GROUP_CONCAT(name) FROM users;</td><td class="note">MySQL — multiple rows ko ek single string mein jod deta hai</td></tr>
+      <tr><td class="kw">STRING_AGG()</td><td class="ex">SELECT STRING_AGG(name,',') FROM users;</td><td class="note">PostgreSQL/MSSQL version of GROUP_CONCAT</td></tr>
+      <tr><td class="kw">ROW_NUMBER()</td><td class="ex">SELECT ROW_NUMBER() OVER(ORDER BY id) FROM users;</td><td class="note">Har row ko sequential number deta hai (window function)</td></tr>
+      <tr><td class="kw">RANK() / DENSE_RANK()</td><td class="ex">SELECT RANK() OVER(ORDER BY score DESC) FROM users;</td><td class="note">Rows ko rank deta hai, ties handle karne ke different tarike se</td></tr>
+    </table>
+  </section>
+
+  <section id="string">
+    <h2>7. String &amp; Utility Functions</h2>
+    <table>
+      <tr><th width="18%">Function</th><th width="40%">Example</th><th>Kya karta hai</th></tr>
+      <tr><td class="kw">CONCAT()</td><td class="ex">SELECT CONCAT(fname,' ',lname) FROM users;</td><td class="note">Do ya zyada strings ko jodta hai</td></tr>
+      <tr><td class="kw">SUBSTRING()</td><td class="ex">SELECT SUBSTRING(name,1,3) FROM users;</td><td class="note">String ka ek part (character range) nikalta hai</td></tr>
+      <tr><td class="kw">LENGTH() / LEN()</td><td class="ex">SELECT LENGTH(password) FROM users;</td><td class="note">String ki lambai (character count) batata hai</td></tr>
+      <tr><td class="kw">UPPER() / LOWER()</td><td class="ex">SELECT UPPER(name) FROM users;</td><td class="note">Text ko uppercase/lowercase mein convert karta hai</td></tr>
+      <tr><td class="kw">TRIM()</td><td class="ex">SELECT TRIM(' text ');</td><td class="note">Extra spaces (start/end se) hata deta hai</td></tr>
+      <tr><td class="kw">REPLACE()</td><td class="ex">SELECT REPLACE(name,'a','@');</td><td class="note">String ke andar ek part ko dusre se replace karta hai</td></tr>
+      <tr><td class="kw">ASCII()</td><td class="ex">SELECT ASCII('A');</td><td class="note">Character ka ASCII numeric value deta hai (blind SQLi mein useful)</td></tr>
+      <tr><td class="kw">CHAR()</td><td class="ex">SELECT CHAR(65);</td><td class="note">ASCII number se wapas character banata hai</td></tr>
+      <tr><td class="kw">REVERSE()</td><td class="ex">SELECT REVERSE(name);</td><td class="note">String ko ulta kar deta hai</td></tr>
+      <tr><td class="kw">database() / DB_NAME()</td><td class="ex">SELECT database();</td><td class="note">Current database ka naam batata hai</td></tr>
+      <tr><td class="kw">user() / current_user</td><td class="ex">SELECT user();</td><td class="note">Current logged-in DB user batata hai</td></tr>
+      <tr><td class="kw">@@version</td><td class="ex">SELECT @@version;</td><td class="note">DB engine ka version batata hai</td></tr>
+    </table>
+  </section>
+
+  <section id="modify">
+    <h2>8. Data Modification</h2>
+    <table>
+      <tr><th width="18%">Keyword</th><th width="40%">Example</th><th>Kya karta hai</th></tr>
+      <tr><td class="kw">INSERT INTO</td><td class="ex">INSERT INTO users(name) VALUES('Karan');</td><td class="note">Naya row/record add karta hai</td></tr>
+      <tr><td class="kw">VALUES</td><td class="ex">INSERT INTO users(name) VALUES('Karan');</td><td class="note">INSERT ke saath actual data specify karta hai</td></tr>
+      <tr><td class="kw">UPDATE</td><td class="ex">UPDATE users SET name='Karan' WHERE id=1;</td><td class="note">Existing data ko modify karta hai</td></tr>
+      <tr><td class="kw">SET</td><td class="ex">UPDATE users SET age=25;</td><td class="note">UPDATE ke saath — kaunsa column kya value lega batata hai</td></tr>
+      <tr><td class="kw">DELETE FROM</td><td class="ex">DELETE FROM users WHERE id=1;</td><td class="note">Row(s) ko table se remove karta hai</td></tr>
+      <tr><td class="kw">MERGE / UPSERT</td><td class="ex">MERGE INTO users USING ... WHEN MATCHED ...</td><td class="note">Insert ya Update ek hi statement mein (agar exist kare to update, warna insert)</td></tr>
+    </table>
+  </section>
+
+  <section id="structure">
+    <h2>9. Table/Schema Commands</h2>
+    <table>
+      <tr><th width="18%">Keyword</th><th width="40%">Example</th><th>Kya karta hai</th></tr>
+      <tr><td class="kw">CREATE TABLE</td><td class="ex">CREATE TABLE users (id INT, name VARCHAR(50));</td><td class="note">Naya table structure banata hai</td></tr>
+      <tr><td class="kw">ALTER TABLE</td><td class="ex">ALTER TABLE users ADD email VARCHAR(100);</td><td class="note">Existing table mein column add/modify karta hai</td></tr>
+      <tr><td class="kw">DROP TABLE</td><td class="ex">DROP TABLE users;</td><td class="note">Pura table hi delete kar deta hai (destructive)</td></tr>
+      <tr><td class="kw">TRUNCATE TABLE</td><td class="ex">TRUNCATE TABLE users;</td><td class="note">Table ka structure rakhta hai, sirf sara data delete karta hai</td></tr>
+      <tr><td class="kw">RENAME TABLE</td><td class="ex">RENAME TABLE old_name TO new_name;</td><td class="note">Table ka naam badalta hai</td></tr>
+      <tr><td class="kw">information_schema</td><td class="ex">SELECT * FROM information_schema.tables;</td><td class="note">System database jisme sabhi tables/columns ki metadata store hoti hai</td></tr>
+      <tr><td class="kw">PRIMARY KEY</td><td class="ex">id INT PRIMARY KEY;</td><td class="note">Column ko unique identifier banata hai, har row alag hoti hai</td></tr>
+      <tr><td class="kw">FOREIGN KEY</td><td class="ex">FOREIGN KEY(user_id) REFERENCES users(id);</td><td class="note">Ek table ka column dusre table se link karta hai</td></tr>
+    </table>
+  </section>
+
+  <section id="special">
+    <h2>10. Special Symbols / SQLi-Relevant</h2>
+    <table>
+      <tr><th width="18%">Symbol</th><th width="40%">Example</th><th>Kya karta hai</th></tr>
+      <tr><td class="kw">'</td><td class="ex">WHERE name='karan';</td><td class="note">String value ko quote karta hai — SQLi testing mein sabse pehla test character</td></tr>
+      <tr><td class="kw">--</td><td class="ex">SELECT * FROM users; -- comment</td><td class="note">Comment — is symbol ke baad ka pura query ignore ho jata hai</td></tr>
+      <tr><td class="kw">#</td><td class="ex">SELECT * FROM users; # comment</td><td class="note">MySQL-specific comment style</td></tr>
+      <tr><td class="kw">/* */</td><td class="ex">SELECT /* comment */ * FROM users;</td><td class="note">Multi-line/inline comment — WAF bypass mein bhi use hota hai</td></tr>
+      <tr><td class="kw">;</td><td class="ex">SELECT 1; SELECT 2;</td><td class="note">Statement separator — stacked queries mein multiple statements chalane ke liye</td></tr>
+      <tr><td class="kw">NULL</td><td class="ex">UNION SELECT NULL,NULL;</td><td class="note">"Koi value nahi" — column count test karte waqt safe placeholder</td></tr>
+      <tr><td class="kw">0x...</td><td class="ex">SELECT 0x61646d696e;</td><td class="note">Hexadecimal literal — quote-filter bypass mein use hota hai</td></tr>
+      <tr><td class="kw">@</td><td class="ex">SET @x = 5; SELECT @x;</td><td class="note">User-defined variable declare karne ke liye</td></tr>
+      <tr><td class="kw">?</td><td class="ex">SELECT * FROM users WHERE id=?;</td><td class="note">Parameterized query placeholder — safe coding practice, SQLi se bachata hai</td></tr>
+    </table>
+  </section>
+
+  <section id="subquery">
+    <h2>11. Subqueries &amp; CTE</h2>
+    <table>
+      <tr><th width="18%">Keyword</th><th width="40%">Example</th><th>Kya karta hai</th></tr>
+      <tr><td class="kw">Subquery</td><td class="ex">SELECT * FROM users WHERE id=(SELECT MAX(id) FROM users);</td><td class="note">Ek query ke andar dusri query — inner query pehle execute hoti hai</td></tr>
+      <tr><td class="kw">WITH (CTE)</td><td class="ex">WITH temp AS (SELECT * FROM users) SELECT * FROM temp;</td><td class="note">Common Table Expression — temporary named result set jo query ke andar reuse hota hai</td></tr>
+      <tr><td class="kw">Correlated Subquery</td><td class="ex">SELECT name FROM users u WHERE EXISTS (SELECT 1 FROM orders WHERE user_id=u.id);</td><td class="note">Inner query outer query ke columns reference karti hai — row-by-row evaluate hoti hai</td></tr>
+    </table>
+  </section>
+
+  <section id="conditional">
+    <h2>12. Conditional Logic</h2>
+    <table>
+      <tr><th width="18%">Keyword</th><th width="40%">Example</th><th>Kya karta hai</th></tr>
+      <tr><td class="kw">CASE WHEN</td><td class="ex">SELECT CASE WHEN age>18 THEN 'Adult' ELSE 'Minor' END FROM users;</td><td class="note">If-else jaisa logic — condition ke hisaab se alag value return karta hai</td></tr>
+      <tr><td class="kw">IF()</td><td class="ex">SELECT IF(age>18,'Adult','Minor') FROM users;</td><td class="note">MySQL ka shorthand conditional function</td></tr>
+      <tr><td class="kw">IFNULL() / ISNULL()</td><td class="ex">SELECT IFNULL(email,'N/A') FROM users;</td><td class="note">Agar value NULL ho to default value return karta hai</td></tr>
+      <tr><td class="kw">COALESCE()</td><td class="ex">SELECT COALESCE(email,phone,'N/A') FROM users;</td><td class="note">Multiple columns mein se pehli non-NULL value return karta hai</td></tr>
+      <tr><td class="kw">NULLIF()</td><td class="ex">SELECT NULLIF(a,b);</td><td class="note">Agar dono equal hain to NULL return karta hai, warna pehli value</td></tr>
+    </table>
+  </section>
+
+  <section id="constraints">
+    <h2>13. Constraints</h2>
+    <table>
+      <tr><th width="18%">Keyword</th><th width="40%">Example</th><th>Kya karta hai</th></tr>
+      <tr><td class="kw">NOT NULL</td><td class="ex">name VARCHAR(50) NOT NULL;</td><td class="note">Column mein empty value allow nahi karta</td></tr>
+      <tr><td class="kw">UNIQUE</td><td class="ex">email VARCHAR(100) UNIQUE;</td><td class="note">Duplicate values allow nahi karta us column mein</td></tr>
+      <tr><td class="kw">DEFAULT</td><td class="ex">status VARCHAR(10) DEFAULT 'active';</td><td class="note">Value na di jaye to ye default value set ho jayegi</td></tr>
+      <tr><td class="kw">CHECK</td><td class="ex">age INT CHECK (age>=18);</td><td class="note">Custom condition enforce karta hai column pe</td></tr>
+      <tr><td class="kw">AUTO_INCREMENT / SERIAL</td><td class="ex">id INT AUTO_INCREMENT PRIMARY KEY;</td><td class="note">Har naye row ke saath number automatically badhta jata hai</td></tr>
+    </table>
+  </section>
+
+  <section id="transaction">
+    <h2>14. Transactions</h2>
+    <table>
+      <tr><th width="18%">Keyword</th><th width="40%">Example</th><th>Kya karta hai</th></tr>
+      <tr><td class="kw">BEGIN / START TRANSACTION</td><td class="ex">BEGIN;</td><td class="note">Transaction shuru karta hai — multiple statements ek group mein</td></tr>
+      <tr><td class="kw">COMMIT</td><td class="ex">COMMIT;</td><td class="note">Transaction ke sab changes permanently save kar deta hai</td></tr>
+      <tr><td class="kw">ROLLBACK</td><td class="ex">ROLLBACK;</td><td class="note">Transaction ke sab changes undo kar deta hai (agar commit nahi hua)</td></tr>
+      <tr><td class="kw">SAVEPOINT</td><td class="ex">SAVEPOINT sp1;</td><td class="note">Transaction ke andar ek checkpoint banata hai — partial rollback ke liye</td></tr>
+    </table>
+  </section>
+
+  <section id="date">
+    <h2>15. Date/Time Functions</h2>
+    <table>
+      <tr><th width="18%">Function</th><th width="40%">Example</th><th>Kya karta hai</th></tr>
+      <tr><td class="kw">NOW() / GETDATE()</td><td class="ex">SELECT NOW();</td><td class="note">Current date aur time deta hai</td></tr>
+      <tr><td class="kw">CURDATE() / CURRENT_DATE</td><td class="ex">SELECT CURDATE();</td><td class="note">Sirf current date deta hai (time nahi)</td></tr>
+      <tr><td class="kw">DATE_ADD() / DATEADD()</td><td class="ex">SELECT DATE_ADD(NOW(), INTERVAL 7 DAY);</td><td class="note">Date mein din/mahine/saal jodta hai</td></tr>
+      <tr><td class="kw">DATEDIFF()</td><td class="ex">SELECT DATEDIFF('2026-01-01','2025-01-01');</td><td class="note">Do dates ke beech ka difference nikalta hai</td></tr>
+      <tr><td class="kw">YEAR() / MONTH() / DAY()</td><td class="ex">SELECT YEAR(dob) FROM users;</td><td class="note">Date se specific part (saal/mahina/din) extract karta hai</td></tr>
+      <tr><td class="kw">SLEEP()</td><td class="ex">SELECT SLEEP(5);</td><td class="note">MySQL — response ko N seconds delay karta hai (time-based blind SQLi mein use hota hai)</td></tr>
+      <tr><td class="kw">WAITFOR DELAY</td><td class="ex">WAITFOR DELAY '0:0:5';</td><td class="note">MSSQL version of SLEEP()</td></tr>
+      <tr><td class="kw">pg_sleep()</td><td class="ex">SELECT pg_sleep(5);</td><td class="note">PostgreSQL version of SLEEP()</td></tr>
+    </table>
+  </section>
+
+  <section id="numeric">
+    <h2>16. Numeric Functions</h2>
+    <table>
+      <tr><th width="18%">Function</th><th width="40%">Example</th><th>Kya karta hai</th></tr>
+      <tr><td class="kw">ROUND()</td><td class="ex">SELECT ROUND(3.567,2);</td><td class="note">Number ko decimal places tak round karta hai</td></tr>
+      <tr><td class="kw">FLOOR()</td><td class="ex">SELECT FLOOR(3.9);</td><td class="note">Neeche wala poora number deta hai (3.9 → 3)</td></tr>
+      <tr><td class="kw">CEIL() / CEILING()</td><td class="ex">SELECT CEIL(3.1);</td><td class="note">Upar wala poora number deta hai (3.1 → 4)</td></tr>
+      <tr><td class="kw">ABS()</td><td class="ex">SELECT ABS(-5);</td><td class="note">Negative number ko positive bana deta hai</td></tr>
+      <tr><td class="kw">RAND() / RANDOM()</td><td class="ex">SELECT RAND();</td><td class="note">Random number generate karta hai</td></tr>
+      <tr><td class="kw">MOD()</td><td class="ex">SELECT MOD(10,3);</td><td class="note">Division ka remainder deta hai (10%3 = 1)</td></tr>
+      <tr><td class="kw">CAST() / CONVERT()</td><td class="ex">SELECT CAST(age AS VARCHAR);</td><td class="note">Data type ko dusre type mein convert karta hai</td></tr>
+    </table>
+  </section>
+
+  <section id="views">
+    <h2>17. Views, Index &amp; Misc</h2>
+    <table>
+      <tr><th width="18%">Keyword</th><th width="40%">Example</th><th>Kya karta hai</th></tr>
+      <tr><td class="kw">CREATE VIEW</td><td class="ex">CREATE VIEW active_users AS SELECT * FROM users WHERE status='active';</td><td class="note">Virtual table banata hai jo ek saved query hoti hai</td></tr>
+      <tr><td class="kw">CREATE INDEX</td><td class="ex">CREATE INDEX idx_name ON users(name);</td><td class="note">Query speed badhane ke liye column pe index banata hai</td></tr>
+      <tr><td class="kw">EXPLAIN</td><td class="ex">EXPLAIN SELECT * FROM users;</td><td class="note">Query kaise execute hogi (query plan) dikhata hai — performance/blind testing dono mein useful</td></tr>
+      <tr><td class="kw">GRANT / REVOKE</td><td class="ex">GRANT SELECT ON users TO 'app_user';</td><td class="note">Database user ko permissions deta/hatata hai</td></tr>
+      <tr><td class="kw">SHOW TABLES</td><td class="ex">SHOW TABLES;</td><td class="note">MySQL — current DB ke sabhi tables list karta hai</td></tr>
+      <tr><td class="kw">DESCRIBE / DESC</td><td class="ex">DESCRIBE users;</td><td class="note">Table ka structure (columns, types) dikhata hai</td></tr>
+    </table>
+  </section>
+
+  <section id="datatypes">
+    <h2>18. Common Data Types</h2>
+    <table>
+      <tr><th width="18%">Type</th><th width="40%">Example</th><th>Kya store karta hai</th></tr>
+      <tr><td class="kw">INT / INTEGER</td><td class="ex">age INT;</td><td class="note">Whole numbers (decimal nahi)</td></tr>
+      <tr><td class="kw">VARCHAR(n)</td><td class="ex">name VARCHAR(50);</td><td class="note">Variable-length text, max n characters tak</td></tr>
+      <tr><td class="kw">TEXT</td><td class="ex">bio TEXT;</td><td class="note">Bade text blocks (limit se zyada text)</td></tr>
+      <tr><td class="kw">DATE / DATETIME</td><td class="ex">dob DATE;</td><td class="note">Date, ya date+time dono</td></tr>
+      <tr><td class="kw">BOOLEAN</td><td class="ex">is_active BOOLEAN;</td><td class="note">TRUE/FALSE value</td></tr>
+      <tr><td class="kw">DECIMAL(p,s)</td><td class="ex">price DECIMAL(10,2);</td><td class="note">Exact decimal numbers (money ke liye best, precision ke saath)</td></tr>
+      <tr><td class="kw">FLOAT</td><td class="ex">rating FLOAT;</td><td class="note">Approximate decimal numbers</td></tr>
+      <tr><td class="kw">BLOB</td><td class="ex">image BLOB;</td><td class="note">Binary data (images, files) store karta hai</td></tr>
+    </table>
+  </section>
+
+</div>
+
+<footer>
+  Made for Karan's SQL Foundation → Bug Bounty journey | Har cheez mein poochho — Yeh kaise toot sakta hai?
+</footer>
+
+</body>
+</html>
