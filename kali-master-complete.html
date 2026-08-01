@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<title>Kali Linux — Complete Reference: Symbols + Commands</title>
+<style>
+  :root{--bg:#0b0f14;--panel:#111820;--border:#1f2b38;--text:#c9d6e3;--muted:#7d93a8;--accent:#4fd1ff;}
+  body{background:var(--bg);color:var(--text);font-family:'Segoe UI',Roboto,sans-serif;margin:0;padding:0 0 60px;}
+  header{background:linear-gradient(135deg,#0b0f14,#141c26);padding:32px 24px;border-bottom:2px solid var(--border);text-align:center;}
+  header h1{margin:0;color:#fff;font-size:24px;}
+  header p{color:var(--muted);margin-top:8px;}
+  .megasection{max-width:1050px;margin:26px auto;text-align:center;}
+  .megasection h1{color:#facc15;font-size:28px;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px;}
+  .nav{max-width:1050px;margin:20px auto;text-align:center;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px;}
+  .nav a{color:var(--accent);text-decoration:none;margin:4px 8px;font-size:12.5px;font-weight:600;border:1px solid var(--border);padding:4px 9px;border-radius:6px;display:inline-block;}
+  .nav a:hover{border-color:var(--accent);}
+  .catlabel{max-width:1050px;margin:30px auto 6px;color:#f472b6;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding-left:6px;}
+  .section{max-width:1050px;margin:10px auto;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:20px 26px;}
+  .section h2{color:var(--accent);margin-top:0;font-size:22px;border-bottom:2px solid var(--border);padding-bottom:8px;}
+  .flag-row{margin:16px 0;padding:12px 0;border-bottom:1px solid var(--border);}
+  .flag-row:last-child{border-bottom:none;}
+  .flag-name{color:#facc15;font-family:Consolas,monospace;font-weight:bold;font-size:15px;}
+  .flag-desc{color:var(--text);font-size:14px;margin:4px 0 8px;}
+  .term{background:#0a0e13;border-radius:8px;padding:12px 16px;font-family:Consolas,monospace;font-size:13.5px;}
+  .prompt{color:#4fd1ff;}
+  .cmd{color:#fff;}
+  .out{color:#7ee787;}
+  .match{color:#ff6b6b;font-weight:bold;}
+  .warn{color:#f87171;font-size:12.5px;margin-top:4px;}
+</style>
+</head>
+<body>
+<header>
+  <h1>🅺🅰️🅻🅸 — COMPLETE REFERENCE</h1>
+  <p>Section 1: Shell Symbols & Operators | Section 2: Commands (Networking, Files, Text, System, Security)</p>
+</header>
+
+<!-- ===================== SECTION 1 ===================== -->
+<div class="megasection"><h1>📌 SECTION 1 — SHELL SYMBOLS & OPERATORS</h1></div>
+
+<div class="nav">
+  <a href="#redirect">Redirection</a><a href="#logic">Logical Operators</a><a href="#wildcard">Wildcards</a>
+  <a href="#special">Special Chars</a><a href="#quote">Quoting</a><a href="#keys">Keyboard Shortcuts</a>
+</div>
+
+<div class="section" id="redirect">
+<h2>🔀 Redirection Symbols</h2>
+
+<div class="flag-row">
+  <div class="flag-name">|  (pipe)</div>
+  <div class="flag-desc">Ek command ka output doosre command ka input banata hai — chaining ke liye sabse important symbol</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd">cat file.txt | grep "error" | wc -l</span></div>
+</div>
+
+<div class="flag-row">
+  <div class="flag-name">&gt;</div>
+  <div class="flag-desc">Output ko file mein save karta hai — agar file already exist karti hai to overwrite (purana content mit jaata hai)</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd">nmap target.com > scan.txt</span></div>
+</div>
+
+<div class="flag-row">
+  <div class="flag-name">&gt;&gt;</div>
+  <div class="flag-desc">Output ko file ke end mein append karta hai — purana content safe rehta hai</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd">echo "new log entry" >> log.txt</span></div>
+</div>
+
+<div class="flag-row">
+  <div class="flag-name">&lt;</div>
+  <div class="flag-desc">File ko input ke roop mein command ko deta hai</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd">mysql -u root -p < backup.sql</span></div>
+</div>
+
+<div class="flag-row">
+  <div class="flag-name">2&gt;</div>
+  <div class="flag-desc">Sirf error messages (stderr) ko file mein redirect karta hai, normal output nahi</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd">find / -name "*.conf" 2> errors.txt</span></div>
+</div>
+
+<div class="flag-row">
+  <div class="flag-name">2&gt;&amp;1</div>
+  <div class="flag-desc">Errors (stderr) ko normal output (stdout) ke saath combine kar deta hai — dono ek hi jagah</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd">command > output.txt 2>&1</span></div>
+</div>
+
+<div class="flag-row">
+  <div class="flag-name">&gt; /dev/null 2&gt;&amp;1</div>
+  <div class="flag-desc">Poora output (normal + error) discard/hide kar deta hai — scripts mein silent run karne ke liye</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd">ping -c 1 host > /dev/null 2>&1</span></div>
+</div>
+
+<div class="flag-row">
+  <div class="flag-name">tee</div>
+  <div class="flag-desc">Symbol nahi command hai, lekin redirection ke saath use hota hai — screen pe bhi dikhata hai, file mein bhi save karta hai</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd">nmap target.com | tee scan.txt</span></div>
+</div>
+
+</div>
+
+<div class="section" id="logic">
+<h2>🔗 Logical / Chaining Operators</h2>
+
+<div class="flag-row">
+  <div class="flag-name">&amp;&amp;</div>
+  <div class="flag-desc">AND — doosra command sirf tab chalega jab pehla SUCCESS ho (exit code 0)</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd">apt update && apt upgrade</span><br>
+  <span class="out">(upgrade tabhi chalega jab update successful ho)</span></div>
+</div>
+
+<div class="flag-row">
+  <div class="flag-name">||</div>
+  <div class="flag-desc">OR — doosra command sirf tab chalega jab pehla FAIL ho jaaye</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd">ping -c1 host || echo "host down"</span></div>
+</div>
+
+<div class="flag-row">
+  <div class="flag-name">;</div>
+  <div class="flag-desc">Sequential — dono commands chalenge, chahe pehla success ho ya fail (bina condition check kiye)</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd">cd /tmp; ls</span></div>
+</div>
+
+<div class="flag-row">
+  <div class="flag-name">&amp;</div>
+  <div class="flag-desc">Command ko background mein run karta hai, terminal turant free ho jaata hai</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd">nmap -p- target.com &</span></div>
+</div>
+
+</div>
+
+<div class="section" id="wildcard">
+<h2>🃏 Wildcards / Pattern Matching</h2>
+
+<div class="flag-row">
+  <div class="flag-name">*</div>
+  <div class="flag-desc">Koi bhi characters (zero ya usse zyada) match karta hai</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd">rm *.txt</span><br><span class="out">(saari .txt files delete)</span></div>
+</div>
+
+<div class="flag-row">
+  <div class="flag-name">?</div>
+  <div class="flag-desc">Exactly ek single character match karta hai</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd">ls file?.txt</span><br><span class="out">(file1.txt, file2.txt match — file10.txt nahi)</span></div>
+</div>
+
+<div class="flag-row">
+  <div class="flag-name">[abc]</div>
+  <div class="flag-desc">Bracket ke andar diye gaye characters mein se koi ek match karta hai</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd">ls file[123].txt</span><br><span class="out">(file1.txt, file2.txt, file3.txt)</span></div>
+</div>
+
+<div class="flag-row">
+  <div class="flag-name">[a-z] / [0-9]</div>
+  <div class="flag-desc">Range specify karta hai — a se z tak, ya 0 se 9 tak koi bhi ek character</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd">ls report[0-9].csv</span></div>
+</div>
+
+<div class="flag-row">
+  <div class="flag-name">{a,b,c}</div>
+  <div class="flag-desc">Brace expansion — multiple exact options ek saath specify karta hai</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd">mkdir {images,videos,docs}</span><br><span class="out">(3 folders ek command se ban jaate hain)</span></div>
+</div>
+
+</div>
+
+<div class="section" id="special">
+<h2>⚡ Special Characters</h2>
+
+<div class="flag-row">
+  <div class="flag-name">~</div>
+  <div class="flag-desc">Current user ki home directory (jaise /home/kali)</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd">cd ~</span></div>
+</div>
+
+<div class="flag-row">
+  <div class="flag-name">.</div>
+  <div class="flag-desc">Current directory ko refer karta hai</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd">./script.sh</span><br><span class="out">(current directory ki script chalao)</span></div>
+</div>
+
+<div class="flag-row">
+  <div class="flag-name">..</div>
+  <div class="flag-desc">Parent (ek level upar) directory ko refer karta hai</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd">cd ..</span></div>
+</div>
+
+<div class="flag-row">
+  <div class="flag-name">-  (cd -)</div>
+  <div class="flag-desc">Pichli directory mein wapas le jaata hai (jahan se aaye the)</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd">cd -</span></div>
+</div>
+
+<div class="flag-row">
+  <div class="flag-name">$VAR / $(cmd)</div>
+  <div class="flag-desc">$ variable ki value nikalta hai, ya $(command) command ka output nikal ke use karta hai</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd">echo "Today is $(date)"</span></div>
+</div>
+
+<div class="flag-row">
+  <div class="flag-name">` ` (backticks)</div>
+  <div class="flag-desc">$(...) ka purana style — command substitution ke liye, same kaam karta hai</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd">echo "IP: `hostname -I`"</span></div>
+</div>
+
+<div class="flag-row">
+  <div class="flag-name">$?</div>
+  <div class="flag-desc">Pichle command ka exit status dikhata hai — 0 = success, koi bhi aur number = fail</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd">ls file.txt; echo $?</span></div>
+</div>
+
+<div class="flag-row">
+  <div class="flag-name">#</div>
+  <div class="flag-desc">Comment — iske baad ki line ignore ho jaati hai (scripts likhte waqt notes ke liye)</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd"># ye ek comment hai, execute nahi hoga</span></div>
+</div>
+
+<div class="flag-row">
+  <div class="flag-name">\ (backslash)</div>
+  <div class="flag-desc">Escape character — special symbol ko literal treat karwane ke liye, ya line continue karne ke liye</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd">echo "Price: \$50"</span><br><span class="out">Price: $50</span></div>
+</div>
+
+<div class="flag-row">
+  <div class="flag-name">!</div>
+  <div class="flag-desc">History reference — pichle commands recall karne ke liye</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd">!!</span> <span class="out">(last command dubara chalao)</span><br>
+  <span class="prompt">$</span> <span class="cmd">!ping</span> <span class="out">(last "ping" wala command chalao)</span></div>
+</div>
+
+</div>
+
+<div class="section" id="quote">
+<h2>💬 Quoting</h2>
+
+<div class="flag-row">
+  <div class="flag-name">"double quotes"</div>
+  <div class="flag-desc">Variables aur command substitution ke andar kaam karte hain ($VAR expand hota hai)</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd">echo "User: $USER"</span></div>
+</div>
+
+<div class="flag-row">
+  <div class="flag-name">'single quotes'</div>
+  <div class="flag-desc">Sab kuch literal treat karta hai — $VAR bhi expand nahi hota, as-it-is print hota hai</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd">echo 'User: $USER'</span><br><span class="out">User: $USER</span></div>
+</div>
+
+</div>
+
+<div class="section" id="keys">
+<h2>⌨️ Terminal Keyboard Shortcuts</h2>
+
+<div class="flag-row"><div class="flag-name">Ctrl + C</div><div class="flag-desc">Currently running command ko forcefully stop/kill karta hai</div></div>
+<div class="flag-row"><div class="flag-name">Ctrl + Z</div><div class="flag-desc">Command ko pause/suspend karta hai (background mein jaata hai, <code>fg</code> se resume hota hai)</div></div>
+<div class="flag-row"><div class="flag-name">Ctrl + D</div><div class="flag-desc">Terminal session/input end karta hai (EOF signal)</div></div>
+<div class="flag-row"><div class="flag-name">Ctrl + L</div><div class="flag-desc">Screen clear karta hai (<code>clear</code> command jaisa)</div></div>
+<div class="flag-row"><div class="flag-name">Ctrl + R</div><div class="flag-desc">Command history mein reverse search karta hai — type karo, purana matching command mil jaayega</div></div>
+<div class="flag-row"><div class="flag-name">Tab</div><div class="flag-desc">Auto-complete — filename/command ka baaki hissa khud complete karta hai</div></div>
+<div class="flag-row"><div class="flag-name">↑ / ↓</div><div class="flag-desc">Pichle/agle commands history mein navigate karta hai</div></div>
+
+</div>
+
+<!-- ===================== SECTION 2 ===================== -->
+<div class="megasection"><h1>📌 SECTION 2 — COMMANDS</h1></div>
+
+<div class="nav">
+  <a href="#net">Networking</a><a href="#fileops">File Ops</a><a href="#perm">Permissions</a>
+  <a href="#grep">grep</a><a href="#sort">sort</a><a href="#find">find</a><a href="#awk">awk</a><a href="#sed">sed</a>
+  <a href="#cut">cut</a><a href="#uniq">uniq</a><a href="#wc">wc</a><a href="#xargs">xargs</a>
+  <a href="#ps">ps/kill</a><a href="#sysctl">systemctl</a><a href="#ssh">ssh/scp</a>
+  <a href="#curl">curl</a><a href="#nmap">nmap</a><a href="#tcpdump">tcpdump</a><a href="#tar">tar</a>
+  <a href="#misc">Misc Useful</a>
+</div>
+
+<div class="catlabel">🌐 Networking</div>
+<div class="section" id="net">
+<h2>Networking Commands</h2>
+<div class="flag-row"><div class="flag-name">ip a</div><div class="flag-desc">Interfaces aur IP addresses dikhata hai</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">ip a</span></div></div>
+<div class="flag-row"><div class="flag-name">ip r</div><div class="flag-desc">Routing table dikhata hai</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">ip r</span></div></div>
+<div class="flag-row"><div class="flag-name">ifconfig</div><div class="flag-desc">Legacy interface tool</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">ifconfig eth0</span></div></div>
+<div class="flag-row"><div class="flag-name">iwconfig</div><div class="flag-desc">Wireless interface info (SSID, mode, signal)</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">iwconfig</span></div></div>
+<div class="flag-row"><div class="flag-name">ping -c 4</div><div class="flag-desc">Reachability test, -c se count fix</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">ping -c 4 google.com</span></div></div>
+<div class="flag-row"><div class="flag-name">traceroute</div><div class="flag-desc">Packet route trace</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">traceroute target.com</span></div></div>
+<div class="flag-row"><div class="flag-name">netstat -tulnp</div><div class="flag-desc">Open ports + process</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">netstat -tulnp</span></div></div>
+<div class="flag-row"><div class="flag-name">ss -tulnp</div><div class="flag-desc">netstat ka modern version</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">ss -tulnp</span></div></div>
+<div class="flag-row"><div class="flag-name">dig / dig +short</div><div class="flag-desc">DNS records fetch</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">dig +short target.com</span></div></div>
+<div class="flag-row"><div class="flag-name">nslookup</div><div class="flag-desc">Domain resolve</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">nslookup target.com</span></div></div>
+<div class="flag-row"><div class="flag-name">whois</div><div class="flag-desc">Domain registration info</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">whois target.com</span></div></div>
+<div class="flag-row"><div class="flag-name">nc -lvp / nc -nv</div><div class="flag-desc">Listener banana / connect test</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">nc -lvp 4444</span></div></div>
+<div class="flag-row"><div class="flag-name">arp -a</div><div class="flag-desc">LAN devices (IP↔MAC)</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">arp -a</span></div></div>
+<div class="flag-row"><div class="flag-name">netdiscover -r</div><div class="flag-desc">LAN mein active hosts discover karta hai</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">netdiscover -r 192.168.1.0/24</span></div></div>
+</div>
+
+<div class="catlabel">📁 File Operations</div>
+<div class="section" id="fileops">
+<h2>File Operations</h2>
+<div class="flag-row"><div class="flag-name">rm / rm -r / rm -rf</div><div class="flag-desc">File delete / recursive / force+recursive</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">rm -rf temp/</span></div>
+<div class="warn">⚠️ pwd check kiye bina rm -rf mat chalao</div></div>
+<div class="flag-row"><div class="flag-name">rm -i</div><div class="flag-desc">Confirmation maang kar delete</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">rm -i file.txt</span></div></div>
+<div class="flag-row"><div class="flag-name">cp -r / cp -v</div><div class="flag-desc">Recursive copy / verbose copy</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">cp -r src/ dst/</span></div></div>
+<div class="flag-row"><div class="flag-name">mv</div><div class="flag-desc">Move/rename</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">mv old.txt new.txt</span></div></div>
+<div class="flag-row"><div class="flag-name">mkdir -p</div><div class="flag-desc">Nested directories</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">mkdir -p a/b/c</span></div></div>
+<div class="flag-row"><div class="flag-name">ls -la / -lh / -lt</div><div class="flag-desc">Detail+hidden / human size / recent first</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">ls -lah</span></div></div>
+</div>
+
+<div class="catlabel">🔐 Permissions</div>
+<div class="section" id="perm">
+<h2>Permissions & Ownership</h2>
+<div class="flag-row"><div class="flag-name">chmod +x / -R 755</div><div class="flag-desc">Execute add / recursive numeric</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">chmod +x scan.sh</span></div></div>
+<div class="flag-row"><div class="flag-name">chown user:group -R</div><div class="flag-desc">Owner+group change, recursive</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">sudo chown -R kali:kali project/</span></div></div>
+</div>
+
+<div class="catlabel">✂️ Text Processing</div>
+<div class="section" id="grep">
+<h2>grep</h2>
+<div class="flag-row"><div class="flag-name">-i -r -v -n -c -w -l -A/B/C -E -oP</div>
+<div class="flag-desc">Case-insensitive, recursive, invert, line-num, count, whole-word, filenames-only, context, extended-regex, extract-match</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">grep -A 2 "ERROR" app.log</span></div></div>
+</div>
+
+<div class="section" id="sort">
+<h2>sort</h2>
+<div class="flag-row"><div class="flag-name">-r -n -u -k -t -R</div>
+<div class="flag-desc">Reverse, numeric, unique, column, delimiter, random</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">sort -t',' -k2 -n data.csv</span></div></div>
+</div>
+
+<div class="section" id="find">
+<h2>find</h2>
+<div class="flag-row"><div class="flag-name">-name -iname -type -perm -mtime -exec</div>
+<div class="flag-desc">Name search, case-insensitive, file-type, permission-based, time-based, run command on result</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">find / -perm -4000 2>/dev/null</span></div></div>
+</div>
+
+<div class="section" id="awk">
+<h2>awk</h2>
+<div class="flag-row"><div class="flag-name">'{print $N}' -F condition</div>
+<div class="flag-desc">Column extract, custom separator, filter condition</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">awk -F',' '$3 > 100 {print $1}' data.csv</span></div></div>
+</div>
+
+<div class="section" id="sed">
+<h2>sed</h2>
+<div class="flag-row"><div class="flag-name">s/old/new/g -i -n '/p/p' Nd</div>
+<div class="flag-desc">Global replace, in-place edit, print matches only, delete line</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">sed -i 's/http/https/g' urls.txt</span></div></div>
+</div>
+
+<div class="section" id="cut">
+<h2>cut</h2>
+<div class="flag-row"><div class="flag-name">-d -f -c</div><div class="flag-desc">Delimiter, field number, character position</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">cut -d':' -f1,3 /etc/passwd</span></div></div>
+</div>
+
+<div class="section" id="uniq">
+<h2>uniq</h2>
+<div class="flag-row"><div class="flag-name">-c -d</div><div class="flag-desc">Count occurrences, sirf duplicates dikhao</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">sort ips.txt | uniq -c | sort -nr</span></div></div>
+</div>
+
+<div class="section" id="wc">
+<h2>wc</h2>
+<div class="flag-row"><div class="flag-name">-l -w -c</div><div class="flag-desc">Lines, words, bytes count</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">wc -l subdomains.txt</span></div></div>
+</div>
+
+<div class="section" id="xargs">
+<h2>xargs</h2>
+<div class="flag-row"><div class="flag-name">-I{} -n</div><div class="flag-desc">Placeholder use, ek baar mein n arguments</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">cat ips.txt | xargs -I{} ping -c1 {}</span></div></div>
+</div>
+
+<div class="catlabel">⚙️ System & Process</div>
+<div class="section" id="ps">
+<h2>ps / kill</h2>
+<div class="flag-row"><div class="flag-name">ps aux | grep</div><div class="flag-desc">Process dhundhna</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">ps aux | grep nginx</span></div></div>
+<div class="flag-row"><div class="flag-name">kill / kill -9 / killall</div><div class="flag-desc">Normal stop, force stop, naam se stop</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">kill -9 1234</span></div></div>
+</div>
+
+<div class="section" id="sysctl">
+<h2>systemctl / service</h2>
+<div class="flag-row"><div class="flag-name">status/start/stop/restart/enable</div><div class="flag-desc">Service control</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">sudo systemctl restart ssh</span></div></div>
+</div>
+
+<div class="section" id="ssh">
+<h2>ssh / scp</h2>
+<div class="flag-row"><div class="flag-name">-i -p</div><div class="flag-desc">Private key, custom port</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">ssh -i id_rsa -p 2222 user@host</span></div></div>
+<div class="flag-row"><div class="flag-name">scp file user@host:/path</div><div class="flag-desc">Remote copy</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">scp report.pdf user@host:/tmp/</span></div></div>
+</div>
+
+<div class="catlabel">🛡️ Security Tools</div>
+<div class="section" id="curl">
+<h2>curl</h2>
+<div class="flag-row"><div class="flag-name">-I -s -X POST -d -H -o</div>
+<div class="flag-desc">Headers-only, silent, POST+data, custom-header, save-to-file</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">curl -X POST -H "Content-Type: application/json" -d '{"user":"admin"}' url</span></div></div>
+</div>
+
+<div class="section" id="nmap">
+<h2>nmap</h2>
+<div class="flag-row"><div class="flag-name">-sV -p- -sC -A -oN -Pn</div>
+<div class="flag-desc">Version detect, all ports, default scripts, aggressive, save output, skip ping</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">nmap -sC -sV -p- -oN scan.txt target.com</span></div></div>
+</div>
+
+<div class="section" id="tcpdump">
+<h2>tcpdump</h2>
+<div class="flag-row"><div class="flag-name">-i -w port</div><div class="flag-desc">Interface, save-to-pcap, filter by port</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">tcpdump -i eth0 -w capture.pcap port 80</span></div></div>
+</div>
+
+<div class="section" id="tar">
+<h2>tar</h2>
+<div class="flag-row"><div class="flag-name">-cvf -xvf -czvf -xzvf</div><div class="flag-desc">Create, extract, create+gzip, extract+gzip</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">tar -czvf backup.tar.gz folder/</span></div></div>
+</div>
+
+<div class="catlabel">🧰 Miscellaneous Useful</div>
+<div class="section" id="misc">
+<h2>Baaki Zaroori Commands (jo pehle miss ho gaye)</h2>
+
+<div class="flag-row"><div class="flag-name">which cmd</div><div class="flag-desc">Kisi command ka path dikhata hai (kaunsi file chal rahi hai)</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">which python3</span></div></div>
+
+<div class="flag-row"><div class="flag-name">man cmd</div><div class="flag-desc">Command ka poora manual/help dikhata hai — sabse reliable documentation source</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">man grep</span></div></div>
+
+<div class="flag-row"><div class="flag-name">alias name='cmd'</div><div class="flag-desc">Long command ka shortcut banata hai</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">alias ll='ls -la'</span></div></div>
+
+<div class="flag-row"><div class="flag-name">history / history -c</div><div class="flag-desc">Pichle commands dikhana / poori history clear karna</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">history | grep nmap</span></div></div>
+
+<div class="flag-row"><div class="flag-name">export VAR=value</div><div class="flag-desc">Environment variable set karta hai jo current session mein rehta hai</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">export PATH=$PATH:/opt/tools</span></div></div>
+
+<div class="flag-row"><div class="flag-name">watch -n 2 cmd</div><div class="flag-desc">Command ko har 2 second baad repeat chalata hai — live monitoring ke liye</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">watch -n 2 "ls -la"</span></div></div>
+
+<div class="flag-row"><div class="flag-name">nohup cmd &</div><div class="flag-desc">Terminal band hone pe bhi command background mein chalta rehta hai</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">nohup python3 server.py &</span></div></div>
+
+<div class="flag-row"><div class="flag-name">tmux / screen</div><div class="flag-desc">Terminal session ko persistent banata hai — disconnect hone pe bhi session zinda rehta hai (long scans ke liye zaroori)</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">tmux new -s scan1</span></div></div>
+
+<div class="flag-row"><div class="flag-name">crontab -e</div><div class="flag-desc">Scheduled recurring tasks edit karta hai</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">crontab -e</span></div></div>
+
+<div class="flag-row"><div class="flag-name">lsof -i</div><div class="flag-desc">Kaunse process ne kaunsa network port khola hai, dikhata hai</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">lsof -i :80</span></div></div>
+
+<div class="flag-row"><div class="flag-name">diff -u file1 file2</div><div class="flag-desc">Do files ka difference unified format mein dikhata hai</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">diff -u old.txt new.txt</span></div></div>
+
+<div class="flag-row"><div class="flag-name">md5sum / sha256sum</div><div class="flag-desc">File ka hash calculate karta hai — integrity verify karne ke liye</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">sha256sum file.iso</span></div></div>
+
+<div class="flag-row"><div class="flag-name">strings file</div><div class="flag-desc">Binary file ke andar readable text/strings nikal deta hai — malware/binary analysis mein useful</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">strings suspicious.bin | less</span></div></div>
+
+<div class="flag-row"><div class="flag-name">base64 -d</div><div class="flag-desc">Base64 encoded data ko decode karta hai</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">echo "aGVsbG8=" | base64 -d</span></div></div>
+
+<div class="flag-row"><div class="flag-name">echo $PATH</div><div class="flag-desc">System jin folders mein executable commands dhundhta hai, wo list dikhata hai</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">echo $PATH</span></div></div>
+
+</div>
+
+</body>
+</html>
