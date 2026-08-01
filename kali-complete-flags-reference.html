@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<title>Kali Linux — Complete Flags Reference (All Categories)</title>
+<style>
+  :root{--bg:#0b0f14;--panel:#111820;--border:#1f2b38;--text:#c9d6e3;--muted:#7d93a8;--accent:#4fd1ff;}
+  body{background:var(--bg);color:var(--text);font-family:'Segoe UI',Roboto,sans-serif;margin:0;padding:0 0 60px;}
+  header{background:linear-gradient(135deg,#0b0f14,#141c26);padding:32px 24px;border-bottom:2px solid var(--border);text-align:center;}
+  header h1{margin:0;color:#fff;font-size:24px;}
+  header p{color:var(--muted);margin-top:8px;}
+  .nav{max-width:1050px;margin:20px auto;text-align:center;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px;}
+  .nav a{color:var(--accent);text-decoration:none;margin:4px 8px;font-size:12.5px;font-weight:600;border:1px solid var(--border);padding:4px 9px;border-radius:6px;display:inline-block;}
+  .nav a:hover{border-color:var(--accent);}
+  .catlabel{max-width:1050px;margin:30px auto 6px;color:#f472b6;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding-left:6px;}
+  .section{max-width:1050px;margin:10px auto;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:20px 26px;}
+  .section h2{color:var(--accent);margin-top:0;font-size:22px;border-bottom:2px solid var(--border);padding-bottom:8px;}
+  .flag-row{margin:16px 0;padding:12px 0;border-bottom:1px solid var(--border);}
+  .flag-row:last-child{border-bottom:none;}
+  .flag-name{color:#facc15;font-family:Consolas,monospace;font-weight:bold;font-size:15px;}
+  .flag-desc{color:var(--text);font-size:14px;margin:4px 0 8px;}
+  .term{background:#0a0e13;border-radius:8px;padding:12px 16px;font-family:Consolas,monospace;font-size:13.5px;}
+  .prompt{color:#4fd1ff;}
+  .cmd{color:#fff;}
+  .out{color:#7ee787;}
+  .match{color:#ff6b6b;font-weight:bold;}
+  .warn{color:#f87171;font-size:12.5px;margin-top:4px;}
+</style>
+</head>
+<body>
+<header>
+  <h1>🔑 COMPLETE COMMAND FLAGS REFERENCE</h1>
+  <p>Networking + File Ops + Text Processing + System + Security Tools — sab flags terminal examples ke saath</p>
+</header>
+
+<div class="nav">
+  <a href="#net">Networking</a><a href="#fileops">File Ops</a><a href="#perm">Permissions</a>
+  <a href="#grep">grep</a><a href="#sort">sort</a><a href="#find">find</a><a href="#awk">awk</a><a href="#sed">sed</a>
+  <a href="#cut">cut</a><a href="#uniq">uniq</a><a href="#wc">wc</a><a href="#xargs">xargs</a>
+  <a href="#ps">ps/kill</a><a href="#sysctl">systemctl</a><a href="#ssh">ssh/scp</a>
+  <a href="#curl">curl</a><a href="#nmap">nmap</a><a href="#tcpdump">tcpdump</a><a href="#tar">tar</a>
+</div>
+
+<div class="catlabel">🌐 Networking</div>
+<div class="section" id="net">
+<h2>Networking Commands</h2>
+
+<div class="flag-row">
+  <div class="flag-name">ip a</div>
+  <div class="flag-desc">Saare network interfaces aur unke IP addresses dikhata hai (modern replacement ifconfig ka)</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd">ip a</span><br>
+  <span class="out">eth0: inet 192.168.1.15/24 ...</span></div>
+</div>
+
+<div class="flag-row">
+  <div class="flag-name">ip r</div>
+  <div class="flag-desc">Routing table dikhata hai — traffic kaunse gateway se jaata hai</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd">ip r</span><br>
+  <span class="out">default via 192.168.1.1 dev eth0</span></div>
+</div>
+
+<div class="flag-row">
+  <div class="flag-name">ip link set eth0 up/down</div>
+  <div class="flag-desc">Interface ko enable/disable karta hai</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd">sudo ip link set eth0 down</span></div>
+</div>
+
+<div class="flag-row">
+  <div class="flag-name">ifconfig</div>
+  <div class="flag-desc">Legacy tool — same info jo <code>ip a</code> deta hai, purane scripts mein abhi bhi milta hai</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd">ifconfig eth0</span></div>
+</div>
+
+<div class="flag-row">
+  <div class="flag-name">ifconfig eth0 up/down</div>
+  <div class="flag-desc">Interface start/stop karta hai (legacy syntax)</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd">sudo ifconfig eth0 up</span></div>
+</div>
+
+<div class="flag-row">
+  <div class="flag-name">iwconfig</div>
+  <div class="flag-desc">Wireless interfaces ki info dikhata hai — SSID, signal, mode (wifi work ke liye zaroori)</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd">iwconfig</span><br>
+  <span class="out">wlan0  ESSID:"HomeWifi" Mode:Managed</span></div>
+</div>
+
+<div class="flag-row">
+  <div class="flag-name">iwconfig wlan0 mode monitor</div>
+  <div class="flag-desc">Wireless adapter ko monitor mode mein daalta hai — WiFi packet capture ke liye</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd">sudo iwconfig wlan0 mode monitor</span></div>
+</div>
+
+<div class="flag-row">
+  <div class="flag-name">ping -c 4 host</div>
+  <div class="flag-desc">-c = count, sirf 4 packets bhejkar ruk jaayega (default hamesha chalta rehta hai)</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd">ping -c 4 google.com</span></div>
+</div>
+
+<div class="flag-row">
+  <div class="flag-name">traceroute host</div>
+  <div class="flag-desc">Packet destination tak kin-kin hops se hokar jaata hai, dikhata hai</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd">traceroute target.com</span></div>
+</div>
+
+<div class="flag-row">
+  <div class="flag-name">netstat -tulnp</div>
+  <div class="flag-desc">t=TCP, u=UDP, l=listening, n=numeric (no DNS lookup), p=process name — open ports + kaunsa program use kar raha hai</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd">netstat -tulnp</span><br>
+  <span class="out">tcp 0.0.0.0:80 LISTEN nginx/1234</span></div>
+</div>
+
+<div class="flag-row">
+  <div class="flag-name">ss -tulnp</div>
+  <div class="flag-desc">netstat ka modern, faster replacement — same flags kaam karte hain</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd">ss -tulnp</span></div>
+</div>
+
+<div class="flag-row">
+  <div class="flag-name">dig domain</div>
+  <div class="flag-desc">DNS records fetch karta hai (default A record)</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd">dig target.com</span></div>
+</div>
+
+<div class="flag-row">
+  <div class="flag-name">dig target.com MX / dig +short</div>
+  <div class="flag-desc">Specific record type (MX/NS/TXT) ya sirf short answer nikalta hai</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd">dig +short target.com</span><br>
+  <span class="out">104.21.5.10</span></div>
+</div>
+
+<div class="flag-row">
+  <div class="flag-name">nslookup domain</div>
+  <div class="flag-desc">Domain ka IP resolve karta hai (dig ka simpler alternative)</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd">nslookup target.com</span></div>
+</div>
+
+<div class="flag-row">
+  <div class="flag-name">whois domain</div>
+  <div class="flag-desc">Domain registration details — owner, registrar, creation date</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd">whois target.com</span></div>
+</div>
+
+<div class="flag-row">
+  <div class="flag-name">nc -lvp 4444</div>
+  <div class="flag-desc">l=listen, v=verbose, p=port — netcat listener bana kar connections sunta hai</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd">nc -lvp 4444</span></div>
+</div>
+
+<div class="flag-row">
+  <div class="flag-name">nc -nv IP port</div>
+  <div class="flag-desc">Kisi IP:port pe connect karke test karta hai (banner grabbing ke liye bhi)</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd">nc -nv 192.168.1.5 80</span></div>
+</div>
+
+<div class="flag-row">
+  <div class="flag-name">arp -a</div>
+  <div class="flag-desc">Local network ke ARP table (IP↔MAC mapping) dikhata hai — LAN devices dhundne ke liye</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd">arp -a</span></div>
+</div>
+
+</div>
+
+<div class="catlabel">📁 File Operations</div>
+<div class="section" id="fileops">
+<h2>File Operations</h2>
+
+<div class="flag-row">
+  <div class="flag-name">rm file</div>
+  <div class="flag-desc">Ek file delete karta hai</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd">rm notes.txt</span></div>
+</div>
+
+<div class="flag-row">
+  <div class="flag-name">rm -r folder/</div>
+  <div class="flag-desc">Recursive — folder ke andar sab kuch bhi delete karta hai</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd">rm -r old_project/</span></div>
+</div>
+
+<div class="flag-row">
+  <div class="flag-name">rm -rf folder/</div>
+  <div class="flag-desc">Recursive + Force — bina confirmation maange, error ignore karke sab delete. Sabse dangerous command hai</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd">rm -rf temp/</span></div>
+  <div class="warn">⚠️ <code>rm -rf /</code> ya <code>rm -rf *</code> galat directory mein chalaya to sab system data gone — hamesha pwd check karo pehle</div>
+</div>
+
+<div class="flag-row">
+  <div class="flag-name">rm -i</div>
+  <div class="flag-desc">Interactive — har file delete karne se pehle confirm poochega (safe practice)</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd">rm -i file.txt</span></div>
+</div>
+
+<div class="flag-row">
+  <div class="flag-name">cp -r</div>
+  <div class="flag-desc">Recursive copy — poori directory (sub-folders sahit) copy karta hai</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd">cp -r src/ dst/</span></div>
+</div>
+
+<div class="flag-row">
+  <div class="flag-name">cp -v</div>
+  <div class="flag-desc">Verbose — kya copy ho raha hai, live dikhata hai</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd">cp -v file.txt backup/</span></div>
+</div>
+
+<div class="flag-row">
+  <div class="flag-name">mv old new</div>
+  <div class="flag-desc">Move ya rename dono ke liye same command</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd">mv report.txt final_report.txt</span></div>
+</div>
+
+<div class="flag-row">
+  <div class="flag-name">mkdir -p a/b/c</div>
+  <div class="flag-desc">Parent — nested directories ek saath banata hai, bina error ke agar already exist ho</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd">mkdir -p project/scans/output</span></div>
+</div>
+
+<div class="flag-row">
+  <div class="flag-name">ls -la</div>
+  <div class="flag-desc">l=long format (permissions, size, date), a=hidden files bhi</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd">ls -la</span></div>
+</div>
+
+<div class="flag-row">
+  <div class="flag-name">ls -lh</div>
+  <div class="flag-desc">Human-readable file sizes (KB/MB/GB) ke saath</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd">ls -lh</span></div>
+</div>
+
+<div class="flag-row">
+  <div class="flag-name">ls -t</div>
+  <div class="flag-desc">Sabse recent modified file sabse upar — latest downloads/logs dhundne ke liye</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd">ls -lt</span></div>
+</div>
+
+</div>
+
+<div class="catlabel">🔐 Permissions</div>
+<div class="section" id="perm">
+<h2>Permissions & Ownership</h2>
+
+<div class="flag-row">
+  <div class="flag-name">chmod +x</div>
+  <div class="flag-desc">Execute permission add karta hai (scripts run karne ke liye)</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd">chmod +x scan.sh</span></div>
+</div>
+
+<div class="flag-row">
+  <div class="flag-name">chmod -R 755</div>
+  <div class="flag-desc">Recursive numeric permission — owner full, baaki read+execute</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd">chmod -R 755 tools/</span></div>
+</div>
+
+<div class="flag-row">
+  <div class="flag-name">chown user:group file</div>
+  <div class="flag-desc">File ka owner aur group dono ek saath badalta hai</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd">sudo chown kali:kali file.txt</span></div>
+</div>
+
+<div class="flag-row">
+  <div class="flag-name">chown -R</div>
+  <div class="flag-desc">Recursive ownership change — poori directory ke liye</div>
+  <div class="term"><span class="prompt">$</span> <span class="cmd">sudo chown -R kali:kali project/</span></div>
+</div>
+
+</div>
+
+<div class="catlabel">✂️ Text Processing</div>
+<div class="section" id="grep">
+<h2>grep</h2>
+<div class="flag-row"><div class="flag-name">-i</div><div class="flag-desc">Case-insensitive search</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">grep -i "wscube" records</span><br><span class="out"><span class="match">wscube</span>tech</span></div></div>
+<div class="flag-row"><div class="flag-name">-r</div><div class="flag-desc">Recursive — sub-folders ke andar bhi search</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">grep -r "wscube" ~</span></div></div>
+<div class="flag-row"><div class="flag-name">-v</div><div class="flag-desc">Invert — jo match NAHI karti wo lines dikhata hai</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">grep -v "wscube" records</span></div></div>
+<div class="flag-row"><div class="flag-name">-n</div><div class="flag-desc">Line number ke saath match dikhata hai</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">grep -n "error" log.txt</span></div></div>
+<div class="flag-row"><div class="flag-name">-c</div><div class="flag-desc">Sirf matches ki count</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">grep -c "wscube" records</span></div></div>
+<div class="flag-row"><div class="flag-name">-w</div><div class="flag-desc">Poora word match (partial nahi)</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">grep -w "cube" records</span></div></div>
+<div class="flag-row"><div class="flag-name">-l</div><div class="flag-desc">Sirf matching filenames dikhata hai</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">grep -l "wscube" *</span></div></div>
+<div class="flag-row"><div class="flag-name">-A/-B/-C n</div><div class="flag-desc">Match ke After/Before/Context extra lines</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">grep -A 2 "ERROR" app.log</span></div></div>
+<div class="flag-row"><div class="flag-name">-E</div><div class="flag-desc">Extended regex (|, +, ?)</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">grep -E "admin|root" users.txt</span></div></div>
+<div class="flag-row"><div class="flag-name">-oP</div><div class="flag-desc">Sirf matched part extract (Perl regex)</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">grep -oP '(?<=email:).*' data.txt</span></div></div>
+</div>
+
+<div class="section" id="sort">
+<h2>sort</h2>
+<div class="flag-row"><div class="flag-name">-r</div><div class="flag-desc">Reverse order sort</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">sort -r names.txt</span></div></div>
+<div class="flag-row"><div class="flag-name">-n</div><div class="flag-desc">Numeric sort (2,9,10 sahi order mein)</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">sort -n numbers.txt</span></div></div>
+<div class="flag-row"><div class="flag-name">-u</div><div class="flag-desc">Sort + duplicates ek saath remove</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">sort -u subdomains.txt</span></div></div>
+<div class="flag-row"><div class="flag-name">-k n</div><div class="flag-desc">Specific column ke basis pe sort</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">sort -k2 -n scores.txt</span></div></div>
+<div class="flag-row"><div class="flag-name">-t','</div><div class="flag-desc">Custom delimiter (CSV ke liye)</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">sort -t',' -k2 data.csv</span></div></div>
+<div class="flag-row"><div class="flag-name">-R</div><div class="flag-desc">Random order shuffle</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">sort -R wordlist.txt | head -5</span></div></div>
+</div>
+
+<div class="section" id="find">
+<h2>find</h2>
+<div class="flag-row"><div class="flag-name">-name / -iname</div><div class="flag-desc">Filename se search (iname = case-insensitive)</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">find / -iname "*.conf"</span></div></div>
+<div class="flag-row"><div class="flag-name">-type f/d</div><div class="flag-desc">Sirf files ya sirf directories</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">find . -type f -name "*.php"</span></div></div>
+<div class="flag-row"><div class="flag-name">-perm -4000</div><div class="flag-desc">SUID binaries dhundta hai (priv-esc recon)</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">find / -perm -4000 2>/dev/null</span></div></div>
+<div class="flag-row"><div class="flag-name">-mtime -n</div><div class="flag-desc">Last n din mein modify hui files</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">find /var/log -mtime -1</span></div></div>
+<div class="flag-row"><div class="flag-name">-exec cmd {} \;</div><div class="flag-desc">Har result pe koi command run karta hai</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">find . -name "*.sh" -exec chmod +x {} \;</span></div></div>
+</div>
+
+<div class="section" id="awk">
+<h2>awk</h2>
+<div class="flag-row"><div class="flag-name">'{print $N}'</div><div class="flag-desc">Column-wise extract ($1, $2...)</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">awk '{print $1}' access.log</span></div></div>
+<div class="flag-row"><div class="flag-name">-F','</div><div class="flag-desc">Custom field separator</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">awk -F',' '{print $2}' users.csv</span></div></div>
+<div class="flag-row"><div class="flag-name">condition {action}</div><div class="flag-desc">Filter karke action</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">awk '$3 > 100 {print $1}' data.txt</span></div></div>
+</div>
+
+<div class="section" id="sed">
+<h2>sed</h2>
+<div class="flag-row"><div class="flag-name">s/old/new/g</div><div class="flag-desc">Global find & replace</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">sed 's/http/https/g' urls.txt</span></div></div>
+<div class="flag-row"><div class="flag-name">-i</div><div class="flag-desc">In-place — original file mein hi save</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">sed -i 's/old/new/g' file.txt</span></div></div>
+<div class="flag-row"><div class="flag-name">-n '/pattern/p'</div><div class="flag-desc">Sirf matching lines print</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">sed -n '/error/p' log.txt</span></div></div>
+<div class="flag-row"><div class="flag-name">Nd</div><div class="flag-desc">Specific line delete</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">sed '3d' file.txt</span></div></div>
+</div>
+
+<div class="section" id="cut">
+<h2>cut</h2>
+<div class="flag-row"><div class="flag-name">-d',' -f2</div><div class="flag-desc">Delimiter se split, field nikalo</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">cut -d',' -f2 users.csv</span></div></div>
+<div class="flag-row"><div class="flag-name">-c1-5</div><div class="flag-desc">Character position se extract</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">cut -c1-5 file.txt</span></div></div>
+</div>
+
+<div class="section" id="uniq">
+<h2>uniq</h2>
+<div class="flag-row"><div class="flag-name">-c</div><div class="flag-desc">Har line ki count bhi dikhata hai</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">sort ips.txt | uniq -c | sort -nr</span></div></div>
+<div class="flag-row"><div class="flag-name">-d</div><div class="flag-desc">Sirf duplicate wali lines dikhata hai</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">sort file.txt | uniq -d</span></div></div>
+</div>
+
+<div class="section" id="wc">
+<h2>wc</h2>
+<div class="flag-row"><div class="flag-name">-l</div><div class="flag-desc">Total lines count</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">wc -l subdomains.txt</span></div></div>
+<div class="flag-row"><div class="flag-name">-w</div><div class="flag-desc">Total words count</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">wc -w file.txt</span></div></div>
+</div>
+
+<div class="section" id="xargs">
+<h2>xargs</h2>
+<div class="flag-row"><div class="flag-name">| xargs cmd</div><div class="flag-desc">Piped input ko dusre command ka argument banata hai</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">cat ips.txt | xargs -I{} ping -c1 {}</span></div></div>
+<div class="flag-row"><div class="flag-name">-n 1</div><div class="flag-desc">Ek baar mein sirf 1 argument pass karta hai</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">cat files.txt | xargs -n1 rm</span></div></div>
+</div>
+
+<div class="catlabel">⚙️ System & Process</div>
+<div class="section" id="ps">
+<h2>ps / kill</h2>
+<div class="flag-row"><div class="flag-name">ps aux</div><div class="flag-desc">Saare users ke saare processes, detail mein</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">ps aux | grep nginx</span></div></div>
+<div class="flag-row"><div class="flag-name">kill PID</div><div class="flag-desc">Process ko normal signal bhejta hai (graceful stop)</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">kill 1234</span></div></div>
+<div class="flag-row"><div class="flag-name">kill -9 PID</div><div class="flag-desc">Force kill — turant band, cleanup nahi hota</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">kill -9 1234</span></div></div>
+<div class="flag-row"><div class="flag-name">killall name</div><div class="flag-desc">Naam se saare matching processes kill</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">killall firefox</span></div></div>
+</div>
+
+<div class="section" id="sysctl">
+<h2>systemctl / service</h2>
+<div class="flag-row"><div class="flag-name">status</div><div class="flag-desc">Service chal rahi hai ya nahi check karta hai</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">systemctl status ssh</span></div></div>
+<div class="flag-row"><div class="flag-name">start/stop/restart</div><div class="flag-desc">Service ko control karta hai</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">sudo systemctl start postgresql</span></div></div>
+<div class="flag-row"><div class="flag-name">enable</div><div class="flag-desc">Boot ke time auto-start set karta hai</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">sudo systemctl enable ssh</span></div></div>
+</div>
+
+<div class="section" id="ssh">
+<h2>ssh / scp</h2>
+<div class="flag-row"><div class="flag-name">ssh user@host</div><div class="flag-desc">Remote machine se secure connect</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">ssh root@192.168.1.5</span></div></div>
+<div class="flag-row"><div class="flag-name">ssh -i key.pem</div><div class="flag-desc">Private key file se authenticate</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">ssh -i id_rsa user@host</span></div></div>
+<div class="flag-row"><div class="flag-name">ssh -p 2222</div><div class="flag-desc">Non-default port pe connect</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">ssh -p 2222 user@host</span></div></div>
+<div class="flag-row"><div class="flag-name">scp file user@host:/path</div><div class="flag-desc">SSH ke through file remote machine pe bhejta hai</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">scp report.pdf user@host:/tmp/</span></div></div>
+</div>
+
+<div class="catlabel">🛡️ Security Tools</div>
+<div class="section" id="curl">
+<h2>curl</h2>
+<div class="flag-row"><div class="flag-name">-I</div><div class="flag-desc">Sirf headers fetch (fingerprinting)</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">curl -I https://target.com</span></div></div>
+<div class="flag-row"><div class="flag-name">-s</div><div class="flag-desc">Silent mode — clean output scripting ke liye</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">curl -s target.com/robots.txt</span></div></div>
+<div class="flag-row"><div class="flag-name">-X POST -d</div><div class="flag-desc">POST request custom data ke saath</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">curl -X POST -d "user=admin" url</span></div></div>
+<div class="flag-row"><div class="flag-name">-H</div><div class="flag-desc">Custom header (auth token etc)</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">curl -H "Authorization: Bearer TOKEN" url</span></div></div>
+<div class="flag-row"><div class="flag-name">-o file</div><div class="flag-desc">Response file mein save</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">curl -s url -o page.html</span></div></div>
+</div>
+
+<div class="section" id="nmap">
+<h2>nmap</h2>
+<div class="flag-row"><div class="flag-name">-sV</div><div class="flag-desc">Service/version detection</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">nmap -sV target.com</span></div></div>
+<div class="flag-row"><div class="flag-name">-p-</div><div class="flag-desc">Saare 65535 ports scan</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">nmap -p- target.com</span></div></div>
+<div class="flag-row"><div class="flag-name">-sC</div><div class="flag-desc">Default NSE scripts run</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">nmap -sC -sV target.com</span></div></div>
+<div class="flag-row"><div class="flag-name">-A</div><div class="flag-desc">OS + version + scripts + traceroute, sab ek saath</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">nmap -A target.com</span></div></div>
+<div class="flag-row"><div class="flag-name">-oN file</div><div class="flag-desc">Output text file mein save</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">nmap -sV target.com -oN scan.txt</span></div></div>
+<div class="flag-row"><div class="flag-name">-Pn</div><div class="flag-desc">Ping skip (firewall block scenario)</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">nmap -Pn target.com</span></div></div>
+</div>
+
+<div class="section" id="tcpdump">
+<h2>tcpdump</h2>
+<div class="flag-row"><div class="flag-name">-i eth0</div><div class="flag-desc">Specific interface pe packets capture</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">tcpdump -i eth0</span></div></div>
+<div class="flag-row"><div class="flag-name">-w file.pcap</div><div class="flag-desc">Capture ko file mein save karta hai (Wireshark mein analyze karne ke liye)</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">tcpdump -i eth0 -w capture.pcap</span></div></div>
+<div class="flag-row"><div class="flag-name">port 80</div><div class="flag-desc">Sirf specific port ka traffic filter karta hai</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">tcpdump -i eth0 port 80</span></div></div>
+</div>
+
+<div class="section" id="tar">
+<h2>tar</h2>
+<div class="flag-row"><div class="flag-name">-cvf</div><div class="flag-desc">Create archive</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">tar -cvf backup.tar folder/</span></div></div>
+<div class="flag-row"><div class="flag-name">-xvf</div><div class="flag-desc">Extract archive</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">tar -xvf backup.tar</span></div></div>
+<div class="flag-row"><div class="flag-name">-czvf / -xzvf</div><div class="flag-desc">Gzip compression ke saath (.tar.gz)</div>
+<div class="term"><span class="prompt">$</span> <span class="cmd">tar -czvf backup.tar.gz folder/</span></div></div>
+</div>
+
+</body>
+</html>
