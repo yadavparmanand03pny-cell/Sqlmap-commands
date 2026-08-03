@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>OSINT Tools — Complete Arsenal</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; min-height: 100%;
+    background: #070a09;
+    color: #d8ffe9;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 14px;
+  }
+  body { padding-bottom: 60px; }
+  header {
+    padding: 28px 20px 16px; border-bottom: 1px solid #16261c; text-align: center;
+  }
+  header h1 {
+    font-size: 16px; letter-spacing: 4px; text-transform: uppercase;
+    color: #39ff9c; margin: 0 0 6px;
+  }
+  header .sub { color: #4d7a63; font-size: 11px; letter-spacing: 2px; }
+  main { max-width: 760px; margin: 0 auto; padding: 20px 16px; }
+
+  .cat-title {
+    font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
+    margin: 30px 0 12px; padding-bottom: 6px; border-bottom: 1px solid #1f3d2c;
+  }
+  .cat-title.c1 { color: #39d0ff; }
+  .cat-title.c2 { color: #ffbb4d; }
+  .cat-title.c3 { color: #ff4d6d; }
+  .cat-title.c4 { color: #b98bff; }
+  .cat-title.c5 { color: #39ff9c; }
+  .cat-title.c6 { color: #ff8a4d; }
+
+  .tool {
+    border: 1px solid #1f3d2c; background: #0d1410;
+    margin-bottom: 14px; padding: 14px 16px;
+  }
+  .tool.c1 { border-left: 3px solid #39d0ff; }
+  .tool.c2 { border-left: 3px solid #ffbb4d; }
+  .tool.c3 { border-left: 3px solid #ff4d6d; }
+  .tool.c4 { border-left: 3px solid #b98bff; }
+  .tool.c5 { border-left: 3px solid #39ff9c; }
+  .tool.c6 { border-left: 3px solid #ff8a4d; }
+
+  .tool-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 6px; }
+  .tool-name { font-size: 14px; font-weight: bold; color: #d8ffe9; }
+  .tool-url { font-size: 11px; color: #9fd; }
+  .tool-desc { color: #6f9a80; font-size: 12px; margin-top: 6px; line-height: 1.6; }
+  .tool-use { color: #4d7a63; font-size: 11px; margin-top: 6px; line-height: 1.6; border-left: 2px solid #1f3d2c; padding-left: 8px; }
+  .tool-use b { color: #9fd; }
+  .tag { display: inline-block; font-size: 9px; letter-spacing: 1px; text-transform: uppercase; padding: 2px 6px; border: 1px solid #1f3d2c; color: #6f9a80; margin-left: 6px; }
+
+  .trick {
+    background: #0d1410; border: 1px solid #ff4d6d40; border-left: 3px solid #ff4d6d;
+    margin-bottom: 12px; padding: 12px 16px;
+  }
+  .trick-title { color: #ff4d6d; font-size: 12px; font-weight: bold; letter-spacing: 0.5px; }
+  .trick-body { color: #9fd; font-size: 12px; margin-top: 6px; line-height: 1.7; }
+  .trick-body code { color: #39ff9c; }
+
+  .note {
+    margin-top: 16px; font-size: 11px; color: #4d7a63;
+    border-left: 2px solid #1f3d2c; padding-left: 10px; line-height: 1.6;
+  }
+  .note b { color: #ffbb4d; }
+
+  footer {
+    max-width: 760px; margin: 30px auto 0; padding: 0 16px;
+    font-size: 10px; color: #3d5c48; text-align: center; letter-spacing: 1px; line-height: 1.7;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>&gt; osint_arsenal_</h1>
+  <div class="sub">tools · websites · advanced tricks</div>
+</header>
+
+<main>
+
+<div class="cat-title c1">1. Domain / Infrastructure Recon</div>
+
+<div class="tool c1">
+  <div class="tool-head"><span class="tool-name">Shodan</span><span class="tool-url">shodan.io</span></div>
+  <div class="tool-desc">"Search engine for internet-connected devices" — servers, webcams, IoT devices, exposed databases index karta hai unke banners/headers ke saath.</div>
+  <div class="tool-use"><b>Use:</b> <code>hostname:target.com</code> se target ke saare exposed services dikh jaate hain, ports/services/banners ke saath.</div>
+</div>
+
+<div class="tool c1">
+  <div class="tool-head"><span class="tool-name">Censys</span><span class="tool-url">censys.io</span></div>
+  <div class="tool-desc">Shodan jaisa hi, lekin certificate data pe zyada strong — SSL/TLS certificates se hosts aur subdomains dhundta hai.</div>
+  <div class="tool-use"><b>Use:</b> Certificate search se hidden subdomains aur internal hosts mil sakte hain jo dusre tools miss kar dete hain.</div>
+</div>
+
+<div class="tool c1">
+  <div class="tool-head"><span class="tool-name">crt.sh</span><span class="tool-url">crt.sh</span></div>
+  <div class="tool-desc">Certificate Transparency logs search karta hai — free, passive, koi target ko request nahi jaati.</div>
+  <div class="tool-use"><b>Use:</b> <code>%.target.com</code> query se saare certificates mein mention hue subdomains milte hain (already tumhare toolkit mein hai).</div>
+</div>
+
+<div class="tool c1">
+  <div class="tool-head"><span class="tool-name">Amass</span><span class="tool-url">github.com/owasp-amass/amass</span><span class="tag">CLI Tool</span></div>
+  <div class="tool-desc">OWASP ka subdomain enumeration tool — passive aur active dono modes mein kaam karta hai, multiple sources combine karta hai.</div>
+  <div class="tool-use"><b>Use:</b> <code>amass enum -d target.com</code> — sabse comprehensive subdomain list deta hai.</div>
+</div>
+
+<div class="tool c1">
+  <div class="tool-head"><span class="tool-name">Subfinder</span><span class="tool-url">github.com/projectdiscovery/subfinder</span><span class="tag">CLI Tool</span></div>
+  <div class="tool-desc">Fast, passive subdomain discovery tool — ProjectDiscovery ka, bahut popular bug bounty community mein.</div>
+  <div class="tool-use"><b>Use:</b> <code>subfinder -d target.com</code> — Amass se faster, lekin thoda kam comprehensive.</div>
+</div>
+
+<div class="tool c1">
+  <div class="tool-head"><span class="tool-name">Netcraft</span><span class="tool-url">netcraft.com</span></div>
+  <div class="tool-desc">Website ka tech stack, hosting history, aur infrastructure details deta hai.</div>
+  <div class="tool-use"><b>Use:</b> Site report se pata chalta hai server kaunsa OS/software use kar raha hai.</div>
+</div>
+
+<div class="cat-title c2">2. People / Username / Social Recon</div>
+
+<div class="tool c2">
+  <div class="tool-head"><span class="tool-name">Sherlock</span><span class="tool-url">github.com/sherlock-project/sherlock</span><span class="tag">CLI Tool</span></div>
+  <div class="tool-desc">Ek username 300+ social platforms pe check karta hai ki wo exist karta hai ya nahi.</div>
+  <div class="tool-use"><b>Use:</b> <code>python sherlock username</code> — quick cross-platform username presence check.</div>
+</div>
+
+<div class="tool c2">
+  <div class="tool-head"><span class="tool-name">Maltego</span><span class="tool-url">maltego.com</span></div>
+  <div class="tool-desc">Link analysis tool — entities ko visually connect karke relationship graphs banata hai (already practice kar rahe ho).</div>
+  <div class="tool-use"><b>Use:</b> Domain/email/person entities se transforms chala ke connected data map karna.</div>
+</div>
+
+<div class="tool c2">
+  <div class="tool-head"><span class="tool-name">theHarvester</span><span class="tool-url">github.com/laramies/theHarvester</span><span class="tag">CLI Tool</span></div>
+  <div class="tool-desc">Domain se emails, subdomains, employee names, aur hosts collect karta hai multiple public sources se.</div>
+  <div class="tool-use"><b>Use:</b> <code>theHarvester -d target.com -b all</code> — Day 3 plan ke liye core tool.</div>
+</div>
+
+<div class="tool c2">
+  <div class="tool-head"><span class="tool-name">Hunter.io</span><span class="tool-url">hunter.io</span></div>
+  <div class="tool-desc">Company domain se employee email patterns aur verified email addresses dhundta hai.</div>
+  <div class="tool-use"><b>Use:</b> Company domain daalo — pattern dikhega (jaise firstname.lastname@company.com).</div>
+</div>
+
+<div class="tool c2">
+  <div class="tool-head"><span class="tool-name">LinkedIn (manual OSINT)</span><span class="tool-url">linkedin.com</span></div>
+  <div class="tool-desc">Employee structure, job titles, tech stack mentions (job postings se), org hierarchy samajhne ka best source.</div>
+  <div class="tool-use"><b>Use:</b> Company page → "People" tab se employees list karo, job postings se tech stack pata karo.</div>
+</div>
+
+<div class="tool c2">
+  <div class="tool-head"><span class="tool-name">Pipl</span><span class="tool-url">pipl.com</span></div>
+  <div class="tool-desc">Deep people-search engine — name/email/phone se detailed profiles dhundta hai (paid, professional-grade).</div>
+  <div class="tool-use"><b>Use:</b> Jab basic search kaafi na ho, deeper person verification ke liye.</div>
+</div>
+
+<div class="cat-title c3">3. Breach & Leak Data</div>
+
+<div class="tool c3">
+  <div class="tool-head"><span class="tool-name">Have I Been Pwned</span><span class="tool-url">haveibeenpwned.com</span></div>
+  <div class="tool-desc">Email/domain check karta hai kaunse data breaches mein wo appear hua hai.</div>
+  <div class="tool-use"><b>Use:</b> Domain search se pata chalta hai company ke kitne employees kis breach mein affected hue.</div>
+</div>
+
+<div class="tool c3">
+  <div class="tool-head"><span class="tool-name">DeHashed</span><span class="tool-url">dehashed.com</span><span class="tag">Paid</span></div>
+  <div class="tool-desc">Breach database search engine — emails, usernames, passwords (hashed/plain) search karta hai leaked databases mein.</div>
+  <div class="tool-use"><b>Use:</b> Authorized engagements mein credential exposure check karne ke liye.</div>
+</div>
+
+<div class="tool c3">
+  <div class="tool-head"><span class="tool-name">IntelligenceX</span><span class="tool-url">intelx.io</span></div>
+  <div class="tool-desc">Leaks, darknet data, aur historical web snapshots search karta hai.</div>
+  <div class="tool-use"><b>Use:</b> Broad search across leaked data sources, paste sites included.</div>
+</div>
+
+<div class="cat-title c4">4. Metadata & Document Analysis</div>
+
+<div class="tool c4">
+  <div class="tool-head"><span class="tool-name">ExifTool</span><span class="tool-url">exiftool.org</span><span class="tag">CLI Tool</span></div>
+  <div class="tool-desc">Images/documents se hidden metadata nikalta hai — GPS location, device model, software used, author name.</div>
+  <div class="tool-use"><b>Use:</b> <code>exiftool image.jpg</code> — Day 6 plan ka core tool.</div>
+</div>
+
+<div class="tool c4">
+  <div class="tool-head"><span class="tool-name">FOCA</span><span class="tool-url">github.com/ElevenPaths/FOCA</span></div>
+  <div class="tool-desc">Website se public documents (PDF, DOC, XLS) download karke unki metadata batch analyze karta hai.</div>
+  <div class="tool-use"><b>Use:</b> Company ke saare public docs se ek saath usernames, software versions, internal paths nikalna.</div>
+</div>
+
+<div class="cat-title c5">5. Image / Reverse Search & Geolocation</div>
+
+<div class="tool c5">
+  <div class="tool-head"><span class="tool-name">Google Lens / Google Images</span><span class="tool-url">images.google.com</span></div>
+  <div class="tool-desc">Reverse image search — kahan aur ye image pehle use hui hai wo dhundta hai.</div>
+  <div class="tool-use"><b>Use:</b> Profile pics verify karna (fake account detection), image ka original source dhundna.</div>
+</div>
+
+<div class="tool c5">
+  <div class="tool-head"><span class="tool-name">Yandex Images</span><span class="tool-url">yandex.com/images</span></div>
+  <div class="tool-desc">Reverse image search mein Google se bhi better face-matching karta hai — OSINT community mein popular reason.</div>
+  <div class="tool-use"><b>Use:</b> Jab Google Images kuch na de, Yandex try karo — alag results deta hai.</div>
+</div>
+
+<div class="tool c5">
+  <div class="tool-head"><span class="tool-name">SunCalc</span><span class="tool-url">suncalc.org</span></div>
+  <div class="tool-desc">Kisi photo mein shadow ke angle se approximate location/time nikalne mein help karta hai (advanced geolocation technique).</div>
+  <div class="tool-use"><b>Use:</b> Shadow direction match karke possible location/time-of-day narrow down karna.</div>
+</div>
+
+<div class="cat-title c6">6. Aggregators / Search Engines</div>
+
+<div class="tool c6">
+  <div class="tool-head"><span class="tool-name">OSINT Framework</span><span class="tool-url">osintframework.com</span></div>
+  <div class="tool-desc">Categorized directory hai — sabhi OSINT tools ek visual tree mein organized (username, email, domain, image, etc. category ke hisaab se).</div>
+  <div class="tool-use"><b>Use:</b> Jab pata na ho kaunsa tool use karna hai, category browse karo — best starting point naye OSINT investigators ke liye.</div>
+</div>
+
+<div class="tool c6">
+  <div class="tool-head"><span class="tool-name">Wayback Machine</span><span class="tool-url">web.archive.org</span></div>
+  <div class="tool-desc">Website ke purane (archived) versions dekhata hai — deleted pages, old code, removed content recover karne ke liye.</div>
+  <div class="tool-use"><b>Use:</b> Purane API endpoints, removed admin panels, ya deleted sensitive pages dhundna.</div>
+</div>
+
+<div class="tool c6">
+  <div class="tool-head"><span class="tool-name">GitHub Search / GitDorking</span><span class="tool-url">github.com/search</span></div>
+  <div class="tool-desc">Public repos mein leaked secrets, API keys, internal code dhundne ka powerful tarika.</div>
+  <div class="tool-use"><b>Use:</b> <code>org:target-company "api_key"</code> jaise search se leaked credentials milte hain.</div>
+</div>
+
+<div class="cat-title c3">Advanced Tricks</div>
+
+<div class="trick">
+  <div class="trick-title">1. Cross-referencing (chain building)</div>
+  <div class="trick-body">Kabhi ek tool se poora result nahi milta. Username Sherlock se milta hai → us username se GitHub pe search karo → wahan se real email mil sakta hai → us email se Hunter.io/HIBP check karo. Har tool ka output agle tool ka input banao.</div>
+</div>
+
+<div class="trick">
+  <div class="trick-title">2. Google Cache + Wayback combo</div>
+  <div class="trick-body">Agar koi page delete ho chuka hai, pehle <code>cache:</code> try karo (short-term), fir Wayback Machine (long-term history) — dono alag data de sakte hain.</div>
+</div>
+
+<div class="trick">
+  <div class="trick-title">3. GitHub commit history mining</div>
+  <div class="trick-body">Sirf current code nahi, <b>commit history</b> bhi check karo — developers kabhi secret commit karke baad mein "remove" kar dete hain, lekin Git history mein wo purana commit hamesha reachable rehta hai.</div>
+</div>
+
+<div class="trick">
+  <div class="trick-title">4. Job postings se tech stack extraction</div>
+  <div class="trick-body">Company ki job listings (LinkedIn, Indeed) mein "must have experience with X, Y, Z" likha hota hai — ye directly unka tech stack reveal karta hai (jaise "AWS, Kubernetes, Django" — pata chal gaya architecture kaisa hai).</div>
+</div>
+
+<div class="trick">
+  <div class="trick-title">5. Employee email pattern prediction</div>
+  <div class="trick-body">Agar 2-3 employees ke real emails mil jaayein (Hunter.io se), pattern predict kar sakte ho (firstname.lastname@, f.lastname@, etc.) aur baaki employees ke likely emails guess kar sakte ho — verify karne ke liye alag technique chahiye hogi though.</div>
+</div>
+
+<div class="trick">
+  <div class="trick-title">6. Subdomain + Wayback combo for old endpoints</div>
+  <div class="trick-body">Wayback Machine ke CDX API se ek domain ke saare historically-indexed URLs mil sakte hain ek saath — bahut purane/forgotten API endpoints yahi se milte hain jo ab kahin link nahi hain but abhi bhi live ho sakte hain.</div>
+</div>
+
+<div class="trick">
+  <div class="trick-title">7. Multiple reverse-image engines together</div>
+  <div class="trick-body">Sirf Google Images pe depend mat karo — Yandex, Bing Visual Search, aur TinEye teeno try karo, kyunki inka index alag hai — ek jo miss karega dusra pakad sakta hai.</div>
+</div>
+
+<div class="note"><b>Reminder:</b> Ye sab tools sirf apne authorized targets (HackerOne scope) ya khud ke systems pe use karo. Data public hone ka matlab ye nahi ki usse exploit karna legal hai — access sirf recon/mapping ke liye, unauthorized action kabhi nahi.</div>
+
+</main>
+
+<footer>
+  OSINT arsenal reference — Day 1-7 plan ke saath saath use karo.<br>
+  Naye tools discover karte raho, ye list ongoing update hoti rahegi.
+</footer>
+
+</body>
+</html>

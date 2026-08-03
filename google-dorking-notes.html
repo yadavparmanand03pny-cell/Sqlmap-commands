@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Google Dorking — Complete Notes</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; min-height: 100%;
+    background: #070a09;
+    color: #d8ffe9;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 14px;
+  }
+  body { padding-bottom: 60px; }
+  header {
+    padding: 28px 20px 16px; border-bottom: 1px solid #16261c; text-align: center;
+  }
+  header h1 {
+    font-size: 16px; letter-spacing: 4px; text-transform: uppercase;
+    color: #39d0ff; margin: 0 0 6px;
+  }
+  header .sub { color: #4d7a63; font-size: 11px; letter-spacing: 2px; }
+  main { max-width: 720px; margin: 0 auto; padding: 20px 16px; }
+
+  .section {
+    border: 1px solid #1f3d2c; background: #0d1410;
+    margin-bottom: 22px; padding: 18px;
+  }
+  .section h2 {
+    font-size: 14px; letter-spacing: 1px; margin: 0 0 10px; color: #39d0ff;
+    text-transform: uppercase;
+  }
+  .section .desc { color: #6f9a80; font-size: 12px; margin-bottom: 12px; line-height: 1.6; }
+
+  table.ops { width: 100%; border-collapse: collapse; font-size: 12px; }
+  table.ops th {
+    text-align: left; color: #6f9a80; font-size: 10px; letter-spacing: 1px;
+    text-transform: uppercase; padding: 7px 8px; border-bottom: 1px solid #1f3d2c;
+  }
+  table.ops td { padding: 8px; border-bottom: 1px solid #12201670; vertical-align: top; }
+  table.ops td.op { color: #39ff9c; font-weight: bold; width: 20%; }
+  table.ops td.ex { color: #9fd; font-family: monospace; }
+
+  .note {
+    margin-top: 12px; font-size: 11px; color: #4d7a63;
+    border-left: 2px solid #1f3d2c; padding-left: 10px; line-height: 1.6;
+  }
+  .note b { color: #ffbb4d; }
+  .warn { border-left-color: #ff4d6d; }
+  .warn b { color: #ff4d6d; }
+
+  .steps {
+    font-size: 12px; color: #9fd; line-height: 1.8; margin-top: 10px;
+  }
+  .steps b { color: #d8ffe9; }
+
+  footer {
+    max-width: 720px; margin: 30px auto 0; padding: 0 16px;
+    font-size: 10px; color: #3d5c48; text-align: center; letter-spacing: 1px;
+    line-height: 1.7;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>&gt; google_dorking_</h1>
+  <div class="sub">OSINT Day 1 — complete reference notes</div>
+</header>
+
+<main>
+
+<div class="section">
+  <h2>Google Dorking Kya Hai</h2>
+  <div class="desc">
+    Google Dorking (ya "Google Hacking") ek OSINT technique hai jisme Google ke advanced search operators use karke aisi public information dhundhi jaati hai jo normally direct search se nahi milti — exposed files, login panels, misconfigured servers, leaked documents, etc.
+    <br><br>
+    Ye koi "hacking tool" nahi hai — Google khud ye search karta hai, tum sirf smart queries likhte ho. Data already public hai, bas usse structured tarike se find karna aata hai.
+  </div>
+  <div class="note"><b>Important:</b> Sirf apne authorized bug bounty targets ya khud ke systems par use karo. Kisi aur ki private/leaked info dhundna ya access karna illegal hai, chahe Google se hi kyun na mile.</div>
+</div>
+
+<div class="section">
+  <h2>Core Operators</h2>
+  <div class="desc">Ye basic building blocks hain — inhe combine karke complex queries banti hain.</div>
+  <table class="ops">
+    <tr><th>Operator</th><th>Kaam</th><th>Example</th></tr>
+    <tr><td class="op">site:</td><td>Sirf ek domain ke andar search</td><td class="ex">site:example.com</td></tr>
+    <tr><td class="op">filetype:</td><td>Specific file type dhundo</td><td class="ex">filetype:pdf</td></tr>
+    <tr><td class="op">ext:</td><td>filetype ka alternate</td><td class="ex">ext:xml</td></tr>
+    <tr><td class="op">intitle:</td><td>Page title mein keyword</td><td class="ex">intitle:"index of"</td></tr>
+    <tr><td class="op">allintitle:</td><td>Multiple words title mein</td><td class="ex">allintitle:admin login</td></tr>
+    <tr><td class="op">inurl:</td><td>URL mein keyword</td><td class="ex">inurl:admin</td></tr>
+    <tr><td class="op">allinurl:</td><td>Multiple words URL mein</td><td class="ex">allinurl:admin panel</td></tr>
+    <tr><td class="op">intext:</td><td>Page content mein keyword</td><td class="ex">intext:"password"</td></tr>
+    <tr><td class="op">allintext:</td><td>Multiple words content mein</td><td class="ex">allintext:username password</td></tr>
+    <tr><td class="op">"..."</td><td>Exact phrase match</td><td class="ex">"confidential internal use"</td></tr>
+    <tr><td class="op">-</td><td>Word/site exclude karo</td><td class="ex">site:example.com -www</td></tr>
+    <tr><td class="op">*</td><td>Wildcard (kuch bhi fill ho sakta hai)</td><td class="ex">inurl:api/*/v1</td></tr>
+    <tr><td class="op">..</td><td>Number range</td><td class="ex">budget 2020..2024</td></tr>
+    <tr><td class="op">OR / |</td><td>Ek ya dusra match</td><td class="ex">inurl:login OR inurl:signin</td></tr>
+    <tr><td class="op">AND</td><td>Dono conditions</td><td class="ex">site:example.com AND filetype:pdf</td></tr>
+    <tr><td class="op">cache:</td><td>Google ka cached version dekho</td><td class="ex">cache:example.com</td></tr>
+    <tr><td class="op">related:</td><td>Similar websites dhundo</td><td class="ex">related:example.com</td></tr>
+    <tr><td class="op">define:</td><td>Word ki definition</td><td class="ex">define:phishing</td></tr>
+    <tr><td class="op">numrange:</td><td>Number range search</td><td class="ex">numrange:100-200</td></tr>
+  </table>
+</div>
+
+<div class="section">
+  <h2>High-Value Recon Dorks</h2>
+  <div class="desc">Ye combo dorks directly bug bounty recon mein use hote hain — target domain daal ke try karo.</div>
+  <table class="ops">
+    <tr><th>Purpose</th><th>Dork</th></tr>
+    <tr><td>Exposed directories</td><td class="ex">site:target.com intitle:"index of"</td></tr>
+    <tr><td>Login/admin panels</td><td class="ex">site:target.com inurl:login OR inurl:admin</td></tr>
+    <tr><td>Leaked documents</td><td class="ex">site:target.com filetype:pdf OR filetype:xlsx OR filetype:docx</td></tr>
+    <tr><td>Config/backup files</td><td class="ex">site:target.com inurl:.env OR inurl:.git OR inurl:backup</td></tr>
+    <tr><td>Error/debug leaks</td><td class="ex">site:target.com intext:"stack trace" OR intext:"warning"</td></tr>
+    <tr><td>Subdomain discovery</td><td class="ex">site:*.target.com -site:www.target.com</td></tr>
+    <tr><td>Exposed API endpoints</td><td class="ex">site:target.com inurl:api OR inurl:v1 OR inurl:v2</td></tr>
+    <tr><td>Database dumps</td><td class="ex">site:target.com filetype:sql OR filetype:db</td></tr>
+    <tr><td>Log files</td><td class="ex">site:target.com filetype:log</td></tr>
+    <tr><td>Cloud storage leaks</td><td class="ex">site:s3.amazonaws.com "target"</td></tr>
+    <tr><td>Exposed credentials in code/config</td><td class="ex">site:target.com intext:"api_key" OR intext:"secret"</td></tr>
+    <tr><td>WordPress config leaks</td><td class="ex">site:target.com inurl:wp-config.php</td></tr>
+    <tr><td>Employee documents (org info)</td><td class="ex">site:target.com filetype:pdf "confidential"</td></tr>
+    <tr><td>Open FTP/directory listings</td><td class="ex">intitle:"index of" inurl:ftp</td></tr>
+    <tr><td>Exposed webcams (awareness only)</td><td class="ex">intitle:"webcamXP"</td></tr>
+  </table>
+</div>
+
+<div class="section">
+  <h2>Advanced / Extended Operators</h2>
+  <div class="desc">Core 18 ke alawa ye extra operators hain — kuch security recon mein useful, kuch general Google features, kuch deprecated.</div>
+  <table class="ops">
+    <tr><th>Operator</th><th>Kaam</th><th>Example</th></tr>
+    <tr><td class="op">AROUND(X)</td><td>Do words ek dusre ke X shabdon ke andar</td><td class="ex">security AROUND(3) breach</td></tr>
+    <tr><td class="op">before:</td><td>Date se pehle ke results</td><td class="ex">site:example.com before:2023-01-01</td></tr>
+    <tr><td class="op">after:</td><td>Date ke baad ke results</td><td class="ex">site:example.com after:2023-01-01</td></tr>
+    <tr><td class="op">inanchor:</td><td>Jis text pe link anchor ho</td><td class="ex">inanchor:"click here"</td></tr>
+    <tr><td class="op">allinanchor:</td><td>Multiple words anchor text mein</td><td class="ex">allinanchor:admin login</td></tr>
+    <tr><td class="op">weather:</td><td>Quick weather info (general use)</td><td class="ex">weather:mumbai</td></tr>
+    <tr><td class="op">stocks:</td><td>Stock price lookup (general use)</td><td class="ex">stocks:tesla</td></tr>
+    <tr><td class="op">map:</td><td>Location/map search (general use)</td><td class="ex">map:delhi</td></tr>
+    <tr><td class="op">movie:</td><td>Movie showtimes/info (general use)</td><td class="ex">movie:inception</td></tr>
+    <tr><td class="op">source:</td><td>Specific news source (Google News)</td><td class="ex">source:reuters cyber attack</td></tr>
+    <tr><td class="op">#</td><td>Hashtag search</td><td class="ex">#bugbounty</td></tr>
+    <tr><td class="op">@</td><td>Social media mention search</td><td class="ex">@twitter security</td></tr>
+    <tr><td class="op">$</td><td>Price-specific search</td><td class="ex">laptop $500</td></tr>
+    <tr><td class="op">insubject:</td><td>Google Groups subject line (niche, mostly retired)</td><td class="ex">insubject:security</td></tr>
+    <tr><td class="op">link:</td><td>Kaun page target ko link kar raha (mostly deprecated)</td><td class="ex">link:example.com</td></tr>
+    <tr><td class="op">info:</td><td>Basic page info (retired)</td><td class="ex">info:example.com</td></tr>
+    <tr><td class="op">numrange:</td><td>Number range, old syntax (deprecated)</td><td class="ex">numrange:100-200</td></tr>
+    <tr><td class="op">daterange:</td><td>Julian date range, bahut purana (deprecated)</td><td class="ex">daterange:2452000-2452100</td></tr>
+    <tr><td class="op">~</td><td>Synonym search (removed by Google)</td><td class="ex">~fast car</td></tr>
+    <tr><td class="op">+</td><td>Force exact word include (replaced by quotes)</td><td class="ex">+security</td></tr>
+  </table>
+  <div class="note"><b>Recon ke liye sabse useful:</b> AROUND(), before:, after: — inanchor/allinanchor bhi kabhi kaam aate hain. Baaki (weather, stocks, movie) general Google features hain, bug bounty se lena-dena nahi.</div>
+</div>
+
+<div class="section">
+  <h2>Common Filetypes (filetype: ke saath use karo)</h2>
+  <div class="desc"><code>filetype:</code> operator khud fixed hai, lekin file extensions unlimited hain — ye sabse recon-relevant list hai.</div>
+  <table class="ops">
+    <tr><th>Filetype</th><th>Kaam</th><th>Example</th></tr>
+    <tr><td class="op">pdf</td><td>PDF documents</td><td class="ex">filetype:pdf</td></tr>
+    <tr><td class="op">doc / docx</td><td>Word documents</td><td class="ex">filetype:docx</td></tr>
+    <tr><td class="op">xls / xlsx</td><td>Excel spreadsheets</td><td class="ex">filetype:xlsx</td></tr>
+    <tr><td class="op">ppt / pptx</td><td>PowerPoint presentations</td><td class="ex">filetype:pptx</td></tr>
+    <tr><td class="op">txt</td><td>Plain text files</td><td class="ex">filetype:txt</td></tr>
+    <tr><td class="op">csv</td><td>Comma-separated data</td><td class="ex">filetype:csv</td></tr>
+    <tr><td class="op">sql</td><td>Database dump files</td><td class="ex">filetype:sql</td></tr>
+    <tr><td class="op">db</td><td>Database files</td><td class="ex">filetype:db</td></tr>
+    <tr><td class="op">log</td><td>Log files</td><td class="ex">filetype:log</td></tr>
+    <tr><td class="op">env</td><td>Environment/config files</td><td class="ex">filetype:env</td></tr>
+    <tr><td class="op">xml</td><td>XML config/data files</td><td class="ex">filetype:xml</td></tr>
+    <tr><td class="op">json</td><td>JSON data files</td><td class="ex">filetype:json</td></tr>
+    <tr><td class="op">yml / yaml</td><td>Config files (often secrets)</td><td class="ex">filetype:yml</td></tr>
+    <tr><td class="op">conf / config</td><td>Configuration files</td><td class="ex">filetype:conf</td></tr>
+    <tr><td class="op">bak</td><td>Backup files</td><td class="ex">filetype:bak</td></tr>
+    <tr><td class="op">zip / rar</td><td>Compressed archives (leaked data)</td><td class="ex">filetype:zip</td></tr>
+    <tr><td class="op">sh</td><td>Shell scripts</td><td class="ex">filetype:sh</td></tr>
+    <tr><td class="op">key</td><td>Private key files (critical find)</td><td class="ex">filetype:key</td></tr>
+    <tr><td class="op">pem</td><td>SSL/certificate files</td><td class="ex">filetype:pem</td></tr>
+    <tr><td class="op">ini</td><td>Windows config files</td><td class="ex">filetype:ini</td></tr>
+    <tr><td class="op">htaccess</td><td>Apache server config</td><td class="ex">filetype:htaccess</td></tr>
+    <tr><td class="op">swp</td><td>Vim swap files (leaked source code)</td><td class="ex">filetype:swp</td></tr>
+  </table>
+  <div class="note"><b>High-value combo:</b> site:target.com (filetype:env OR filetype:key OR filetype:pem OR filetype:sql) — sabse critical/sensitive files ek saath search karne ke liye.</div>
+</div>
+
+<div class="section">
+  <h2>Google Hacking Database (GHDB)</h2>
+  <div class="desc">
+    Ek public, categorized database jisme hazaaron ready-made dorks hain — vulnerable servers, sensitive files, login portals, error messages ke liye categorized. Exploit-DB ke saath maintained hota hai.
+  </div>
+  <div class="steps">
+    <b>Kaise use karo:</b><br>
+    1. GHDB search karo (publicly available, search engine se easily mil jaata hai)<br>
+    2. Categories browse karo: "Files containing juicy info", "Vulnerable servers", "Login portals", etc.<br>
+    3. Relevant dork copy karke apne target domain ke saath combine karo (site:target.com + wo dork)
+  </div>
+</div>
+
+<div class="section">
+  <h2>Practical Workflow (Recon ke Liye)</h2>
+  <div class="steps">
+    <b>Step 1:</b> Target domain confirm karo (scope ke andar hi)<br>
+    <b>Step 2:</b> Basic dorks se shuru karo — exposed directories, login panels<br>
+    <b>Step 3:</b> File-based dorks try karo — PDF, XLSX, SQL, LOG, ENV files<br>
+    <b>Step 4:</b> Subdomain discovery dork chalao, naye subdomains note karo<br>
+    <b>Step 5:</b> Har result ko manually verify karo — Google index purana ho sakta hai, live check zaroori hai<br>
+    <b>Step 6:</b> Jo bhi interesting mile, ek doc/spreadsheet mein log karo — future recon (subdomain tools, headers analyzer) ke liye input banega
+  </div>
+</div>
+
+<div class="section">
+  <h2>Limitations & Cautions</h2>
+  <div class="note warn"><b>Scope:</b> Sirf authorized targets par use karo — Google se milne wali info bhi agar tum use exploit/access karte ho bina permission, wo illegal hai.</div>
+  <div class="note"><b>Freshness:</b> Google ka index kabhi outdated hota hai — jo dork result dikh raha hai wo page ab exist na kare, ya content change ho chuka ho. Hamesha live verify karo.</div>
+  <div class="note"><b>Rate limits:</b> Bahut zyada automated/rapid queries Google temporarily block kar sakta hai (CAPTCHA). Manual pace se karo.</div>
+  <div class="note"><b>False positives:</b> Har "index of" ya "login" result vulnerability nahi hota — sirf ek starting point hai, deeper analysis zaroori hai.</div>
+</div>
+
+</main>
+
+<footer>
+  OSINT Day 1 complete reference. Practice: apne authorized HackerOne target par ye dorks try karo,<br>
+  jo bhi mile note karo — Day 2 (subdomain/infra recon) isi output se build hoga.
+</footer>
+
+</body>
+</html>
