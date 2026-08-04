@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<title>Day 2 — Subdomain / Infra Recon Mastery</title>
+<style>
+  :root{
+    --bg:#0d1117; --panel:#161b22; --border:#30363d;
+    --amass:#58a6ff; --shodan:#f78166; --censys:#3fb950;
+    --extra:#a371f7; --asn:#d29922; --adv:#f85149; --report:#39c5cf;
+    --text:#c9d1d9; --muted:#8b949e;
+  }
+  *{box-sizing:border-box}
+  body{background:var(--bg);color:var(--text);font-family:'Segoe UI',Arial,sans-serif;margin:0;padding:0 0 60px 0;}
+  header{padding:40px 20px 30px;text-align:center;border-bottom:2px solid var(--border);
+    background:linear-gradient(135deg,#0d1117 0%,#161b22 60%,#0d1117 100%);}
+  header h1{font-size:2em;margin:0;color:#fff;letter-spacing:1px;}
+  header p{color:var(--muted);margin-top:8px;font-size:1em;}
+  .cover-svg{margin:0 auto 10px;display:block;}
+  nav{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;padding:20px;max-width:1100px;margin:0 auto;}
+  nav a{padding:6px 14px;border-radius:20px;font-size:0.85em;text-decoration:none;color:#0d1117;font-weight:600;}
+  .container{max-width:1100px;margin:0 auto;padding:0 20px;}
+  section{margin-bottom:36px;border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+  .sec-head{padding:14px 20px;font-size:1.2em;font-weight:700;color:#0d1117;}
+  .sec-body{padding:18px 20px;background:var(--panel);}
+  .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:14px;border-radius:6px;}
+  table{width:100%;min-width:520px;border-collapse:collapse;margin-bottom:0;}
+  th,td{padding:8px 10px;border-bottom:1px solid var(--border);text-align:left;font-size:0.92em;vertical-align:top;}
+  th{color:var(--muted);font-weight:600;font-size:0.85em;text-transform:uppercase;}
+  .steps{background:#0d1117;border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin:10px 0 18px;}
+  .steps h4{margin:0 0 8px;font-size:0.95em;color:var(--muted);}
+  .steps ol{margin:0;padding-left:20px;}
+  .steps li{margin-bottom:8px;font-size:0.9em;}
+  code{background:#0d1117;border:1px solid var(--border);border-radius:4px;padding:2px 6px;font-size:0.87em;color:#79c0ff;display:inline-block;margin:2px 0;}
+  pre{background:#0d1117;border:1px solid var(--border);border-radius:6px;padding:10px 12px;overflow-x:auto;font-size:0.85em;color:#79c0ff;margin:8px 0;}
+  .note{font-size:0.85em;color:var(--muted);font-style:italic;margin-top:6px;}
+  .badge{display:inline-block;font-size:0.7em;padding:2px 8px;border-radius:10px;margin-left:6px;color:#0d1117;font-weight:700;background:var(--adv);}
+  footer{text-align:center;color:var(--muted);font-size:0.8em;margin-top:30px;padding:0 20px;}
+</style>
+</head>
+<body>
+
+<header>
+<svg class="cover-svg" width="260" height="90" viewBox="0 0 260 90">
+  <rect x="40" y="20" width="180" height="50" rx="8" fill="none" stroke="#58a6ff" stroke-width="2"/>
+  <circle cx="70" cy="45" r="10" fill="#3fb950"/>
+  <circle cx="130" cy="45" r="10" fill="#f78166"/>
+  <circle cx="190" cy="45" r="10" fill="#a371f7"/>
+  <line x1="80" y1="45" x2="120" y2="45" stroke="#8b949e" stroke-width="2"/>
+  <line x1="140" y1="45" x2="180" y2="45" stroke="#8b949e" stroke-width="2"/>
+</svg>
+<h1>🗺️ DAY 2 — Subdomain &amp; Infra Recon</h1>
+<p>Amass + Shodan + Censys — Full Command Reference &amp; Advanced Techniques</p>
+</header>
+
+<nav>
+<a href="#amass" style="background:var(--amass)">Amass</a>
+<a href="#extra" style="background:var(--extra)">Subfinder/Assetfinder</a>
+<a href="#shodan" style="background:var(--shodan)">Shodan</a>
+<a href="#censys" style="background:var(--censys)">Censys</a>
+<a href="#asn" style="background:var(--asn)">ASN/IP Mapping</a>
+<a href="#adv" style="background:var(--adv)">Advanced</a>
+<a href="#report" style="background:var(--report)">Reporting</a>
+</nav>
+
+<div class="container">
+
+<section id="amass">
+<div class="sec-head" style="background:var(--amass)">🔹 Amass — Passive &amp; Active Enumeration</div>
+<div class="sec-body">
+<div class="table-wrap"><table>
+<tr><th>Command</th><th>Kaam</th></tr>
+<tr><td><code>amass enum -passive -d target.com</code></td><td>Sirf passive sources se subdomains (no direct contact with target)</td></tr>
+<tr><td><code>amass enum -d target.com</code></td><td>Active enum — DNS resolution + brute force bhi karta hai</td></tr>
+<tr><td><code>amass enum -active -d target.com -p 80,443,8080</code></td><td>Active + specific ports pe service check</td></tr>
+<tr><td><code>amass enum -brute -d target.com -w wordlist.txt</code></td><td>Custom wordlist se brute-force subdomain discovery</td></tr>
+<tr><td><code>amass intel -d target.com -whois</code></td><td>WHOIS-linked domains dhoondo (same org ke aur domains)</td></tr>
+<tr><td><code>amass intel -org "Company Name"</code></td><td>Organization name se related domains discover karo</td></tr>
+<tr><td><code>amass viz -d3 -d target.com</code></td><td>Visual graph banata hai discovered assets ka</td></tr>
+<tr><td><code>amass db -show -d target.com</code></td><td>Pehle collect kiya hua data local DB se dikhata hai</td></tr>
+</table></div>
+<div class="steps">
+<h4>Amass — full workflow step by step</h4>
+<ol>
+<li>Pehle passive scan chalao (safe, no direct target contact): <code>amass enum -passive -d target.com -o passive.txt</code></li>
+<li>Results review karo — kitne subdomains mile</li>
+<li>Ab active scan chalao (DNS resolve + live check): <code>amass enum -active -d target.com -o active.txt</code></li>
+<li>Config file (<code>~/.config/amass/config.yaml</code>) mein API keys add karo (SecurityTrails, Shodan, Censys) — zyada results milte hain</li>
+<li>Output ko httpx/httprobe se filter karo — sirf live hosts rakho</li>
+</ol>
+</div>
+<div class="note">Passive mode legal/safe hai kyunki target ko direct traffic nahi jaata — sirf third-party databases query hoti hain.</div>
+</div>
+</section>
+
+<section id="extra">
+<div class="sec-head" style="background:var(--extra)">🔹 Subfinder, Assetfinder &amp; Findomain <span class="badge">SPEED</span></div>
+<div class="sec-body">
+<div class="table-wrap"><table>
+<tr><th>Command</th><th>Kaam</th></tr>
+<tr><td><code>subfinder -d target.com -o subs.txt</code></td><td>Fast passive subdomain enum — Amass se zyada tez</td></tr>
+<tr><td><code>subfinder -d target.com -all -recursive</code></td><td>Sab sources use karo + recursive subdomains bhi</td></tr>
+<tr><td><code>assetfinder --subs-only target.com</code></td><td>Simple, fast — sirf subdomains print karta hai</td></tr>
+<tr><td><code>findomain -t target.com -u out.txt</code></td><td>Rust-based, bohot fast, multiple sources combine karta hai</td></tr>
+<tr><td><code>cat subs.txt | httpx -silent -o live.txt</code></td><td>List mein se live/responding hosts filter karo</td></tr>
+</table></div>
+<div class="steps">
+<h4>Combo workflow (best practice)</h4>
+<ol>
+<li>3 tools ek saath chalao: Amass + Subfinder + Assetfinder</li>
+<li>Sabki output ek file mein merge karo: <code>cat amass.txt subfinder.txt assetfinder.txt | sort -u > all_subs.txt</code></li>
+<li><code>httpx</code> se live hosts filter karo</li>
+<li>Screenshot lo har live host ka: <code>httpx -l live.txt -screenshot</code></li>
+</ol>
+</div>
+</div>
+</section>
+
+<section id="shodan">
+<div class="sec-head" style="background:var(--shodan)">🔹 Shodan — Exposed Services &amp; Devices</div>
+<div class="sec-body">
+<div class="table-wrap"><table>
+<tr><th>Query/Command</th><th>Kaam</th></tr>
+<tr><td><code>shodan init API_KEY</code></td><td>CLI ko apni API key se setup karo</td></tr>
+<tr><td><code>shodan search hostname:target.com</code></td><td>Target domain se linked exposed hosts</td></tr>
+<tr><td><code>shodan search org:"Company Name"</code></td><td>Organization ke naam se saare exposed assets</td></tr>
+<tr><td><code>shodan host 1.2.3.4</code></td><td>Ek IP ki full details — ports, banners, vulnerabilities</td></tr>
+<tr><td><code>shodan search ssl:target.com</code></td><td>SSL cert ke basis pe related hosts</td></tr>
+<tr><td><code>shodan search net:1.2.3.0/24</code></td><td>Poore IP range ka scan (CIDR)</td></tr>
+<tr><td>Web query: <code>http.title:"Company Login"</code></td><td>Shodan website pe login panels dhoondo title se</td></tr>
+<tr><td>Web query: <code>port:3389 country:"IN"</code></td><td>India mein exposed RDP servers</td></tr>
+</table></div>
+<div class="steps">
+<h4>Shodan recon — step by step</h4>
+<ol>
+<li>Shodan.io pe account banao, API key free tier mein milti hai</li>
+<li><code>hostname:target.com</code> search karo — konse assets indexed hain dekho</li>
+<li>Har result ke open ports/banners check karo — outdated software/versions note karo</li>
+<li>Vulnerabilities tab dekho — Shodan CVE info bhi dikhata hai kabhi kabhi</li>
+<li>Findings ko screenshot/export karke apni report mein daalo</li>
+</ol>
+</div>
+</div>
+</section>
+
+<section id="censys">
+<div class="sec-head" style="background:var(--censys)">🔹 Censys — Hosts &amp; Certificates</div>
+<div class="sec-body">
+<div class="table-wrap"><table>
+<tr><th>Query/Command</th><th>Kaam</th></tr>
+<tr><td><code>censys search "target.com"</code></td><td>CLI se domain related hosts search</td></tr>
+<tr><td>Web: <code>services.tls.certificates.leaf_data.subject.common_name:target.com</code></td><td>Certificate ke basis pe subdomains/hosts</td></tr>
+<tr><td>Web: <code>same_service(services.port=443 and services.service_name="HTTP")</code></td><td>Specific service combination filter</td></tr>
+<tr><td><code>censys subdomains target.com</code></td><td>Direct subdomain enumeration command</td></tr>
+<tr><td>crt.sh alt: <code>curl -s "https://crt.sh/?q=%25.target.com&output=json"</code></td><td>Certificate transparency logs se subdomains (free, no signup)</td></tr>
+</table></div>
+<div class="steps">
+<h4>Censys + crt.sh combo</h4>
+<ol>
+<li>crt.sh pe pehle free query maaro: <code>%.target.com</code></li>
+<li>Result ko clean karo (duplicates hatao, wildcards handle karo)</li>
+<li>Censys pe wahi domain search karo — extra live-host detail milega (ports, tech stack)</li>
+<li>Dono lists merge karke final subdomain list banao</li>
+</ol>
+</div>
+</div>
+</section>
+
+<section id="asn">
+<div class="sec-head" style="background:var(--asn)">🔹 ASN &amp; IP Range Mapping</div>
+<div class="sec-body">
+<div class="table-wrap"><table>
+<tr><th>Command</th><th>Kaam</th></tr>
+<tr><td><code>whois -h whois.radb.net -- '-i origin AS12345'</code></td><td>ASN se poora IP range nikalo</td></tr>
+<tr><td><code>amass intel -asn 12345</code></td><td>Amass se ASN based domain discovery</td></tr>
+<tr><td><code>bgp.he.net</code> (website)</td><td>ASN, peers, aur announced prefixes visually dekho</td></tr>
+<tr><td><code>nmap -sL 1.2.3.0/24</code></td><td>Range ke andar sab IPs list karo (no scan, sirf listing)</td></tr>
+</table></div>
+<div class="note">Company ka ASN pata karke uska poora IP range map karna — bade organizations mein bohot effective, forgotten/legacy assets mil jaate hain.</div>
+</div>
+</section>
+
+<section id="adv">
+<div class="sec-head" style="background:var(--adv)">🔺 Advanced Techniques</div>
+<div class="sec-body">
+<div class="steps">
+<h4>1. Subdomain Takeover Check</h4>
+<ol>
+<li>Live subdomains list lo (httpx output)</li>
+<li><code>subjack -w subs.txt -t 100 -timeout 30 -o results.txt -ssl</code> chalao</li>
+<li>CNAME dangling (pointing to unclaimed service jaise Github Pages, Heroku, AWS S3) dhoondo</li>
+<li>Manually verify karo before reporting — false positives common hain</li>
+</ol>
+</div>
+<div class="steps">
+<h4>2. Recursive Subdomain Enumeration</h4>
+<ol>
+<li>Pehle level ke subdomains nikalo (e.g. <code>dev.target.com</code>)</li>
+<li>Un par dobara amass/subfinder chalao — nested subdomains milte hain (<code>api.dev.target.com</code>)</li>
+<li>Ye process 2-3 levels tak repeat karo</li>
+</ol>
+</div>
+<div class="steps">
+<h4>3. Permutation/Alteration Scanning</h4>
+<ol>
+<li>Tool: <code>gotator</code> ya <code>dnsgen</code> use karo</li>
+<li>Known subdomains se permutations generate karo: <code>dev-api</code>, <code>api-dev</code>, <code>staging2</code>, etc.</li>
+<li>Generated list ko massdns/puredns se resolve karo</li>
+<li>Command: <code>puredns resolve permutations.txt -r resolvers.txt -w resolved.txt</code></li>
+</ol>
+</div>
+<div class="steps">
+<h4>4. Cloud Asset Discovery</h4>
+<ol>
+<li>S3 buckets: <code>cloud_enum -k target -t aws</code></li>
+<li>Azure/GCP bhi similarly check karo <code>cloud_enum</code> se</li>
+<li>Open/misconfigured buckets manually browse karo (read-only, scope ke andar)</li>
+</ol>
+</div>
+</div>
+</section>
+
+<section id="report">
+<div class="sec-head" style="background:var(--report)">📝 Reporting &amp; Organization</div>
+<div class="sec-body">
+<div class="steps">
+<h4>Final structure banane ka tareeka</h4>
+<ol>
+<li>Ek master spreadsheet banao: Subdomain | IP | Ports Open | Tech Stack | Status (live/dead) | Notes</li>
+<li>High-value targets highlight karo (admin, staging, api, internal panels)</li>
+<li>Screenshots attach karo har interesting host ka</li>
+<li>Ye data Day 3 (employee/org mapping) ke liye base banega</li>
+</ol>
+</div>
+</div>
+</section>
+
+</div>
+
+<footer>
+Sirf apne authorized HackerOne scope ke andar hi practice karo. Active scanning se pehle scope rules dobara verify karo.
+</footer>
+
+</body>
+</html>
